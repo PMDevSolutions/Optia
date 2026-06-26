@@ -44,38 +44,33 @@ export function RecommendationBox({
   }, [onRegenerate, onToast]);
 
   return (
-    <div className={cn("rounded-card bg-bg-700 p-4", className)}>
-      <div className="mb-2 flex items-center justify-between">
-        <span className="text-body-12 uppercase tracking-wider text-text-secondary">
-          {label}
-        </span>
-        <div className="flex items-center gap-2">
+    <div className={cn("rounded-card border border-border bg-surface-2 p-4", className)}>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className="text-label uppercase text-muted">{label}</span>
+        <div className="flex items-center gap-1.5">
           <button
             onClick={handleCopy}
-            className="rounded-full p-1.5 text-text-secondary hover:bg-bg-500 hover:text-white transition-colors"
             title="Copy"
+            aria-label="Copy"
+            className="inline-flex items-center gap-1.5 rounded-pill border border-border bg-surface px-2.5 py-1 text-[12px] font-semibold text-ink transition-colors hover:border-brand hover:text-brand"
           >
-            {copied ? (
-              <Check className="h-3.5 w-3.5 text-green" />
-            ) : (
-              <Copy className="h-3.5 w-3.5" />
-            )}
+            {copied ? <Check className="h-3.5 w-3.5 text-good" /> : <Copy className="h-3.5 w-3.5" />}
+            {copied ? "Copied" : "Copy"}
           </button>
           <button
             onClick={handleRegenerate}
             disabled={loading || apiKeyMissing}
-            className="rounded-full p-1.5 text-text-secondary hover:bg-bg-500 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-text-secondary"
+            className="rounded-full p-1.5 text-muted transition-colors hover:bg-surface-3 hover:text-ink disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-muted"
             title={apiKeyMissing ? "Set up API key in options" : "Regenerate"}
+            aria-label="Regenerate"
           >
-            <RefreshCw
-              className={cn("h-3.5 w-3.5", loading && "animate-spin")}
-            />
+            <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
           </button>
         </div>
       </div>
-      <p className="text-body-16 text-text-primary">{text}</p>
+      <p className="text-body text-ink">{text}</p>
       {apiKeyMissing && (
-        <p className="mt-2 text-body-12 text-text-secondary opacity-70">
+        <p className="mt-2 text-body-12 text-faint">
           Set up your OpenAI API key in options to use AI suggestions.
         </p>
       )}

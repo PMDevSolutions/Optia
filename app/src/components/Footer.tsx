@@ -9,7 +9,7 @@ const links = [
 
 export function Footer() {
   return (
-    <footer className="rounded-[14px] bg-bg-700 border-2 border-[#5b5959] px-4 py-3 shadow-[0px_4px_10px_0px_rgba(0,0,0,0.25)]">
+    <footer className="rounded-card-lg border border-border bg-surface px-4 py-3 shadow-card">
       <div className="flex items-center justify-between gap-1.5">
         {links.map(({ label, icon: Icon, href }) => (
           <a
@@ -17,7 +17,7 @@ export function Footer() {
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1 whitespace-nowrap text-[11px] text-text-secondary hover:text-white transition-colors"
+            className="flex items-center gap-1 whitespace-nowrap text-[11px] font-medium text-muted transition-colors hover:text-brand"
           >
             <Icon className="h-3.5 w-3.5 flex-shrink-0" />
             {label}

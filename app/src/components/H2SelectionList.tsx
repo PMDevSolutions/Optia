@@ -127,7 +127,7 @@ export function H2SelectionList({
   return (
     <div className={cn("flex flex-col gap-3", className)}>
       <div className="flex items-center justify-between">
-        <span className="text-body-12 uppercase tracking-wider text-text-secondary">
+        <span className="text-body-12 uppercase tracking-wider text-muted">
           H2 Heading Suggestions
         </span>
         <Button
@@ -144,7 +144,7 @@ export function H2SelectionList({
       </div>
 
       {apiKeyMissing && (
-        <p className="text-body-12 text-text-secondary opacity-70">
+        <p className="text-body-12 text-muted opacity-70">
           Set up your OpenAI API key in options to use AI suggestions.
         </p>
       )}
@@ -155,9 +155,9 @@ export function H2SelectionList({
         const isCopied = copiedItems.has(item.index);
 
         return (
-          <div key={item.index} className="rounded-card bg-bg-500 p-3">
-            <div className="mb-1.5 text-body-12 text-text-secondary">
-              <span className="font-medium text-text-primary">H2 #{item.index + 1}:</span>{" "}
+          <div key={item.index} className="rounded-card bg-surface-2 p-3">
+            <div className="mb-1.5 text-body-12 text-muted">
+              <span className="font-medium text-ink">H2 #{item.index + 1}:</span>{" "}
               {item.text}
             </div>
             <div className="flex gap-2">
@@ -172,7 +172,7 @@ export function H2SelectionList({
                 }}
                 placeholder="Click regenerate to get a suggestion..."
                 rows={1}
-                className="flex-1 rounded-input bg-bg-700 px-3 py-2 text-body-12 text-text-primary placeholder:text-bg-300 outline-none focus:ring-1 focus:ring-accent-blue transition-shadow resize-none overflow-hidden"
+                className="flex-1 rounded-input bg-surface px-3 py-2 text-body-12 text-ink placeholder:text-faint outline-none focus:ring-1 focus:ring-brand transition-shadow resize-none overflow-hidden"
               />
               <div className="flex items-start gap-1">
                 <button
@@ -181,8 +181,8 @@ export function H2SelectionList({
                   className={cn(
                     "rounded-full p-1.5 transition-colors disabled:opacity-30",
                     isCopied
-                      ? "bg-green/20 text-green"
-                      : "text-text-secondary hover:bg-bg-300 hover:text-white",
+                      ? "bg-good/15 text-good"
+                      : "text-muted hover:bg-surface-2 hover:text-ink",
                   )}
                   title="Copy"
                 >
@@ -195,7 +195,7 @@ export function H2SelectionList({
                 <button
                   onClick={() => handleRegenerateOne(item.index, item.text)}
                   disabled={isLoading || apiKeyMissing}
-                  className="rounded-full p-1.5 text-text-secondary hover:bg-bg-300 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-text-secondary"
+                  className="rounded-full p-1.5 text-muted hover:bg-surface-2 hover:text-ink transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-muted"
                   title={apiKeyMissing ? "Set up API key in options" : "Regenerate"}
                 >
                   <RefreshCw

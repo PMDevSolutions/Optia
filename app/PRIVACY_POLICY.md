@@ -1,8 +1,8 @@
-# Privacy Policy — AI SEO Copilot
+# Privacy Policy — Optia
 
 **Last updated:** April 1, 2026
 
-AI SEO Copilot is a Chrome browser extension that analyzes web pages for SEO issues and provides recommendations. This privacy policy explains what data the extension accesses, how it is used, and how it is stored.
+Optia is a Chrome browser extension that analyzes web pages for SEO issues and provides recommendations. This privacy policy explains what data the extension accesses, how it is used, and how it is stored.
 
 ## Data the Extension Accesses
 
@@ -53,7 +53,7 @@ No data is stored on external servers. No cookies are set. No analytics or track
 
 ## Data Sharing
 
-AI SEO Copilot does **not**:
+Optia does **not**:
 
 - Collect or transmit personal information
 - Use analytics, telemetry, or tracking of any kind

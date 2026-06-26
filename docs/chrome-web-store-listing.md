@@ -2,7 +2,7 @@
 
 ## Extension Name
 
-AI SEO Copilot
+Optia
 
 ## Short Description
 
@@ -14,7 +14,7 @@ Productivity
 
 ## Detailed Description
 
-AI SEO Copilot analyzes any web page for SEO issues and gives you a clear score with actionable recommendations — powered by AI.
+Optia analyzes any web page for SEO issues and gives you a clear score with actionable recommendations — powered by AI.
 
 Enter your target keyword, click "Optimize my SEO," and instantly see what's working and what needs improvement across your titles, meta descriptions, headings, images, links, structured data, and more. Each check is labeled by priority (High, Medium) so you know exactly where to focus first.
 
@@ -46,7 +46,7 @@ Full privacy policy: https://github.com/die-Manufaktur/AISEOC-Chrome-Extension/b
 
 **FREE & OPEN SOURCE**
 
-AI SEO Copilot is completely free to use and open source. View the source code, report issues, or contribute on GitHub:
+Optia is completely free to use and open source. View the source code, report issues, or contribute on GitHub:
 https://github.com/die-Manufaktur/AISEOC-Chrome-Extension
 
 ## Privacy Policy URL

@@ -1,4 +1,4 @@
-# AI SEO Copilot — Visual QA, Functional Testing & Code Review
+# Optia — Visual QA, Functional Testing & Code Review
 
 ## Your Role
 
@@ -73,7 +73,7 @@ The app uses a strict dark-mode design system. Match these tokens against both F
 #### Screen 1: Setup Page (initial state)
 - Navigate to the dev app URL. This is the default view.
 - **Expected elements:**
-  - Blue circle icon with Settings gear + "AI SEO Copilot" heading
+  - Blue circle icon with Settings gear + "Optia" heading
   - "Dev mode" subtitle
   - "Page URL to Analyze" input (dev mode only)
   - "OpenAI API Key (optional)" password input
@@ -329,7 +329,7 @@ Read the following files and review for correctness, consistency, and bugs:
 Produce your report in this structure:
 
 ```markdown
-# AI SEO Copilot — QA Report
+# Optia — QA Report
 
 ## 1. Visual Comparison
 

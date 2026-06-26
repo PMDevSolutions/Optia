@@ -1,5 +1,5 @@
-const HIGHLIGHT_CLASS = "seo-copilot-highlight";
-const STYLE_ID = "seo-copilot-styles";
+const HIGHLIGHT_CLASS = "optia-highlight";
+const STYLE_ID = "optia-styles";
 
 function injectStyles() {
   if (document.getElementById(STYLE_ID)) return;
@@ -7,7 +7,7 @@ function injectStyles() {
   style.id = STYLE_ID;
   style.textContent = `
     .${HIGHLIGHT_CLASS} {
-      outline: 3px solid #FF4343 !important;
+      outline: 3px solid #DC2626 !important;
       outline-offset: 2px;
       position: relative;
     }
@@ -16,7 +16,7 @@ function injectStyles() {
       position: absolute;
       top: -24px;
       left: 0;
-      background: #FF4343;
+      background: #DC2626;
       color: white;
       font-size: 11px;
       padding: 2px 6px;

@@ -114,7 +114,7 @@ async function sendToServiceWorker<T>(
   for (let attempt = 0; attempt <= retries; attempt++) {
     if (attempt > 0) {
       // Wait before retry to give service worker time to wake up
-      console.log(`[AI SEO Copilot] Retrying service worker message (attempt ${attempt + 1})`);
+      console.log(`[Optia] Retrying service worker message (attempt ${attempt + 1})`);
       await new Promise((r) => setTimeout(r, 500));
     }
 
@@ -188,7 +188,7 @@ async function extractPageData(tabId: number): Promise<PageSEOData> {
   if (swResponse.data) return swResponse.data;
 
   // Fallback: direct executeScript from side panel (may hang in CRXJS dev mode)
-  console.warn("[AI SEO Copilot] Service worker failed, trying direct executeScript:", swResponse.error);
+  console.warn("[Optia] Service worker failed, trying direct executeScript:", swResponse.error);
   try {
     return await directExecuteScript(tabId);
   } catch (directErr) {
@@ -463,7 +463,7 @@ export default function App() {
 
       setView("score");
     } catch (error) {
-      console.error("[AI SEO Copilot] Analysis failed:", error);
+      console.error("[Optia] Analysis failed:", error);
       setError(
         error instanceof Error ? error.message : "Analysis failed",
       );
@@ -473,7 +473,7 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-bg-900">
+      <div className="min-h-screen bg-canvas">
         <Onboarding />
         {view === "setup" && <SetupPage onAnalyze={handleAnalyze} />}
         {view === "loading" && <LoadingPage />}

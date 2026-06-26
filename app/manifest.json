@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "AI SEO Copilot",
-  "short_name": "SEO Copilot",
+  "name": "Optia",
+  "short_name": "Optia",
   "description": "Analyze page SEO and get AI-powered recommendations",
   "version": "0.1.0",
   "minimum_chrome_version": "116",
@@ -31,7 +31,7 @@
     "open_in_tab": false
   },
   "action": {
-    "default_title": "Open AI SEO Copilot",
+    "default_title": "Open Optia",
     "default_icon": {
       "16": "icons/icon-16.png",
       "32": "icons/icon-32.png",

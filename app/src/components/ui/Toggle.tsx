@@ -15,24 +15,24 @@ export function Toggle({ checked, onChange, label, id }: ToggleProps) {
         <input
           id={toggleId}
           type="checkbox"
-          className="sr-only"
+          className="peer sr-only"
           checked={checked}
           onChange={(e) => onChange(e.target.checked)}
         />
         <div
           className={cn(
-            "h-6 w-11 rounded-[27px] border border-white/40 transition-colors shadow-[0px_2px_6.6px_0px_rgba(72,201,175,0.3)]",
-            checked ? "bg-green" : "bg-bg-300",
+            "h-6 w-11 rounded-pill transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-brand/40",
+            checked ? "bg-brand" : "border border-border-strong bg-surface-3",
           )}
         />
         <div
           className={cn(
-            "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform",
+            "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform",
             checked && "translate-x-5",
           )}
         />
       </div>
-      {label && <span className="text-[16px] text-text-primary">{label}</span>}
+      {label && <span className="text-body text-ink">{label}</span>}
     </label>
   );
 }

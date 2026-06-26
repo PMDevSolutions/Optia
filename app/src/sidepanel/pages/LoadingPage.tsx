@@ -1,19 +1,37 @@
-import { Loader2 } from "lucide-react";
-
 export function LoadingPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-6">
-      <Loader2 className="h-12 w-12 animate-spin text-accent-blue" />
+    <div className="flex min-h-screen flex-col items-center justify-center gap-7 p-6">
+      {/* Animated score-ring placeholder */}
+      <div className="relative inline-flex items-center justify-center">
+        <svg width={140} height={140} className="-rotate-90" aria-hidden="true">
+          <circle cx={70} cy={70} r={62} fill="none" className="stroke-surface-3" strokeWidth={12} />
+          <circle
+            cx={70}
+            cy={70}
+            r={62}
+            fill="none"
+            className="origin-center animate-spin stroke-brand [animation-duration:1.1s]"
+            strokeWidth={12}
+            strokeLinecap="round"
+            strokeDasharray={389}
+            strokeDashoffset={290}
+          />
+        </svg>
+        <span className="absolute text-label uppercase text-muted">Scoring</span>
+      </div>
+
       <div className="text-center">
-        <h2 className="text-h2 text-text-primary">Analyzing your page</h2>
-        <p className="mt-2 text-body-16 text-text-secondary">
-          Extracting SEO data and running checks...
+        <h2 className="text-h1 text-ink">Analyzing your page</h2>
+        <p className="mt-2 text-body text-muted">
+          Extracting SEO data and running checks…
         </p>
       </div>
-      <div className="w-full max-w-xs">
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-bg-500">
-          <div className="h-full animate-pulse rounded-full bg-accent-blue" style={{ width: "60%" }} />
-        </div>
+
+      {/* Skeleton category cards */}
+      <div className="flex w-full max-w-sm flex-col gap-3">
+        <div className="skeleton h-16 w-full" />
+        <div className="skeleton h-16 w-full" />
+        <div className="skeleton h-16 w-full" />
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 {
-  "name": "ai-seo-copilot",
+  "name": "optia",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -8,6 +8,7 @@
     "dev:ext": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "icons": "node scripts/generate-icons.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",
@@ -49,6 +50,7 @@
     "globals": "^17.4.0",
     "jsdom": "^26.1.0",
     "postcss": "^8.5.4",
+    "sharp": "^0.35.2",
     "standard-version": "^9.5.0",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3",

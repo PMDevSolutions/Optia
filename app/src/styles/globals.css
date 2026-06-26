@@ -2,125 +2,207 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   Optia — "Signal" theme tokens (RGB triplets for Tailwind alpha)
+   Light is the default; .dark on <html> flips the palette.
+   ============================================================ */
 :root {
-  --bg-900: #1a1a1a;
-  --bg-700: #323232;
-  --bg-500: #444444;
-  --bg-300: #787878;
-  --text-primary: #ffffff;
-  --text-secondary: #c7c7c7;
-  --red: #ff4343;
-  --red-light: #ff8484;
-  --green: #a2ffb4;
-  --yellow: #ffdd64;
-  --yellow-light: #ffea9e;
-  --accent-blue: #1a72f5;
+  --canvas: 247 248 250;
+  --surface: 255 255 255;
+  --surface-2: 241 245 249;
+  --surface-3: 233 238 245;
+  --border: 226 232 240;
+  --border-strong: 203 213 225;
+  --ink: 15 23 42;
+  --muted: 100 116 139;
+  --faint: 148 163 184;
+
+  --brand: 79 70 229;        /* indigo 600 */
+  --brand-hover: 67 56 202;  /* indigo 700 */
+  --brand-fg: 255 255 255;
+  --brand-tint: 238 242 255; /* indigo 50 */
+
+  --accent: 14 165 233;      /* sky 500 */
+  --accent-tint: 224 242 254;
+
+  --good: 22 163 74;
+  --good-tint: 220 252 231;
+  --warn: 217 119 6;
+  --warn-tint: 254 243 199;
+  --poor: 220 38 38;
+  --poor-tint: 254 226 226;
+
+  color-scheme: light;
+}
+
+.dark {
+  --canvas: 11 17 32;        /* slate 950 */
+  --surface: 17 24 39;       /* slate 900 */
+  --surface-2: 30 41 59;     /* slate 800 */
+  --surface-3: 39 52 73;
+  --border: 36 48 68;
+  --border-strong: 51 65 85;
+  --ink: 241 245 249;
+  --muted: 148 163 184;
+  --faint: 100 116 139;
+
+  --brand: 99 102 241;       /* indigo 500 */
+  --brand-hover: 129 140 248;/* indigo 400 */
+  --brand-fg: 255 255 255;
+  --brand-tint: 30 27 75;    /* indigo 950 */
+
+  --accent: 56 189 248;      /* sky 400 */
+  --accent-tint: 12 74 110;
+
+  --good: 52 211 153;
+  --good-tint: 6 78 59;
+  --warn: 251 191 36;
+  --warn-tint: 120 53 15;
+  --poor: 248 113 113;
+  --poor-tint: 127 29 29;
+
+  color-scheme: dark;
 }
 
 @layer base {
+  html {
+    background-color: rgb(var(--canvas));
+  }
+
   body {
-    @apply bg-bg-900 text-text-primary font-sans antialiased;
+    @apply bg-canvas text-ink font-sans antialiased;
     margin: 0;
-    min-width: 380px;
+    min-width: 360px;
   }
 
   * {
     box-sizing: border-box;
   }
+
+  ::selection {
+    background-color: rgb(var(--brand) / 0.18);
+  }
+
+  /* Accessible, brand-tinted focus ring on keyboard nav */
+  :focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgb(var(--brand) / 0.35);
+    border-radius: 6px;
+  }
+
+  /* Subtle, themed scrollbars inside the side panel */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--border-strong)) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: rgb(var(--border-strong));
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
 }
 
 @layer components {
-  /* Stroke colors from Figma */
-  :root {
-    --stroke-bg-700: #3e3e3e;
-    --stroke-bg-300: #787878;
-  }
-
-  /* Score frame outer container */
+  /* Outer score frame container */
   .score-frame {
-    @apply rounded-card-lg border border-bg-500 bg-bg-900;
+    @apply rounded-card-lg border border-border bg-surface shadow-card;
     max-width: 715px;
   }
 
-  /* Score circle area card - 2px border, symmetric 32px 20px padding */
+  /* Hero card holding the score gauge */
   .score-circle-card {
-    @apply rounded-score bg-bg-700;
-    border: 2px solid var(--stroke-bg-700);
-    padding: 32px 20px;
+    @apply relative overflow-hidden rounded-score border border-border bg-surface shadow-pop;
+    padding: 28px 20px 24px;
+  }
+  /* Soft brand glow behind the gauge */
+  .score-circle-card::before {
+    content: "";
+    position: absolute;
+    inset: -40% 0 auto 0;
+    height: 220px;
+    background: radial-gradient(
+      60% 80% at 50% 0%,
+      rgb(var(--brand) / 0.14),
+      transparent 70%
+    );
+    pointer-events: none;
   }
 
-  /* Summarybox card - 2px border */
+  /* Generic content card */
   .summarybox-card {
-    @apply rounded-card-lg bg-bg-700;
-    border: 2px solid var(--stroke-bg-700);
-    padding: 20px 24px 23px 24px;
+    @apply rounded-card-lg border border-border bg-surface shadow-card;
+    padding: 18px 20px 20px;
   }
 
-  /* Passed/To-Improve summary pill container */
+  /* Passed / to-improve summary bar */
   .summary-pill {
-    @apply flex items-center justify-between;
-    background: #444444;
-    border: 1px solid #444444;
-    border-radius: 41px;
-    padding: 12px 31px;
-    min-width: 300px;
+    @apply flex items-center justify-between rounded-pill border border-border bg-surface-2;
+    padding: 10px 22px;
+    min-width: 280px;
   }
 
-  /* Status badge pill - Figma spec: 16px/400, letter-spacing -0.896px, line-height 125% */
+  /* Status badge pills — tinted bg + matching text (modern, high-contrast) */
   .status-badge {
-    @apply inline-flex items-center gap-1;
-    font-size: 16px;
-    font-weight: 400;
-    letter-spacing: -0.896px;
-    line-height: 125%;
-    padding: 8px 12px;
-    border-radius: 27px;
-    border: 1px solid var(--stroke-bg-300);
-    color: #000000;
+    @apply inline-flex items-center gap-1.5 rounded-pill font-semibold;
+    font-size: 13px;
+    line-height: 1;
+    letter-spacing: -0.01em;
+    padding: 7px 12px;
+    border: 1px solid transparent;
   }
-
   .status-badge-success {
-    @apply status-badge;
-    background-color: #A2FFB4;
-    box-shadow: 0 2px 6.6px 0 rgba(162, 255, 180, 0.26);
+    @apply status-badge bg-good-tint text-good;
+    border-color: rgb(var(--good) / 0.25);
   }
-
   .status-badge-warning {
-    @apply status-badge;
-    background-color: #FFDD64;
-    box-shadow: 0 2px 6.6px 0 rgba(255, 221, 100, 0.26);
+    @apply status-badge bg-warn-tint text-warn;
+    border-color: rgb(var(--warn) / 0.3);
   }
-
   .status-badge-error {
-    @apply status-badge;
-    background-color: #FF4343;
-    box-shadow: 0 2px 6.6px 0 rgba(255, 67, 67, 0.26);
+    @apply status-badge bg-poor-tint text-poor;
+    border-color: rgb(var(--poor) / 0.25);
   }
 
-  /* Arrow icon circle - matches badge color */
+  /* Circular arrow/icon chip — matches badge tint */
   .arrow-circle {
-    @apply flex items-center justify-center;
-    width: 35px;
-    height: 35px;
-    border-radius: 27px;
-    border: 1px solid var(--stroke-bg-300);
+    @apply flex items-center justify-center rounded-full;
+    width: 34px;
+    height: 34px;
+    border: 1px solid transparent;
   }
-
   .arrow-circle-success {
-    @apply arrow-circle;
-    background-color: #A2FFB4;
-    box-shadow: 0 2px 6.6px 0 rgba(162, 255, 180, 0.26);
+    @apply arrow-circle bg-good-tint text-good;
+    border-color: rgb(var(--good) / 0.25);
   }
-
   .arrow-circle-warning {
-    @apply arrow-circle;
-    background-color: #FFDD64;
-    box-shadow: 0 2px 6.6px 0 rgba(255, 221, 100, 0.26);
+    @apply arrow-circle bg-warn-tint text-warn;
+    border-color: rgb(var(--warn) / 0.3);
+  }
+  .arrow-circle-error {
+    @apply arrow-circle bg-poor-tint text-poor;
+    border-color: rgb(var(--poor) / 0.25);
   }
 
-  .arrow-circle-error {
-    @apply arrow-circle;
-    background-color: #FF4343;
-    box-shadow: 0 2px 6.6px 0 rgba(255, 67, 67, 0.26);
+  /* Loading skeleton shimmer */
+  .skeleton {
+    @apply relative overflow-hidden rounded-card bg-surface-2;
+  }
+  .skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgb(var(--ink) / 0.06),
+      transparent
+    );
+    animation: shimmer 1.4s infinite;
   }
 }
