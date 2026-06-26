@@ -1,19 +1,9 @@
 {
   "mcpServers": {
-    "figma-desktop": {
-      "type": "http",
-      "url": "http://127.0.0.1:3845/mcp",
-      "description": "Figma desktop app MCP server (local) - requires Figma desktop with Dev Mode enabled"
-    },
-    "figma": {
-      "type": "http",
-      "url": "https://mcp.figma.com/mcp",
-      "description": "Figma remote MCP server (fallback)"
-    },
-    "playwright": {
+    "chrome-devtools": {
       "command": "cmd",
-      "args": ["/c", "npx", "@playwright/mcp@latest", "--headless"],
-      "description": "Playwright browser automation - defaults to Chromium. Change browser via PLAYWRIGHT_MCP_BROWSER env var or restart with --browser firefox|webkit"
+      "args": ["/c", "npx", "-y", "chrome-devtools-mcp@latest"],
+      "description": "Chrome DevTools MCP — drive and screenshot the extension UI, run Lighthouse audits, inspect the DOM. The actual MCP this project uses (its tools are allow-listed in .claude/settings.local.json)."
     }
   }
 }

@@ -1,10 +1,6 @@
-# Test Runner
+# /test
 
-Run Vitest tests with coverage reporting.
-
-## Purpose
-
-This command runs the project's test suite using Vitest and React Testing Library.
+Run the Optia test suite (Vitest + React Testing Library + jsdom). All commands run from `app/`.
 
 ## Usage
 
@@ -12,58 +8,28 @@ This command runs the project's test suite using Vitest and React Testing Librar
 /test
 ```
 
-## What this command does
+## Steps (from `app/`)
 
-1. **Detects test configuration** (vitest.config.ts or vite.config.ts)
-2. **Runs all tests** with proper configuration
-3. **Shows coverage report** if configured
-4. **Reports failures** with clear error details
+1. **Run all tests:**
+   ```bash
+   cd app && pnpm test          # vitest run
+   ```
+2. **Watch mode** (interactive):
+   ```bash
+   cd app && pnpm test:watch
+   ```
+3. **Coverage** (`@vitest/coverage-v8` is installed):
+   ```bash
+   cd app && pnpm vitest run --coverage
+   ```
+4. **A single file or pattern:**
+   ```bash
+   cd app && pnpm vitest run src/lib/scoring.test.ts
+   cd app && pnpm vitest run -t "renders score label"
+   ```
 
-## Steps
+## Notes
 
-### 1. Run all tests
-```bash
-pnpm vitest run
-```
-
-### 2. Run with coverage
-```bash
-pnpm vitest run --coverage
-```
-
-### 3. Run specific test file
-```bash
-pnpm vitest run src/components/Button.test.tsx
-```
-
-### 4. Run in watch mode (interactive development)
-```bash
-pnpm vitest
-```
-
-### 5. Run tests matching a pattern
-```bash
-pnpm vitest run -t "should render"
-```
-
-## Or use the project script
-
-```bash
-./scripts/run-tests.sh
-```
-
-## Test Types
-
-| Type | Tool | Pattern | Purpose |
-|------|------|---------|---------|
-| Unit | Vitest | `*.test.ts` | Pure functions, utilities |
-| Component | Vitest + RTL | `*.test.tsx` | React component behavior |
-| Hook | Vitest + RTL | `*.test.ts` | Custom hook logic |
-| E2E | Playwright | `*.spec.ts` | Full user flows |
-| Visual | Storybook | `*.stories.tsx` | Component states |
-
-## Common Issues
-
-- **Missing setup file**: Create `src/test/setup.ts` with `import '@testing-library/jest-dom'`
-- **JSX not recognized**: Ensure `environment: 'jsdom'` in vitest config
-- **Module resolution**: Check `resolve.alias` matches tsconfig paths
+- Config: `app/vitest.config.ts` (jsdom environment). `chrome.*` is hand-mocked in `app/src/test/setup.ts`.
+- This project has **no** Storybook, Playwright, or E2E tests — Vitest only.
+- For chrome / service-worker / OpenAI-SDK mocking patterns and the import-order rule, see the **testing-chrome-extension** skill.
