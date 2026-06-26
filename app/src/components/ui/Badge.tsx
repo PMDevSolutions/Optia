@@ -17,15 +17,16 @@ export function Badge({ status, priority, className }: BadgeProps) {
           ? "Medium"
           : "Low Priority";
 
+  const isError = status === "fail" && priority === "high";
+  const isWarning = status === "warning" || (status === "fail" && priority !== "high");
+
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-[27px] border border-white/40 px-2 py-1 text-[12px] leading-[1.3] text-black whitespace-nowrap",
-        status === "pass" && "bg-green",
-        status === "fail" && priority === "high" && "bg-[#ff8484]",
-        status === "fail" && priority === "medium" && "bg-[#ffea9e]",
-        status === "fail" && priority === "low" && "bg-[#ffea9e]",
-        status === "warning" && "bg-[#ffea9e]",
+        "inline-flex items-center rounded-pill border px-2.5 py-1 text-[12px] font-semibold leading-none whitespace-nowrap",
+        status === "pass" && "border-good/25 bg-good-tint text-good",
+        isError && "border-poor/25 bg-poor-tint text-poor",
+        isWarning && "border-warn/30 bg-warn-tint text-warn",
         className,
       )}
     >

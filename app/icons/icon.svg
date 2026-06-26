@@ -1,0 +1,14 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="optia-bg" x1="64" y1="32" x2="448" y2="480" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4F46E5"/>
+      <stop offset="1" stop-color="#0EA5E9"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded-square brand tile -->
+  <rect width="512" height="512" rx="116" fill="url(#optia-bg)"/>
+  <!-- Score-gauge ring, open at the bottom -->
+  <path d="M120.2 391.8 A192 192 0 1 1 391.8 391.8" stroke="#FFFFFF" stroke-width="46" stroke-linecap="round"/>
+  <!-- Upward arrow: optimize / score rising -->
+  <path d="M256 352 V184 M185.6 254.4 L256 184 L326.4 254.4" stroke="#FFFFFF" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

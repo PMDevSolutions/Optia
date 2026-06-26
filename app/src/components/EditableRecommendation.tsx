@@ -63,9 +63,9 @@ export function EditableRecommendation({
   }, [onRegenerate, onToast]);
 
   return (
-    <div className={cn("rounded-card bg-bg-500 p-3", className)}>
+    <div className={cn("rounded-card bg-surface-2 p-3", className)}>
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-body-12 uppercase tracking-wider text-text-secondary">
+        <span className="text-body-12 uppercase tracking-wider text-muted">
           {label}
         </span>
         <div className="flex items-center gap-1.5">
@@ -74,8 +74,8 @@ export function EditableRecommendation({
             className={cn(
               "rounded-full p-1.5 transition-colors",
               copied
-                ? "bg-green/20 text-green"
-                : "text-text-secondary hover:bg-bg-300 hover:text-white",
+                ? "bg-good/15 text-good"
+                : "text-muted hover:bg-surface-2 hover:text-ink",
             )}
             title="Copy to clipboard"
           >
@@ -88,7 +88,7 @@ export function EditableRecommendation({
           <button
             onClick={handleRegenerate}
             disabled={loading || apiKeyMissing}
-            className="rounded-full p-1.5 text-text-secondary hover:bg-bg-300 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-text-secondary"
+            className="rounded-full p-1.5 text-muted hover:bg-surface-2 hover:text-ink transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-muted"
             title={apiKeyMissing ? "Set up API key in options" : "Regenerate"}
           >
             <RefreshCw
@@ -105,10 +105,10 @@ export function EditableRecommendation({
           adjustHeight();
         }}
         rows={1}
-        className="w-full rounded-input bg-bg-700 px-3 py-2 text-body-16 text-text-primary placeholder:text-bg-300 outline-none focus:ring-1 focus:ring-accent-blue transition-shadow resize-none overflow-hidden"
+        className="w-full rounded-input bg-surface px-3 py-2 text-body-16 text-ink placeholder:text-faint outline-none focus:ring-1 focus:ring-brand transition-shadow resize-none overflow-hidden"
       />
       {apiKeyMissing && (
-        <p className="mt-2 text-body-12 text-text-secondary opacity-70">
+        <p className="mt-2 text-body-12 text-muted opacity-70">
           Set up your OpenAI API key in options to use AI suggestions.
         </p>
       )}

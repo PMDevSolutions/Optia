@@ -8,16 +8,29 @@ interface ScoreGaugeProps {
   className?: string;
 }
 
-function getScoreTierColor(score: number): string {
-  if (score >= 70) return "#A2FFB4"; // Green
-  if (score >= 40) return "#FFDD64"; // Yellow
-  return "#FF4343"; // Red
+type Tier = "good" | "warn" | "poor";
+
+function getTier(score: number): Tier {
+  if (score >= 70) return "good";
+  if (score >= 40) return "warn";
+  return "poor";
 }
+
+const STROKE: Record<Tier, string> = {
+  good: "stroke-good",
+  warn: "stroke-warn",
+  poor: "stroke-poor",
+};
+const TEXT: Record<Tier, string> = {
+  good: "text-good",
+  warn: "text-warn",
+  poor: "text-poor",
+};
 
 export function ScoreGauge({
   score,
-  size = 244,
-  strokeWidth = 12,
+  size = 216,
+  strokeWidth = 14,
   className,
 }: ScoreGaugeProps) {
   const [displayScore, setDisplayScore] = useState(0);
@@ -25,7 +38,7 @@ export function ScoreGauge({
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (displayScore / 100) * circumference;
 
-  const tierColor = getScoreTierColor(score);
+  const tier = getTier(score);
 
   useEffect(() => {
     let frame: number;
@@ -47,59 +60,50 @@ export function ScoreGauge({
   return (
     <div className={cn("relative inline-flex items-center justify-center", className)}>
       <svg width={size} height={size} className="-rotate-90" style={{ overflow: "visible" }}>
-        {/* Background track circle - BG 300 (#787878), no rounded ends */}
+        {/* Track */}
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="#787878"
+          className="stroke-border-strong"
           strokeWidth={strokeWidth}
-          strokeLinecap="butt"
+          strokeLinecap="round"
         />
-        {/* Glow effect layer - blurred arc behind the main arc, subtle opacity */}
+        {/* Glow */}
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke={tierColor}
+          className={cn(STROKE[tier], "transition-all duration-1000 ease-out")}
           strokeWidth={strokeWidth}
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
-          style={{ filter: "blur(5px)", opacity: 0.6 }}
-          className="transition-all duration-1000 ease-out"
+          style={{ filter: "blur(6px)", opacity: 0.5 }}
         />
-        {/* Main score arc */}
+        {/* Main arc */}
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke={tierColor}
+          className={cn(STROKE[tier], "transition-all duration-1000 ease-out")}
           strokeWidth={strokeWidth}
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
-          className="transition-all duration-1000 ease-out"
         />
       </svg>
       <div className="absolute flex flex-col items-center">
-        {/* Score number - 60px, bold, tier color */}
         <span
-          className="font-bold"
-          style={{ fontSize: "60px", lineHeight: 1, color: tierColor }}
+          className={cn("font-bold leading-none tabular-nums", TEXT[tier])}
+          style={{ fontSize: "56px" }}
         >
           {displayScore}
         </span>
-        {/* SEO Score label - 16px, 600 weight, white */}
-        <span
-          className="font-semibold text-white"
-          style={{ fontSize: "16px" }}
-        >
-          SEO Score
-        </span>
+        <span className="mt-1.5 text-label uppercase text-muted">SEO Score</span>
       </div>
     </div>
   );

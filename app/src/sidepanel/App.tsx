@@ -473,7 +473,7 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-bg-900">
+      <div className="min-h-screen bg-canvas">
         <Onboarding />
         {view === "setup" && <SetupPage onAnalyze={handleAnalyze} />}
         {view === "loading" && <LoadingPage />}

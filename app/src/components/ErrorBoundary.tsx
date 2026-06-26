@@ -1,5 +1,6 @@
 import { Component } from "react";
 import type { ErrorInfo, ReactNode } from "react";
+import { AlertTriangle } from "lucide-react";
 
 interface Props {
   children: ReactNode;
@@ -27,16 +28,18 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex min-h-screen items-center justify-center bg-bg-900 p-6">
-          <div className="flex flex-col items-center gap-4 text-center">
-            <div className="text-4xl">!</div>
-            <h2 className="text-h2 text-text-primary">Something went wrong</h2>
-            <p className="text-body-16 text-text-secondary max-w-sm">
+        <div className="flex min-h-screen items-center justify-center bg-canvas p-6">
+          <div className="flex max-w-sm flex-col items-center gap-4 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-poor-tint text-poor">
+              <AlertTriangle className="h-7 w-7" />
+            </div>
+            <h2 className="text-h1 text-ink">Something went wrong</h2>
+            <p className="text-body text-muted">
               {this.state.error?.message ?? "An unexpected error occurred."}
             </p>
             <button
               onClick={() => this.setState({ hasError: false, error: null })}
-              className="rounded-card bg-accent-blue px-6 py-3 text-button text-white hover:opacity-90 transition-opacity"
+              className="rounded-pill bg-brand px-6 py-3 text-button text-brand-fg shadow-brand transition-colors hover:bg-brand-hover"
             >
               Try Again
             </button>

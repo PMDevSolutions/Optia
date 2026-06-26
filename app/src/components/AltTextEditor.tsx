@@ -35,18 +35,18 @@ export function AltTextEditor({
   };
 
   return (
-    <div className={cn("flex gap-3 rounded-card bg-bg-700 p-3", className)}>
+    <div className={cn("flex gap-3 rounded-card bg-surface p-3", className)}>
       <img
         src={imageSrc}
         alt={alt || "Page image"}
-        className="h-16 w-16 rounded-input object-cover bg-bg-500 flex-shrink-0"
+        className="h-16 w-16 rounded-input object-cover bg-surface-2 flex-shrink-0"
       />
       <div className="flex flex-1 flex-col gap-2">
         <input
           value={alt}
           onChange={(e) => setAlt(e.target.value)}
           placeholder="Enter alt text..."
-          className="w-full rounded-input bg-bg-500 px-3 py-2 text-body-12 text-text-primary placeholder:text-bg-300 outline-none focus:ring-1 focus:ring-accent-blue"
+          className="w-full rounded-input bg-surface-2 px-3 py-2 text-body-12 text-ink placeholder:text-faint outline-none focus:ring-1 focus:ring-brand"
         />
         <div className="flex gap-2">
           <Button size="small" variant="secondary" onClick={handleGenerate} loading={loading}>

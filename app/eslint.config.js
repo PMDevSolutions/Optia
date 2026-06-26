@@ -128,6 +128,19 @@ export default [
     },
   },
   {
+    // Build scripts (icon generation, etc.) - Node.js environment
+    files: ["scripts/**/*.{js,mjs}"],
+    languageOptions: {
+      parserOptions: {
+        ecmaVersion: "latest",
+        sourceType: "module",
+      },
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
+  {
     ignores: [
       "node_modules/**",
       "dist/**",

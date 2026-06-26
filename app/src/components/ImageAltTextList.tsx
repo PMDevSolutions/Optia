@@ -64,12 +64,12 @@ export function ImageAltTextList({
 
   return (
     <div className={cn("flex flex-col gap-3", className)}>
-      <span className="text-body-12 uppercase tracking-wider text-text-secondary">
+      <span className="text-body-12 uppercase tracking-wider text-muted">
         Images Missing Alt Text
       </span>
 
       {apiKeyMissing && (
-        <p className="text-body-12 text-text-secondary opacity-70">
+        <p className="text-body-12 text-muted opacity-70">
           Set up your OpenAI API key in options to use AI suggestions.
         </p>
       )}
@@ -80,17 +80,17 @@ export function ImageAltTextList({
         const isCopied = copiedItems.has(index);
 
         return (
-          <div key={index} className="flex gap-3 rounded-card bg-bg-500 p-3">
+          <div key={index} className="flex gap-3 rounded-card bg-surface-2 p-3">
             <img
               src={img.src}
               alt={altText || "Page image"}
-              className="h-16 w-16 rounded-input object-cover bg-bg-700 flex-shrink-0"
+              className="h-16 w-16 rounded-input object-cover bg-surface flex-shrink-0"
               onError={(e) => {
                 (e.target as HTMLImageElement).style.display = "none";
               }}
             />
             <div className="flex flex-1 flex-col gap-2">
-              <div className="text-body-12 text-text-secondary truncate">
+              <div className="text-body-12 text-muted truncate">
                 {img.src.split("/").pop()?.split("?")[0] ?? img.src}
               </div>
               <div className="flex gap-2">
@@ -100,7 +100,7 @@ export function ImageAltTextList({
                     setAltTexts((prev) => ({ ...prev, [index]: e.target.value }))
                   }
                   placeholder="Generate or type alt text..."
-                  className="flex-1 rounded-input bg-bg-700 px-3 py-2 text-body-12 text-text-primary placeholder:text-bg-300 outline-none focus:ring-1 focus:ring-accent-blue"
+                  className="flex-1 rounded-input bg-surface px-3 py-2 text-body-12 text-ink placeholder:text-faint outline-none focus:ring-1 focus:ring-brand"
                 />
                 <div className="flex items-center gap-1">
                   <button
@@ -109,8 +109,8 @@ export function ImageAltTextList({
                     className={cn(
                       "rounded-full p-1.5 transition-colors disabled:opacity-30",
                       isCopied
-                        ? "bg-green/20 text-green"
-                        : "text-text-secondary hover:bg-bg-300 hover:text-white",
+                        ? "bg-good/15 text-good"
+                        : "text-muted hover:bg-surface-2 hover:text-ink",
                     )}
                     title="Copy"
                   >
@@ -123,7 +123,7 @@ export function ImageAltTextList({
                   <button
                     onClick={() => handleGenerate(index, img.src)}
                     disabled={isLoading || apiKeyMissing}
-                    className="rounded-full p-1.5 text-text-secondary hover:bg-bg-300 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-text-secondary"
+                    className="rounded-full p-1.5 text-muted hover:bg-surface-2 hover:text-ink transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-muted"
                     title={apiKeyMissing ? "Set up API key in options" : "Generate alt text"}
                   >
                     {isLoading ? (

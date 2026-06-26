@@ -20,7 +20,7 @@ import type { SEOCheck } from "@/types/seo";
 // Triangle icons for summary pill
 function TriangleUpIcon({ className }: { className?: string }) {
   return (
-    <svg width="14" height="12" viewBox="0 0 14 12" fill="none" className={className}>
+    <svg width="13" height="11" viewBox="0 0 14 12" fill="none" className={className}>
       <path d="M7 0L13.9282 12H0.0717969L7 0Z" fill="currentColor" />
     </svg>
   );
@@ -28,7 +28,7 @@ function TriangleUpIcon({ className }: { className?: string }) {
 
 function TriangleDownIcon({ className }: { className?: string }) {
   return (
-    <svg width="14" height="12" viewBox="0 0 14 12" fill="none" className={className}>
+    <svg width="13" height="11" viewBox="0 0 14 12" fill="none" className={className}>
       <path d="M7 12L0.0717969 0H13.9282L7 12Z" fill="currentColor" />
     </svg>
   );
@@ -76,8 +76,6 @@ export function SubscoresPage() {
       }
     : undefined;
 
-  // Stub that rejects immediately when no API key is configured.
-  // The buttons will be disabled, but this provides a safe fallback.
   const rejectNoKey = () => Promise.reject(new Error("No API key configured"));
 
   const renderCheckRecommendation = (check: SEOCheck) => {
@@ -189,32 +187,31 @@ export function SubscoresPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-bg-900 p-3">
+    <div className="flex min-h-screen flex-col bg-canvas p-3">
       {/* Main card */}
-      <div className="flex flex-col gap-10 rounded-[20px] border-2 border-[#5b5959] bg-bg-700 px-5 py-8">
+      <div className="flex flex-col gap-6 rounded-card-lg border border-border bg-surface px-5 py-6 shadow-card">
         {/* Header: back arrow + centered title */}
         <div className="relative flex items-center justify-center">
           <button
             onClick={() => setActiveCategory(null)}
-            className="absolute left-0 text-text-secondary hover:text-white transition-colors"
+            aria-label="Back"
+            className="absolute left-0 inline-flex h-9 w-9 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-2 hover:text-ink"
           >
-            <ArrowLeft className="h-6 w-6" />
+            <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="text-center text-[28px] font-medium leading-[1.1] text-text-primary">
-            {category.label}
-          </h1>
+          <h1 className="text-center text-h1 text-ink">{category.label}</h1>
         </div>
 
         {/* Summary pill */}
         <div className="flex justify-center">
           <div className="summary-pill">
-            <span className="flex items-center gap-1.5 text-white">
-              <TriangleUpIcon className="text-green" />
-              <span className="text-[18px] leading-[1.3]">{category.passed} passed</span>
+            <span className="flex items-center gap-2 text-ink">
+              <TriangleUpIcon className="text-good" />
+              <span className="text-body-semibold">{category.passed} passed</span>
             </span>
-            <span className="flex items-center gap-1.5 text-white">
-              <TriangleDownIcon className="text-red" />
-              <span className="text-[18px] leading-[1.3]">{failed} to improve</span>
+            <span className="flex items-center gap-2 text-ink">
+              <TriangleDownIcon className="text-poor" />
+              <span className="text-body-semibold">{failed} to improve</span>
             </span>
           </div>
         </div>
