@@ -1,4 +1,4 @@
-# AI SEO Copilot - Chrome Extension
+# Optia - Chrome Extension
 
 A Chrome extension that analyzes web pages for SEO issues and provides AI-powered recommendations to improve search rankings.
 
@@ -46,8 +46,8 @@ You should see something like `9.x.x`
 Clone or download this repository from GitHub:
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/ai-seo-copilot-extension.git
-cd ai-seo-copilot-extension
+git clone https://github.com/YOUR-USERNAME/optia-extension.git
+cd optia-extension
 ```
 
 Or download the ZIP file from GitHub and extract it.
@@ -85,7 +85,7 @@ This creates a `dist` folder with the built extension.
 
 4. Navigate to the `app/dist` folder inside this project and select it
 
-5. The AI SEO Copilot extension icon should appear in your browser toolbar
+5. The Optia extension icon should appear in your browser toolbar
 
 ---
 
@@ -93,7 +93,7 @@ This creates a `dist` folder with the built extension.
 
 1. Navigate to any website you want to analyze
 
-2. Click the AI SEO Copilot icon in your toolbar (the little robot)
+2. Click the Optia icon in your toolbar
 
 3. Enter your target keyword and click **Analyze**
 

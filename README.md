@@ -1,8 +1,21 @@
-# AI SEO Copilot - Chrome Extension
+# Optia - Chrome Extension
 
 A Chrome extension that analyzes web pages for SEO optimization and provides AI-powered recommendations to improve search rankings.
 
 **Website:** https://ai-seo-copilot.webflow.io/
+
+> ⚠️ **Rebrand in progress (AI SEO Copilot → Optia).** The codebase, UI, docs, and package names have been renamed to **Optia**. The items below live on **external systems** and must be renamed/migrated **manually by the project owner** — they were intentionally left unchanged so links don't break before migration:
+>
+> - **GitHub repository & remote URL** — currently `die-Manufaktur/AISEOC-Chrome-Extension`. Rename the repo, update the git remote, then update the links in `docs/` and `app/src/components/Footer.tsx`.
+> - **Marketing website** — `https://ai-seo-copilot.webflow.io/` (Webflow project).
+> - **Chrome Web Store listing** — extension name, description, screenshots, and the public store URL.
+> - **Documentation site** — `ai-seo-copilot.gitbook.io` (referenced in `app/src/lib/docs-links.ts` and `app/src/components/Footer.tsx`).
+> - **Feature-request portal** — `aiseocopilot.featurebase.app` (referenced in `app/src/components/Footer.tsx`).
+> - **Bug-report repo link** — `github.com/PMDevSolutions/seo-copilot` (referenced in `app/src/components/Footer.tsx`).
+> - **Figma design file** — `…/AI-SEO-Copilot-design` (referenced in `app/QA-PROMPT.md`).
+> - **Donation / sponsor links** — none found in the repo; update if any exist outside it.
+>
+> After migrating each external property, update the corresponding URL in `Footer.tsx`, `docs-links.ts`, and the docs to the new Optia domain.
 
 ## Features
 
@@ -29,7 +42,7 @@ pnpm build
 ## Project Structure
 
 ```
-ai-seo-copilot-extension/
+optia-extension/
 ├── app/                    # Chrome extension source code
 │   ├── src/                # React + TypeScript source
 │   ├── dist/               # Built extension (load this in Chrome)

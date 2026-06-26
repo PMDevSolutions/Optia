@@ -30,9 +30,9 @@ export function Onboarding() {
         </button>
 
         <div className="text-center">
-          <h2 className="text-h2 text-text-primary mb-2">AI SEO Copilot</h2>
+          <h2 className="text-h2 text-text-primary mb-2">Optia</h2>
           <p className="text-body-16 text-text-secondary mb-6">
-            Your AI-powered SEO assistant
+            Instant SEO scores with plain-language fixes
           </p>
         </div>
 

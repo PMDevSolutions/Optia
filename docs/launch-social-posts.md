@@ -4,7 +4,7 @@
 
 ### Post 1 — Announcement
 
-I just shipped my first Chrome extension: AI SEO Copilot.
+I just shipped my first Chrome extension: Optia.
 
 It analyzes any web page for SEO issues and gives you a score from 0–100 with actionable recommendations. Enter your target keyword, and it shows you exactly what's working and what needs fixing across titles, meta descriptions, headings, images, links, structured data, and more.
 
@@ -20,7 +20,7 @@ It's free, open source, and privacy-first — all analysis happens locally in yo
 
 ### Post 2 — Behind the Build
 
-Shipped something new today: AI SEO Copilot, a free Chrome extension for on-page SEO analysis.
+Shipped something new today: Optia, a free Chrome extension for on-page SEO analysis.
 
 What it does:
 • Instant SEO score (0–100) with priority-labeled issues
@@ -43,7 +43,7 @@ If you work with SEO or just want to improve your site's search visibility, give
 
 ### r/SEO
 
-**Title:** I built a free, open-source Chrome extension for on-page SEO analysis — AI SEO Copilot
+**Title:** I built a free, open-source Chrome extension for on-page SEO analysis — Optia
 
 **Body:**
 
@@ -86,7 +86,7 @@ Would love feedback from this community — what checks would you want to see ad
 
 Hey Webflow community,
 
-I built a Chrome extension called AI SEO Copilot that I've been using to optimize my Webflow projects. Thought I'd share it here since it's free and might be useful for others.
+I built a Chrome extension called Optia that I've been using to optimize my Webflow projects. Thought I'd share it here since it's free and might be useful for others.
 
 **What it does:**
 - Analyzes any page for SEO issues and gives you a 0–100 score
@@ -111,11 +111,11 @@ It's open source if anyone wants to check out the code or contribute: https://gi
 
 ### r/SideProject
 
-**Title:** I shipped my first Chrome extension — AI SEO Copilot (free, open source)
+**Title:** I shipped my first Chrome extension — Optia (free, open source)
 
 **Body:**
 
-Just launched AI SEO Copilot on the Chrome Web Store.
+Just launched Optia on the Chrome Web Store.
 
 **The problem:** I was tired of using multiple SEO tools that either required paid accounts or sent my data to their servers just to get basic on-page recommendations.
 
@@ -146,7 +146,7 @@ Would love feedback — what features would make this more useful for you?
 
 ## Twitter/X
 
-🚀 Just shipped AI SEO Copilot — a free Chrome extension for on-page SEO analysis.
+🚀 Just shipped Optia — a free Chrome extension for on-page SEO analysis.
 
 Enter your keyword, get a 0–100 score, and see exactly what to fix across titles, meta, headings, images, and structured data.
 
@@ -158,7 +158,7 @@ AI-powered suggestions (bring your own OpenAI key). Privacy-first. Open source.
 
 ## Webflow Community
 
-**Title:** Free Chrome Extension for SEO Analysis — AI SEO Copilot
+**Title:** Free Chrome Extension for SEO Analysis — Optia
 
 **Body:**
 
@@ -166,7 +166,7 @@ Hey everyone,
 
 I built a Chrome extension that I've been using alongside my Webflow projects and wanted to share it with the community.
 
-**AI SEO Copilot** analyzes any web page for SEO issues and gives you a clear score with actionable recommendations.
+**Optia** analyzes any web page for SEO issues and gives you a clear score with actionable recommendations.
 
 **How it works:**
 1. Open any page (including your published Webflow site)

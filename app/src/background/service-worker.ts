@@ -1,6 +1,6 @@
 import { extractPageDataInline } from "@/lib/extract-page-data-inline";
 
-console.log("[AI SEO Copilot] Service worker initializing...");
+console.log("[Optia] Service worker initializing...");
 
 // Disable automatic panel opening - we'll handle it manually for per-tab scoping
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false });
@@ -32,7 +32,7 @@ chrome.storage.session.get(PANEL_TABS_KEY).then((result) => {
   const saved = result[PANEL_TABS_KEY] as number[] | undefined;
   if (saved?.length) {
     saved.forEach((id) => panelTabs.add(id));
-    console.log("[AI SEO Copilot] Restored panel tabs:", saved);
+    console.log("[Optia] Restored panel tabs:", saved);
   }
 }).catch(() => {
   // Ignore errors
@@ -56,26 +56,26 @@ async function removePanelTab(tabId: number): Promise<void> {
   await persistPanelTabs();
 }
 
-console.log("[AI SEO Copilot] Service worker initialized successfully");
+console.log("[Optia] Service worker initialized successfully");
 
 // When the user switches tabs, hide the panel unless it was opened on that tab.
 // Only start scoping after the panel has been opened at least once — otherwise
 // the first click after install/reload would be blocked (chicken-and-egg bug).
 chrome.tabs.onActivated.addListener(({ tabId }) => {
-  console.log("[AI SEO Copilot] Tab activated:", tabId, "panelTabs:", Array.from(panelTabs));
+  console.log("[Optia] Tab activated:", tabId, "panelTabs:", Array.from(panelTabs));
   if (panelTabs.size === 0) {
-    console.log("[AI SEO Copilot] panelTabs empty, skipping");
+    console.log("[Optia] panelTabs empty, skipping");
     return;
   }
   if (panelTabs.has(tabId)) {
-    console.log("[AI SEO Copilot] Enabling panel for tab:", tabId);
+    console.log("[Optia] Enabling panel for tab:", tabId);
     chrome.sidePanel.setOptions({
       tabId,
       path: "src/sidepanel/index.html",
       enabled: true,
     });
   } else {
-    console.log("[AI SEO Copilot] Disabling panel for tab:", tabId);
+    console.log("[Optia] Disabling panel for tab:", tabId);
     chrome.sidePanel.setOptions({ tabId, enabled: false });
   }
 });
@@ -89,14 +89,14 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   });
 });
 
-console.log("[AI SEO Copilot] Registering message listener...");
+console.log("[Optia] Registering message listener...");
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  console.log("[AI SEO Copilot] Received message:", message.type);
+  console.log("[Optia] Received message:", message.type);
 
   // Ping handler for verifying service worker is responsive
   if (message.type === "PING") {
-    console.log("[AI SEO Copilot] Responding to PING");
+    console.log("[Optia] Responding to PING");
     sendResponse({ pong: true, timestamp: Date.now() });
     return true;
   }
@@ -147,31 +147,31 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   // (Side panel already tried content script and it failed, so skip that step here)
   if (message.type === "EXTRACT_PAGE_DATA") {
     const tabId = message.tabId as number;
-    console.log("[AI SEO Copilot] EXTRACT_PAGE_DATA for tab:", tabId);
+    console.log("[Optia] EXTRACT_PAGE_DATA for tab:", tabId);
     (async () => {
       try {
         // Inject the analyzer directly via executeScript
-        console.log("[AI SEO Copilot] Executing analyzer script...");
+        console.log("[Optia] Executing analyzer script...");
         const results = await chrome.scripting.executeScript({
           target: { tabId },
           func: extractPageDataInline,
         });
-        console.log("[AI SEO Copilot] executeScript completed, results:", results?.length ?? 0);
+        console.log("[Optia] executeScript completed, results:", results?.length ?? 0);
         const data = results?.[0]?.result;
         if (data) {
-          console.log("[AI SEO Copilot] Sending extracted data back");
+          console.log("[Optia] Sending extracted data back");
           sendResponse({ data });
         } else {
-          console.log("[AI SEO Copilot] No data from executeScript");
+          console.log("[Optia] No data from executeScript");
           sendResponse({ error: "Failed to extract page data" });
         }
       } catch (error) {
-        console.error("[AI SEO Copilot] EXTRACT_PAGE_DATA error:", error);
+        console.error("[Optia] EXTRACT_PAGE_DATA error:", error);
         sendResponse({ error: String(error) });
       }
     })().catch((err) => {
       // Catch any unhandled promise rejections from the async IIFE
-      console.error("[AI SEO Copilot] Unhandled error in EXTRACT_PAGE_DATA:", err);
+      console.error("[Optia] Unhandled error in EXTRACT_PAGE_DATA:", err);
       try {
         sendResponse({ error: String(err) });
       } catch {

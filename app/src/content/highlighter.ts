@@ -1,5 +1,5 @@
-const HIGHLIGHT_CLASS = "seo-copilot-highlight";
-const STYLE_ID = "seo-copilot-styles";
+const HIGHLIGHT_CLASS = "optia-highlight";
+const STYLE_ID = "optia-styles";
 
 function injectStyles() {
   if (document.getElementById(STYLE_ID)) return;
