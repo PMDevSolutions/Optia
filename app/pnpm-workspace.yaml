@@ -1,2 +1,5 @@
-ignoredBuiltDependencies:
+# pnpm settings live here (pnpm 10+). Approve build scripts so CI's
+# `pnpm install --frozen-lockfile` doesn't fail with ERR_PNPM_IGNORED_BUILDS.
+onlyBuiltDependencies:
   - esbuild
+  - sharp
