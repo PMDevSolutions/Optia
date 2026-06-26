@@ -1,332 +1,74 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code when working in this repository.
 
-## Project Overview
+## Project
 
-This is a **Claude Code-integrated React app development framework** providing specialized agents, skills, scripts, and a Figma-to-React conversion pipeline.
+**Optia** — a Manifest V3 Chrome extension for on-page SEO analysis with AI-powered recommendations (OpenAI, GPT-4o-mini, user supplies their own key). It scores any page, breaks the score down by category, and generates plain-language fixes.
 
-The framework is designed for:
-- Framework-agnostic React app development (Next.js, Vite, Remix)
-- Figma-to-React component conversion with Tailwind CSS
-- Comprehensive testing (Vitest, React Testing Library, Playwright, Storybook)
-- Full product lifecycle support (engineering, design, testing, marketing, operations)
+> **The entire app lives in `app/`, NOT the repo root.** Always `cd app` before running dev/build/test/lint. The repo root holds only this file, `.claude/`, `docs/`, `README.md`, and store assets.
 
-## Project Structure
+Stack: React 19 · TypeScript (strict) · Vite 6 + `@crxjs/vite-plugin` · Tailwind CSS 3 · Zustand 5 · OpenAI SDK · Vitest 3 + React Testing Library + jsdom.
 
-```
-project-root/
-├── .claude/              # Claude Code configuration
-│   ├── agents/           # 44 specialized agents
-│   ├── skills/           # 9 React-specific skills
-│   ├── commands/         # Custom slash commands
-│   └── hooks/            # Git and tool hooks
-├── scripts/              # Development automation scripts
-├── templates/            # Starter configs (ESLint, Tailwind, Vitest, etc.)
-├── docs/                 # Documentation
-│   ├── figma-to-react/   # Figma conversion pipeline docs
-│   └── react-development/# React development standards
-└── CLAUDE.md             # This file
-```
-
-## Development Scripts
+## Commands (run from `app/`)
 
 ```bash
-# Lint and format code
-./scripts/lint-and-format.sh
-
-# Run tests with coverage
-./scripts/run-tests.sh
-
-# TypeScript type checking
-./scripts/check-types.sh
-
-# Bundle size analysis
-./scripts/check-bundle-size.sh
-
-# Accessibility linting
-./scripts/check-accessibility.sh
-
-# Verify design token usage (no hardcoded values)
-./scripts/verify-tokens.sh
-
-# Initialize a new React project
-./scripts/setup-project.sh my-app --next  # or --vite
-
-# Cross-browser testing (Playwright)
-./scripts/cross-browser-test.sh chromium http://localhost:3000
-./scripts/cross-browser-test.sh firefox http://localhost:3000
-./scripts/cross-browser-test.sh webkit http://localhost:3000
-
-# Setup Playwright browsers (one-time)
-./scripts/setup-playwright.sh
+cd app
+pnpm dev          # WEB PREVIEW at http://localhost:5173/dev.html (vite.config.dev.ts)
+                  #   - runs the side panel as a normal web app, no extension reload
+                  #   - proxies /api/fetch-page and /api/openai for fast iteration
+pnpm dev:ext      # REAL extension watch build (crxjs); load app/dist as unpacked, HMR
+pnpm build        # tsc && vite build  ->  app/dist  (load unpacked / package for store)
+pnpm test         # vitest run (309 tests)
+pnpm test:watch   # vitest watch
+pnpm lint         # eslint .   (flat config app/eslint.config.js — NO Prettier in this repo)
+pnpm lint:fix     # eslint . --fix
+pnpm icons        # regenerate icons/icon-{16,32,48,128}.png from icons/icon.svg (sharp)
 ```
 
-## Development Commands
+There is **no Prettier**, no design tokens/lockfiles, no Storybook, no Playwright, no Next.js, and no Figma pipeline in this repo. Ignore any tooling that assumes them.
 
-### Package Management (always use pnpm)
-```bash
-pnpm install              # Install dependencies
-pnpm add <package>        # Add a dependency
-pnpm add -D <package>     # Add a dev dependency
-pnpm update               # Update dependencies
-```
+## Architecture (`app/src/`)
 
-### Development Server
-```bash
-# Next.js
-pnpm dev                  # Start dev server (port 3000)
-pnpm build                # Production build
-pnpm start                # Start production server
+| Area | Files | Notes |
+|------|-------|-------|
+| Background | `background/service-worker.ts` | MV3 service worker + message router; side-panel lifecycle; injects the page extractor via `chrome.scripting` |
+| Content | `content/{index,analyzer,highlighter}.ts` | injected on `<all_urls>`; `analyzer.ts` extracts page SEO data, `highlighter.ts` outlines issues |
+| Side panel | `sidepanel/App.tsx` + `pages/{Loading,Score,Setup,Subscores}.tsx` | main React UI; all SW calls go through `sendToServiceWorker<T>()` |
+| Options | `options/{Options,main}.tsx` | API key + default language |
+| Lib | `lib/{openai,storage,store,scoring,seo-analyzer,schema-recommendations,fetch-page,extract-page-data-inline,docs-links,languages,theme}.ts` | `storage.ts` = chrome.storage wrapper, `store.ts` = zustand, `theme.ts` = light/dark |
+| Types | `types/seo.ts` | `PageSEOData`, `SEOCheck`, `SEOAnalysis`, `CheckCategory` |
 
-# Vite
-pnpm dev                  # Start dev server (port 5173)
-pnpm build                # Production build
-pnpm preview              # Preview production build
-```
+**Two page extractors must stay in sync:** `content/analyzer.ts` (typed) and `lib/extract-page-data-inline.ts` (import-free, injected via `executeScript`). They must return the same `PageSEOData`.
 
-### Testing
-```bash
-pnpm vitest               # Run tests in watch mode
-pnpm vitest run           # Run tests once
-pnpm vitest run --coverage # Run with coverage report
-pnpm storybook            # Start Storybook dev server
-pnpm build-storybook      # Build Storybook static site
-```
+## SEO scoring model (`lib/scoring.ts`, `lib/seo-analyzer.ts`)
 
-### Code Quality
-```bash
-pnpm eslint .             # Run ESLint
-pnpm eslint . --fix       # Auto-fix ESLint issues
-pnpm prettier --check .   # Check formatting
-pnpm prettier --write .   # Fix formatting
-pnpm tsc --noEmit         # Type check without emitting
-```
+- `runSEOChecks(pageData, opts)` → ~25 checks across 5 categories → `calculateAnalysis()` → `SEOAnalysis`.
+- `categoryWeights`: meta `.25`, content `.25`, links `.15`, images `.15`, technical `.20` — **must sum to 1.0**.
+- Per check: pass = 1, warning = 0.5, fail = 0; an empty category scores 100.
+- Score → label ladder lives in `scoring.ts` (90/80/60/40); the gauge **color** ladder is separate in `ScoreGauge.tsx` (70/40).
+- Check `id` is an untyped string duplicated across `seo-analyzer.ts`, `openai.ts`'s switch, and `SubscoresPage.tsx`; `docs-links.ts` is keyed by check **title**. Adding a check touches ~8 files — use `/add-seo-check`.
 
----
+## Testing
 
-## Claude Code Architecture & Configuration
+Vitest + RTL + jsdom. `chrome.*` is hand-mocked in `src/test/setup.ts` (storage + runtime only). The service worker test builds its own listener-capturing mock. See the **testing-chrome-extension** skill before writing tests (load-order rule, openai mocking, the App.tsx coverage gap).
 
-### Installed Plugins (5 Total)
+## Release (Chrome Web Store)
 
-- **episodic-memory** - Conversation search and memory
-- **commit-commands** - Git workflow automation
-- **superpowers** - Advanced development workflows
-- **ai-taskmaster** - Task management (local)
+Run releases from `app/` **only** — `app/.versionrc.json` bumps both `package.json` and `manifest.json` and tags `app-v*`. Use `/release-extension`. (The repo root has no release config by design; never run `standard-version` from root.)
 
-**Note:** GitHub integration via `gh` CLI
+## Skills & commands
 
-**Full documentation:** `.claude/PLUGINS-REFERENCE.md`
+- **chrome-extension-dev** skill — MV3 message catalog, storage schema, SW lifecycle, side-panel lifecycle, the two-extractor rule, dev-mode detection.
+- **testing-chrome-extension** skill — real Vitest/chrome-mock/openai-mock patterns.
+- `/add-seo-check` — ordered cross-file workflow to add an SEO check.
+- `/release-extension` — the one correct path to cut a store release.
+- `/lint`, `/test` — quality commands.
 
----
+Curated agents live in `.claude/agents/` (engineering, QA, accessibility, app-store, marketing, support). MCP: `chrome-devtools` (drive/screenshot the UI, Lighthouse).
 
-### Custom Agents (44 Total)
+## Conventions
 
-44 specialized agents covering the full product lifecycle:
-
-| Category | Count | Key Agents |
-|----------|-------|------------|
-| Engineering | 7 | frontend-developer, backend-architect, rapid-prototyper, test-writer-fixer |
-| Design | 5 | ui-designer, ux-researcher, brand-guardian |
-| Design-to-Code | 2 | figma-react-converter, asset-cataloger |
-| Testing & QA | 7 | visual-qa-agent, accessibility-auditor, api-tester, performance-benchmarker |
-| Product | 3 | sprint-prioritizer, feedback-synthesizer, trend-researcher |
-| Marketing | 7 | content-creator, growth-hacker, app-store-optimizer |
-| Project Management | 3 | studio-producer, project-shipper, experiment-tracker |
-| Operations | 5 | analytics-reporter, infrastructure-maintainer, legal-compliance-checker |
-| Documentation | 1 | docusaurus-expert |
-| Meta | 2 | agent-expert, command-expert |
-| Bonus | 2 | joker, studio-coach |
-
-Agents are invoked automatically based on task context.
-
-**Full catalog:** `.claude/CUSTOM-AGENTS-GUIDE.md`
-
----
-
-### React Skills (9 Total)
-
-| Skill | Purpose | Triggers |
-|-------|---------|----------|
-| figma-to-react-workflow | Figma-to-React conversion pipeline (v2 with lockfile + TDD) | "convert Figma", "Figma to React" |
-| figma-intake | Structured interview → build-spec.json | Phase 1 of /build-from-figma |
-| design-token-lock | Extract + lock Figma values → lockfile | Phase 2 of /build-from-figma |
-| tdd-from-figma | Write tests FIRST from Figma + lockfile | Phase 3 of /build-from-figma |
-| react-component-development | Component patterns and best practices | "create component", "custom hook" |
-| react-testing-workflows | Vitest, RTL, Playwright, Storybook | "write tests", "test coverage" |
-| react-performance-optimization | Profiling, bundle analysis, Web Vitals | "performance", "bundle size" |
-| react-accessibility | WCAG patterns for React | "accessibility", "a11y", "ARIA" |
-| visual-qa-verification | Post-conversion visual QA | "verify", "visual QA", "compare to Figma" |
-
-**Full catalog:** `.claude/skills/README.md`
-
----
-
-### Figma-to-React Pipeline
-
-**Single command:** `/build-from-figma <Figma URL>`
-
-Autonomous 7-phase pipeline that converts a Figma design into a working, tested React app:
-
-```
-/build-from-figma https://figma.com/file/abc123
-
-  [1] INTAKE      → figma-intake skill → build-spec.json
-  [2] TOKEN LOCK  → design-token-lock skill → design-tokens.lock.json
-  [3] TDD         → tdd-from-figma skill → failing tests (Red)
-  [4] BUILD       → figma-to-react-workflow → components pass tests (Green)
-  [5] VISUAL QA   → Chrome DevTools + Figma screenshots → max 3 fix iterations
-  [6] QUALITY     → vitest + tsc + build + verify-tokens + Lighthouse
-  [7] REPORT      → .claude/visual-qa/build-report.md
-```
-
-**Key artifacts:**
-- `design-tokens.lock.json` — Single source of truth for all design values
-- `build-spec.json` — Machine-readable build plan (no re-asking questions)
-- `verify-tokens.sh` — Catches hardcoded values and token drift
-
-**Features:**
-- Design token extraction with lockfile enforcement
-- TDD: tests written before components, using exact Figma values
-- Automated visual comparison loop (3 iterations max)
-- Quality gate: 80%+ coverage, TypeScript, Lighthouse audit
-- Resumable: TodoWrite tracks progress across interrupted sessions
-
-**Documentation:** `docs/figma-to-react/README.md`
-
----
-
-### MCP Server Integration
-
-- **Figma Desktop MCP** - Local Figma integration (port 3845)
-- **Figma Remote MCP** - Fallback remote access
-- **Playwright MCP** - Cross-browser testing (Chromium, Firefox, WebKit)
-- **Chrome DevTools MCP** - Screenshots, Lighthouse audits, DOM inspection
-
----
-
-## React Development Standards
-
-### TypeScript
-- Strict mode enabled
-- No `any` types - use proper interfaces and generics
-- Export prop interfaces alongside components
-- Use discriminated unions for complex prop patterns
-
-### Component Patterns
-- Functional components only (no class components)
-- Custom hooks for reusable logic
-- Composition over inheritance
-- Props interface for every component
-- `children` and `className` passthrough where appropriate
-
-### Tailwind CSS
-- Utility-first styling
-- Design tokens via Tailwind config (not hardcoded values)
-- Responsive with mobile-first breakpoints (sm, md, lg, xl, 2xl)
-- Use `cn()` utility for conditional classes (clsx + tailwind-merge)
-
-### Testing Strategy
-- **Unit tests** (Vitest): Pure functions, custom hooks, utilities
-- **Component tests** (RTL): User interactions, rendering, accessibility
-- **Visual tests** (Storybook): Component states, responsive variants
-- **E2E tests** (Playwright): Critical user flows, cross-browser
-
-### Accessibility
-- WCAG 2.1 AA minimum
-- Semantic HTML (landmarks, headings hierarchy)
-- ARIA attributes on interactive elements
-- Keyboard navigation support
-- Color contrast 4.5:1 minimum
-
-### Code Quality
-- ESLint with React, TypeScript, and jsx-a11y plugins
-- Prettier for formatting
-- 2-space indentation (JS/TS/CSS/JSON)
-
----
-
-### Development Workflow with Claude Code
-
-**1. Feature Development**
-```bash
-# Start feature branch
-git checkout -b feature/hero-component
-
-# Develop with Claude Code
-# - frontend-developer agent for React work
-# - test-writer-fixer agent for tests
-# - ui-designer agent for design decisions
-
-# Commit with structure
-/commit
-```
-
-**2. Code Quality**
-```bash
-./scripts/lint-and-format.sh
-./scripts/check-types.sh
-./scripts/run-tests.sh
-./scripts/check-accessibility.sh
-```
-
-**3. Figma-to-React Conversion**
-```
-User: "Convert this Figma design to React components"
-      [Provide Figma URL]
-
-Claude: [Uses figma-react-converter agent]
-        → Extracts design tokens
-        → Generates Tailwind config + React components
-        → Runs visual QA verification
-```
-
-**4. Using Custom Agents**
-```
-User: "Help me optimize app performance"
-Claude: [Uses performance-benchmarker agent]
-
-User: "Build a hero component"
-Claude: [Uses frontend-developer agent]
-
-User: "Write tests for my auth hook"
-Claude: [Uses test-writer-fixer agent]
-```
-
----
-
-### Quick Command Reference
-
-**Figma Pipeline:**
-```bash
-/build-from-figma <URL>       # Full autonomous pipeline
-```
-
-**Git Workflows (via commit-commands):**
-```bash
-/commit                       # Structured commit
-/commit-push-pr              # Commit + push + PR
-/clean_gone                   # Clean merged branches
-```
-
-**GitHub CLI:**
-```bash
-gh pr create                  # Create pull request
-gh pr list                    # List pull requests
-gh issue create               # Create issue
-```
-
-**Code Quality:**
-```bash
-./scripts/lint-and-format.sh        # ESLint + Prettier
-./scripts/run-tests.sh              # Vitest + coverage
-./scripts/check-types.sh            # TypeScript check
-./scripts/check-bundle-size.sh      # Bundle analysis
-./scripts/check-accessibility.sh    # a11y linting
-./scripts/verify-tokens.sh          # Design token enforcement
-```
-
----
-
-**Last Updated:** 2026-03-16
-**Architecture:** 44 agents, 9 skills, 4 plugins + gh CLI, Figma + Playwright MCP
+- TypeScript strict, no `any`; functional components; Tailwind utility-first with the design tokens in `tailwind.config.ts` + `src/styles/globals.css` (CSS-variable themes, light default + dark).
+- 2-space indent; ESLint (`app/eslint.config.js`) is the source of truth for style.
+- Never log or commit the user's OpenAI API key; the SDK runs in-browser (`dangerouslyAllowBrowser: true`) by design — the key is the user's and is sent only to OpenAI.

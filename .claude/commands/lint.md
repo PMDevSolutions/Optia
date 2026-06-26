@@ -1,10 +1,6 @@
-# Lint & Format
+# /lint
 
-Run ESLint and Prettier across the project.
-
-## Purpose
-
-This command checks and fixes code quality and formatting issues using ESLint and Prettier.
+Lint and type-check the Optia extension. **This project uses ESLint only — there is no Prettier.**
 
 ## Usage
 
@@ -12,43 +8,23 @@ This command checks and fixes code quality and formatting issues using ESLint an
 /lint
 ```
 
-## What this command does
+## Steps (all run from `app/`)
 
-1. **Runs ESLint** to check for code quality issues
-2. **Runs Prettier** to check formatting
-3. **Auto-fixes** where possible
-4. **Reports** remaining issues that need manual attention
+1. **Lint**
+   ```bash
+   cd app && pnpm lint
+   ```
+2. **Auto-fix** what's mechanically fixable
+   ```bash
+   cd app && pnpm lint:fix
+   ```
+3. **Type-check** (no emit)
+   ```bash
+   cd app && pnpm tsc --noEmit
+   ```
 
-## Steps
+## Notes
 
-### 1. Check if tools are installed
-```bash
-pnpm eslint --version && pnpm prettier --version
-```
-
-### 2. Run ESLint with auto-fix
-```bash
-pnpm eslint . --fix --ext .ts,.tsx,.js,.jsx
-```
-
-### 3. Run Prettier
-```bash
-pnpm prettier --write "src/**/*.{ts,tsx,js,jsx,css,json,md}"
-```
-
-### 4. Type check
-```bash
-pnpm tsc --noEmit
-```
-
-## Or use the project script
-
-```bash
-./scripts/lint-and-format.sh
-```
-
-## Common Issues
-
-- **Missing ESLint config**: Copy `templates/shared/eslint.config.js` to project root
-- **Missing Prettier config**: Copy `templates/shared/prettier.config.js` to project root
-- **Conflicting rules**: Ensure eslint-config-prettier is installed to disable formatting rules in ESLint
+- ESLint config is `app/eslint.config.js` (flat config: `@typescript-eslint`, `eslint-plugin-react`, `eslint-plugin-react-hooks`).
+- Do **not** run `pnpm prettier` — Prettier is not a dependency and there is no Prettier config.
+- Build scripts (`app/scripts/*.mjs`) are covered by a Node-globals override in the ESLint config.

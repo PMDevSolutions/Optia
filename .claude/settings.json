@@ -1,13 +1,25 @@
 {
   "hooks": {
-    "PostToolUse": [
+    "PreToolUse": [
       {
         "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'if echo \"$TOOL_INPUT\" | grep -q \"pnpm build\" && echo \"$TOOL_OUTPUT\" | grep -q \"built in\"; then echo \"[post-build-qa] Build succeeded. Run quality gate: pnpm vitest run && pnpm tsc --noEmit && ./scripts/verify-tokens.sh\"; fi'",
-            "description": "Remind to run quality gate after successful builds during the pipeline"
+            "command": "node .claude/hooks/guards.mjs",
+            "description": "Block running standard-version / pnpm release from the repo root (must run from app/)"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/guards.mjs",
+            "description": "Remind to keep the twin page extractors in sync and to treat manifest.json version/permission edits as a release concern"
           }
         ]
       }
