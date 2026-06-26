@@ -1,5 +1,6 @@
-# pnpm settings live here (pnpm 10+). Approve build scripts so CI's
-# `pnpm install --frozen-lockfile` doesn't fail with ERR_PNPM_IGNORED_BUILDS.
-onlyBuiltDependencies:
-  - esbuild
-  - sharp
+# pnpm build-script approval. pnpm v11 replaced onlyBuiltDependencies with
+# `allowBuilds`; this allows esbuild's (and sharp's) postinstall so CI's
+# `pnpm install --frozen-lockfile` passes instead of ERR_PNPM_IGNORED_BUILDS.
+allowBuilds:
+  esbuild: true
+  sharp: true
