@@ -1,6 +1,13 @@
-# pnpm build-script approval. pnpm v11 replaced onlyBuiltDependencies with
-# `allowBuilds`; this allows esbuild's (and sharp's) postinstall so CI's
-# `pnpm install --frozen-lockfile` passes instead of ERR_PNPM_IGNORED_BUILDS.
-allowBuilds:
-  esbuild: true
-  sharp: true
+# Approve the dependencies allowed to run install/build scripts during
+# `pnpm install` (pnpm blocks dependency build scripts by default). This is
+# pnpm v10's documented mechanism — https://pnpm.io/settings#onlybuiltdependencies
+# — so CI's `pnpm install --frozen-lockfile` runs them and exits 0 instead of
+# failing with ERR_PNPM_IGNORED_BUILDS.
+#
+# The pnpm major is pinned to 10 in .github/workflows/ci.yml because pnpm v11
+# renames this key to `allowBuilds` (and ignores `onlyBuiltDependencies`); keep
+# the two in sync. esbuild ships a native postinstall; sharp is listed
+# defensively (it uses prebuilt @img/* binaries today, with no install script).
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
