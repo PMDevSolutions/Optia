@@ -1,9 +1,14 @@
 import { render, screen } from "@testing-library/react";
 import { useStore } from "@/lib/store";
+import { useEntitlementStore } from "@/lib/entitlement-store";
+import { getSchemaRecommendations } from "@/lib/schema-recommendations";
 import { SubscoresPage } from "./SubscoresPage";
-import type { SEOAnalysis, PageSEOData } from "@/types/seo";
+import type { SEOAnalysis, PageSEOData, SEOCheck, SchemaRecommendation } from "@/types/seo";
 
-vi.mock("@/lib/openai", () => ({
+// The AI facade now lives at "@/lib/ai" (the old "@/lib/openai" module is gone).
+// Signatures dropped the leading apiKey arg, but for these render tests we only
+// need stubbed promises — the page never awaits them here.
+vi.mock("@/lib/ai", () => ({
   generateRecommendation: vi.fn().mockResolvedValue("suggested title"),
   generateH2Suggestion: vi.fn().mockResolvedValue("new h2"),
   generateAllH2Suggestions: vi.fn().mockResolvedValue(["new h2"]),
@@ -89,7 +94,86 @@ const mockAnalysis: SEOAnalysis = {
   timestamp: Date.now(),
 };
 
+// A failing schema-markup check drives the Pro schema gate.
+const schemaCheck: SEOCheck = {
+  id: "schema-markup",
+  title: "Structured data present",
+  description: "test",
+  status: "fail",
+  priority: "medium",
+  category: "meta",
+  details: "No structured data found on this page",
+};
+
+const schemaAnalysis: SEOAnalysis = {
+  ...mockAnalysis,
+  categories: [
+    {
+      category: "meta",
+      label: "Meta Tags",
+      score: 50,
+      passed: 0,
+      total: 1,
+      checks: [schemaCheck],
+    },
+  ],
+};
+
+const testSchema: SchemaRecommendation = {
+  name: "BlogPosting",
+  description: "Enables article rich results",
+  documentationUrl: "https://example.com/docs",
+  googleSupport: "yes",
+  jsonLdCode: '{"@type":"BlogPosting"}',
+  isRequired: true,
+};
+
+// ── Entitlement helpers ──
+// useCanUseAI() derives from computeAiStatus over the entitlement + app stores.
+// For a free user, freeAiRemaining === null (unknown, pre-call) is treated as
+// available; freeAiRemaining <= 0 (with a known limit) is "locked".
+
+/** Free tier with AI still available (canUseAI === true). */
+function setFreeAiAvailable() {
+  useEntitlementStore.setState({
+    isPro: false,
+    tier: "free",
+    freeAiRemaining: 5,
+    freeAiLimit: 10,
+    aiQuotaRemaining: 0,
+    quotaLimit: 0,
+  });
+}
+
+/** Free tier with AI allowance exhausted (canUseAI === false / locked). */
+function setFreeAiLocked() {
+  useEntitlementStore.setState({
+    isPro: false,
+    tier: "free",
+    freeAiRemaining: 0,
+    freeAiLimit: 10,
+    aiQuotaRemaining: 0,
+    quotaLimit: 0,
+  });
+}
+
 beforeEach(() => {
+  vi.mocked(getSchemaRecommendations).mockReturnValue([]);
+  useEntitlementStore.setState({
+    entitlementLoaded: true,
+    isPro: false,
+    tier: "free",
+    expiresAt: null,
+    quotaLimit: 0,
+    aiQuotaRemaining: 0,
+    freeAiRemaining: null,
+    freeAiLimit: null,
+    canUseAdvancedOptions: false,
+    canUseMultiLanguage: false,
+    canUseSchema: false,
+    canBringOwnKey: false,
+    hasLicenseKey: false,
+  });
   useStore.setState({
     view: "subscores",
     analysis: null,
@@ -176,5 +260,81 @@ describe("SubscoresPage", () => {
     useStore.setState({ analysis: mockAnalysis, activeCategory: "meta" });
     render(<SubscoresPage />);
     expect(screen.getByText("Title contains keyword")).toBeInTheDocument();
+  });
+
+  // ── Scoring stays free ──
+  // The score breakdown (category header, pass/fail summary, per-check list)
+  // renders for every tier — it never depends on the AI/schema entitlement.
+  describe("scoring stays free", () => {
+    it("renders the category card and per-check list for a free user with AI locked", () => {
+      setFreeAiLocked();
+      useStore.setState({ analysis: mockAnalysis, activeCategory: "meta" });
+      render(<SubscoresPage />);
+
+      expect(
+        screen.getByRole("heading", { name: "Meta Tags" }),
+      ).toBeInTheDocument();
+      expect(screen.getByText("1 passed")).toBeInTheDocument();
+      expect(screen.getByText("1 to improve")).toBeInTheDocument();
+      expect(screen.getByText("Page has a title tag")).toBeInTheDocument();
+      expect(screen.getByText("Title contains keyword")).toBeInTheDocument();
+    });
+  });
+
+  // ── Schema markup Pro gate ──
+  describe("schema markup gate", () => {
+    it("shows the Pro upsell when canUseSchema is false", () => {
+      useEntitlementStore.setState({ canUseSchema: false });
+      vi.mocked(getSchemaRecommendations).mockReturnValue([testSchema]);
+      useStore.setState({ analysis: schemaAnalysis, activeCategory: "meta" });
+      render(<SubscoresPage />);
+
+      expect(
+        screen.getByText(/Schema markup generation is an Optia Pro feature/i),
+      ).toBeInTheDocument();
+      // The generated schema (SchemaDisplay) must NOT render for free users.
+      expect(
+        screen.queryByText(/Recommended Schema Markup/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it("renders SchemaDisplay when canUseSchema is true", () => {
+      useEntitlementStore.setState({ canUseSchema: true });
+      vi.mocked(getSchemaRecommendations).mockReturnValue([testSchema]);
+      useStore.setState({ analysis: schemaAnalysis, activeCategory: "meta" });
+      render(<SubscoresPage />);
+
+      expect(
+        screen.getByText(/Recommended Schema Markup/i),
+      ).toBeInTheDocument();
+      expect(screen.getByText("BlogPosting")).toBeInTheDocument();
+      // The upsell must NOT render for Pro users.
+      expect(
+        screen.queryByText(/Schema markup generation is an Optia Pro feature/i),
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  // ── AI regenerate widgets track useCanUseAI() ──
+  describe("AI recommendation widgets", () => {
+    it("disables the regenerate control when AI is locked", () => {
+      setFreeAiLocked();
+      useStore.setState({ analysis: mockAnalysis, activeCategory: "meta" });
+      render(<SubscoresPage />);
+
+      const regenerate = screen.getByTitle(
+        /Activate Optia Pro or add your own Anthropic key in options/i,
+      );
+      expect(regenerate).toBeDisabled();
+    });
+
+    it("enables the regenerate control when AI is available", () => {
+      setFreeAiAvailable();
+      useStore.setState({ analysis: mockAnalysis, activeCategory: "meta" });
+      render(<SubscoresPage />);
+
+      const regenerate = screen.getByTitle("Regenerate");
+      expect(regenerate).toBeEnabled();
+    });
   });
 });

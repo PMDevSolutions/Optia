@@ -5,7 +5,8 @@ import { runSEOChecks } from "@/lib/seo-analyzer";
 import { calculateAnalysis } from "@/lib/scoring";
 import { fetchAndAnalyzePage } from "@/lib/fetch-page";
 import { detectLanguage } from "@/lib/languages";
-import { generateRecommendation, generateAllH2Suggestions } from "@/lib/openai";
+import { generateRecommendation, generateAllH2Suggestions } from "@/lib/ai";
+import { aiStatusNow } from "@/lib/entitlement-store";
 import {
   saveKeywordForUrl,
   getKeywordForUrl,
@@ -31,7 +32,6 @@ const isDevMode =
 /** Auto-generate AI recommendations for failing copyable checks and H2 suggestions. */
 async function generateAIRecommendations(
   analysis: SEOAnalysis,
-  apiKey: string,
   keyword: string,
   advancedOptions?: { pageType?: string; secondaryKeywords?: string; languageCode?: string },
 ): Promise<string | null> {
@@ -44,7 +44,6 @@ async function generateAIRecommendations(
     if (check.id === "h2-keyword" && check.h2Recommendations?.length) {
       promises.push(
         generateAllH2Suggestions(
-          apiKey,
           check.h2Recommendations.map((h) => h.text),
           keyword,
           advancedOptions,
@@ -61,7 +60,7 @@ async function generateAIRecommendations(
     if (check.copyable) {
       const context = getCheckContext(check, analysis);
       promises.push(
-        generateRecommendation(apiKey, check.id, keyword, context, advancedOptions)
+        generateRecommendation(check.id, keyword, context, advancedOptions)
           .then((rec) => { check.recommendation = rec; }),
       );
     }
@@ -75,17 +74,20 @@ async function generateAIRecommendations(
   if (failures.length === 0) return null;
 
   // Determine error type from the first failure
-  const firstError = (failures[0] as PromiseRejectedResult).reason;
+  const firstError = (failures[0] as PromiseRejectedResult).reason as Error | undefined;
+  const errorName = firstError?.name ?? "";
   const errorMsg = firstError?.message ?? String(firstError);
 
-  if (errorMsg.includes("401") || errorMsg.includes("Incorrect API key") || errorMsg.includes("invalid_api_key")) {
-    return "Invalid OpenAI API key — AI suggestions could not be generated.";
+  // Proxy quota / unavailable errors carry friendly, actionable copy — surface it.
+  if (errorName === "AiUnavailableError" || errorName === "AiProxyError") {
+    return errorMsg;
+  }
+  // BYO-key (Anthropic SDK) auth/rate errors.
+  if (errorMsg.includes("401") || errorMsg.includes("authentication")) {
+    return "Invalid Anthropic API key — AI suggestions could not be generated.";
   }
   if (errorMsg.includes("429") || errorMsg.includes("rate_limit")) {
-    return "OpenAI rate limit reached — some AI suggestions were skipped.";
-  }
-  if (errorMsg.includes("insufficient_quota") || errorMsg.includes("billing")) {
-    return "OpenAI quota exceeded — check your billing at platform.openai.com.";
+    return "Anthropic rate limit reached — some AI suggestions were skipped.";
   }
 
   if (failures.length === settled.length) {
@@ -369,9 +371,11 @@ export default function App() {
 
       setAnalysis(analysis);
 
-      // Auto-generate AI recommendations in background (non-blocking)
-      const { apiKey } = useStore.getState();
-      if (apiKey) {
+      // Auto-generate AI recommendations in the background (non-blocking) only
+      // for unmetered/high-cap paths. Free users generate on demand per
+      // recommendation so a single analysis doesn't drain their monthly allowance.
+      const aiMode = aiStatusNow().mode;
+      if (aiMode === "byok" || aiMode === "pro") {
         const advancedOptions = settings.advancedMode
           ? {
               pageType: settings.pageType,
@@ -382,7 +386,6 @@ export default function App() {
 
         generateAIRecommendations(
           analysis,
-          apiKey,
           settings.keyword,
           advancedOptions,
         ).then((aiError) => {

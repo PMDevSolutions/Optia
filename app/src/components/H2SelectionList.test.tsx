@@ -104,7 +104,7 @@ describe("H2SelectionList", () => {
 
     it("disables all per-item regenerate buttons", () => {
       render(<H2SelectionList {...defaultProps} aiDisabled />);
-      const regenerateButtons = screen.getAllByTitle("Add an OpenAI API key or activate Optia Pro in options");
+      const regenerateButtons = screen.getAllByTitle("Activate Optia Pro or add your own Anthropic key in options");
       for (const btn of regenerateButtons) {
         expect(btn).toBeDisabled();
       }
@@ -113,7 +113,7 @@ describe("H2SelectionList", () => {
     it("shows a message about setting up the API key", () => {
       render(<H2SelectionList {...defaultProps} aiDisabled />);
       expect(
-        screen.getByText("Add your OpenAI API key or activate Optia Pro in options to use AI suggestions."),
+        screen.getByText("Activate Optia Pro or add your own Anthropic key in options to use AI suggestions."),
       ).toBeInTheDocument();
     });
 

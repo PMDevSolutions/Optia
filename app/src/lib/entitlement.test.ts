@@ -4,19 +4,26 @@
 import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest";
 import {
   activate,
-  consumeAiQuota,
+  currentAiPeriod,
   deactivate,
-  getAiQuotaRemaining,
+  getFreeAiQuota,
   getInstallId,
+  getProAiRemaining,
+  getRawEntitlementToken,
   getRefreshFailureCount,
   getValidEntitlement,
+  recordFreeAiQuota,
+  recordProAiQuota,
   refreshNow,
   verifyEntitlementToken,
-  AI_USAGE_KEY,
   ENTITLEMENT_TOKEN_KEY,
+  FREE_AI_QUOTA_KEY,
   INSTALL_ID_KEY,
   LICENSE_KEY_KEY,
+  PRO_AI_QUOTA_KEY,
   REFRESH_FAILURES_KEY,
+  type EntitlementClaims,
+  type QuotaSnapshot,
 } from "@/lib/entitlement";
 import { getStorageItem, setStorageItem } from "@/lib/storage";
 import {
@@ -137,6 +144,18 @@ describe("getValidEntitlement", () => {
   });
 });
 
+describe("getRawEntitlementToken", () => {
+  it("returns null when no token is cached", async () => {
+    expect(await getRawEntitlementToken()).toBeNull();
+  });
+
+  it("returns the raw stored token verbatim", async () => {
+    const token = await signTestToken(keys);
+    await setStorageItem(ENTITLEMENT_TOKEN_KEY, token);
+    expect(await getRawEntitlementToken()).toBe(token);
+  });
+});
+
 describe("getInstallId", () => {
   it("generates once and then returns the same id", async () => {
     const first = await getInstallId();
@@ -210,13 +229,25 @@ describe("refreshNow", () => {
     expect(await refreshNow(verifyOpts)).toBeNull();
   });
 
-  it("clears all license state when the license is revoked or unknown", async () => {
+  it("clears license state on a revoked/unknown license but keeps the free allowance", async () => {
     await setStorageItem(ENTITLEMENT_TOKEN_KEY, await signTestToken(keys));
+    await setStorageItem(PRO_AI_QUOTA_KEY, {
+      period: TEST_PERIOD,
+      remaining: 5,
+      limit: 100,
+    } satisfies QuotaSnapshot);
+    await setStorageItem(FREE_AI_QUOTA_KEY, {
+      period: TEST_PERIOD,
+      remaining: 2,
+      limit: 5,
+    } satisfies QuotaSnapshot);
     refreshTokenMock.mockRejectedValue(new LicenseError("invalid", "revoked"));
 
     expect(await refreshNow(verifyOpts)).toBeNull();
     expect(await getStorageItem(ENTITLEMENT_TOKEN_KEY)).toBeNull();
     expect(await getStorageItem(LICENSE_KEY_KEY)).toBeNull();
+    expect(await getStorageItem(PRO_AI_QUOTA_KEY)).toBeNull();
+    expect(await getStorageItem(FREE_AI_QUOTA_KEY)).not.toBeNull();
   });
 
   it("does not persist a tampered refresh response", async () => {
@@ -237,7 +268,16 @@ describe("deactivate", () => {
     await setStorageItem(LICENSE_KEY_KEY, "optia_live_abc");
     await setStorageItem(INSTALL_ID_KEY, "install-1");
     await setStorageItem(ENTITLEMENT_TOKEN_KEY, await signTestToken(keys));
-    await setStorageItem(AI_USAGE_KEY, { period: TEST_PERIOD, used: 5 });
+    await setStorageItem(PRO_AI_QUOTA_KEY, {
+      period: TEST_PERIOD,
+      remaining: 5,
+      limit: 100,
+    } satisfies QuotaSnapshot);
+    await setStorageItem(FREE_AI_QUOTA_KEY, {
+      period: TEST_PERIOD,
+      remaining: 2,
+      limit: 5,
+    } satisfies QuotaSnapshot);
     deactivateLicenseMock.mockRejectedValue(new LicenseError("network", "offline"));
 
     await deactivate();
@@ -245,39 +285,78 @@ describe("deactivate", () => {
     expect(deactivateLicenseMock).toHaveBeenCalledWith("optia_live_abc", "install-1");
     expect(await getStorageItem(ENTITLEMENT_TOKEN_KEY)).toBeNull();
     expect(await getStorageItem(LICENSE_KEY_KEY)).toBeNull();
-    expect(await getStorageItem(AI_USAGE_KEY)).toBeNull();
+    // Pro quota is license-scoped and cleared; the free allowance is
+    // install-scoped and survives deactivation.
+    expect(await getStorageItem(PRO_AI_QUOTA_KEY)).toBeNull();
+    expect(await getStorageItem(FREE_AI_QUOTA_KEY)).not.toBeNull();
   });
 });
 
-describe("AI quota", () => {
-  beforeEach(async () => {
-    await setStorageItem(ENTITLEMENT_TOKEN_KEY, await signTestToken(keys, { quotaLimit: 3 }));
+describe("currentAiPeriod", () => {
+  it("formats a date as YYYY-MM", () => {
+    expect(currentAiPeriod(new Date("2026-07-15T12:00:00Z"))).toBe("2026-07");
+    expect(currentAiPeriod(new Date("2026-01-01T00:00:00Z"))).toBe("2026-01");
   });
 
-  it("computes remaining from the stored usage for the same period", async () => {
-    const claims = await getValidEntitlement(verifyOpts);
-    await setStorageItem(AI_USAGE_KEY, { period: TEST_PERIOD, used: 2 });
-    expect(await getAiQuotaRemaining(claims!)).toBe(1);
+  it("defaults to the current month in YYYY-MM form", () => {
+    expect(currentAiPeriod()).toMatch(/^\d{4}-\d{2}$/);
+  });
+});
+
+describe("recordProAiQuota / getProAiRemaining", () => {
+  const proClaims: EntitlementClaims = {
+    sub: "lic_test_123",
+    subjectType: "license",
+    tier: "pro",
+    quotaLimit: 100,
+    period: TEST_PERIOD,
+    exp: Math.floor(Date.now() / 1000) + 3600,
+    iat: Math.floor(Date.now() / 1000),
+  };
+
+  it("falls back to the token's quotaLimit when nothing has been recorded", async () => {
+    expect(await getProAiRemaining(proClaims)).toBe(100);
   });
 
-  it("consumes down to zero and never goes negative", async () => {
-    expect(await consumeAiQuota(verifyOpts)).toBe(2);
-    expect(await consumeAiQuota(verifyOpts)).toBe(1);
-    expect(await consumeAiQuota(verifyOpts)).toBe(0);
-    expect(await consumeAiQuota(verifyOpts)).toBe(0);
+  it("returns the server-recorded remaining for a matching period", async () => {
+    await recordProAiQuota({ period: TEST_PERIOD, remaining: 7, limit: 100 });
+    expect(await getStorageItem(PRO_AI_QUOTA_KEY)).toEqual({
+      period: TEST_PERIOD,
+      remaining: 7,
+      limit: 100,
+    });
+    expect(await getProAiRemaining(proClaims)).toBe(7);
   });
 
-  it("resets the counter when the token period rolls over", async () => {
-    await setStorageItem(AI_USAGE_KEY, { period: "2026-06", used: 3 });
-    const claims = await getValidEntitlement(verifyOpts);
-    expect(await getAiQuotaRemaining(claims!)).toBe(3);
-    expect(await consumeAiQuota(verifyOpts)).toBe(2);
-    expect(await getStorageItem(AI_USAGE_KEY)).toEqual({ period: TEST_PERIOD, used: 1 });
+  it("ignores a stale-period snapshot and falls back to the token quotaLimit", async () => {
+    await recordProAiQuota({ period: "2026-06", remaining: 7, limit: 100 });
+    expect(await getProAiRemaining(proClaims)).toBe(100);
   });
 
-  it("consumes nothing without a valid entitlement", async () => {
-    await setStorageItem(ENTITLEMENT_TOKEN_KEY, "garbage");
-    expect(await consumeAiQuota(verifyOpts)).toBe(0);
-    expect(await getStorageItem(AI_USAGE_KEY)).toBeNull();
+  it("never reports a negative remaining", async () => {
+    await recordProAiQuota({ period: TEST_PERIOD, remaining: -5, limit: 100 });
+    expect(await getProAiRemaining(proClaims)).toBe(0);
+  });
+});
+
+describe("recordFreeAiQuota / getFreeAiQuota", () => {
+  it("returns null when nothing has been recorded", async () => {
+    expect(await getFreeAiQuota()).toBeNull();
+  });
+
+  it("returns the snapshot when its period is the current month", async () => {
+    const now = new Date("2026-07-15T00:00:00Z");
+    const snapshot: QuotaSnapshot = {
+      period: currentAiPeriod(now),
+      remaining: 3,
+      limit: 5,
+    };
+    await recordFreeAiQuota(snapshot);
+    expect(await getFreeAiQuota(now)).toEqual(snapshot);
+  });
+
+  it("returns null for a stale-month snapshot", async () => {
+    await recordFreeAiQuota({ period: "2026-07", remaining: 3, limit: 5 });
+    expect(await getFreeAiQuota(new Date("2026-08-15T00:00:00Z"))).toBeNull();
   });
 });

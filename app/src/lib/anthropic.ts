@@ -1,18 +1,34 @@
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 import { getLanguageByCode } from "./languages";
+
+// Direct browser→Anthropic path for Pro users who bring their own key. The key
+// never transits Optia's backend (that path is the hosted proxy in ai-proxy.ts).
+// Free/entitlement-metered generation goes through the proxy instead.
+
+// SEO snippet generation is short and latency-sensitive; Opus 4.8 is the default
+// per Anthropic guidance. Change AI_MODEL if a cheaper tier is preferred.
+export const AI_MODEL = "claude-opus-4-8";
+const MAX_TOKENS = 1024;
 
 const isDevMode =
   typeof window !== "undefined" && window.location?.hostname === "localhost";
 
-function createClient(apiKey: string): OpenAI {
-  return new OpenAI({
+function createClient(apiKey: string): Anthropic {
+  return new Anthropic({
     apiKey,
     dangerouslyAllowBrowser: true,
-    ...(isDevMode ? { baseURL: `${window.location.origin}/api/openai` } : {}),
+    ...(isDevMode ? { baseURL: `${window.location.origin}/api/anthropic` } : {}),
   });
 }
 
-async function chatWithRetry(
+function extractText(message: Anthropic.Message): string {
+  const block = message.content.find((b) => b.type === "text");
+  const text = block && block.type === "text" ? block.text.trim() : "";
+  // Strip wrapping quotes the model sometimes adds
+  return text.replace(/^["']|["']$/g, "");
+}
+
+async function completeWithRetry(
   apiKey: string,
   systemPrompt: string,
   userPrompt: string,
@@ -23,20 +39,15 @@ async function chatWithRetry(
 
   while (retries <= maxRetries) {
     try {
-      const response = await client.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        max_tokens: 500,
-        temperature: 0.7,
+      const message = await client.messages.create({
+        model: AI_MODEL,
+        max_tokens: MAX_TOKENS,
+        system: systemPrompt,
+        messages: [{ role: "user", content: userPrompt }],
       });
-      const text = response.choices[0]?.message?.content?.trim() ?? "";
-      // Strip wrapping quotes if present
-      return text.replace(/^["']|["']$/g, "");
+      return extractText(message);
     } catch (error: unknown) {
-      // Don't retry auth or billing errors — they won't resolve
+      // Auth/permission errors won't resolve on retry
       const status = (error as { status?: number }).status;
       if (status === 401 || status === 403) throw error;
       if (retries === maxRetries) throw error;
@@ -47,7 +58,7 @@ async function chatWithRetry(
   throw new Error("Max retries exceeded");
 }
 
-interface AdvancedOptions {
+export interface AdvancedOptions {
   pageType?: string;
   secondaryKeywords?: string;
   languageCode?: string;
@@ -71,7 +82,8 @@ function buildLanguageInstruction(langCode?: string): string {
   return `\n\nIMPORTANT: Generate all content in ${lang.name} (${lang.nativeName}). Provide recommendations entirely in this language.`;
 }
 
-export async function generateRecommendation(
+/** Direct Anthropic generation for a single SEO check (BYO-key path). */
+export async function generateRecommendationDirect(
   apiKey: string,
   checkId: string,
   keyword: string,
@@ -94,7 +106,7 @@ Provide a concise recommendation for improving this SEO issue.${advCtx ? " Consi
 
   switch (checkId) {
     case "title-keyword":
-      return chatWithRetry(apiKey, copyableSystem,
+      return completeWithRetry(apiKey, copyableSystem,
         `Create a perfect SEO title for the keyphrase "${keyword}".
 Current title: ${context}${advCtx}
 Requirements:
@@ -104,7 +116,7 @@ Requirements:
 Return ONLY the title text.`);
 
     case "meta-description-keyword":
-      return chatWithRetry(apiKey, copyableSystem,
+      return completeWithRetry(apiKey, copyableSystem,
         `Create a perfect meta description for the keyphrase "${keyword}".
 Current description: ${context}${advCtx}
 Requirements:
@@ -114,7 +126,7 @@ Requirements:
 Return ONLY the description text.`);
 
     case "keyword-url":
-      return chatWithRetry(apiKey, copyableSystem,
+      return completeWithRetry(apiKey, copyableSystem,
         `Create an SEO-friendly URL slug for the keyphrase "${keyword}".
 Current URL: ${context}${advCtx}
 Requirements:
@@ -127,7 +139,7 @@ Requirements:
 Return ONLY the page slug with no slashes, protocol, or domain.`);
 
     case "h1-keyword":
-      return chatWithRetry(apiKey, copyableSystem,
+      return completeWithRetry(apiKey, copyableSystem,
         `Create a perfect H1 heading for the keyphrase "${keyword}".
 Current H1: ${context}${advCtx}
 Requirements:
@@ -137,7 +149,7 @@ Requirements:
 Return ONLY the H1 heading text.`);
 
     case "keyword-intro":
-      return chatWithRetry(apiKey, copyableSystem,
+      return completeWithRetry(apiKey, copyableSystem,
         `Rewrite this introduction to naturally include the keyphrase "${keyword}".
 Current introduction: ${context}${advCtx}
 Requirements:
@@ -147,32 +159,16 @@ Requirements:
 - Make it engaging${pageTypeStr}
 Return ONLY the rewritten introduction.`);
 
-    case "keyword-density":
-    case "word-count":
-    case "heading-hierarchy":
-    case "internal-links":
-    case "outbound-links":
-    case "next-gen-images":
-    case "code-minification":
-    case "schema-markup":
-    case "image-file-size":
-    case "og-image":
-    case "og-tags":
-    case "canonical":
-    case "lang":
-      return chatWithRetry(apiKey, advisorySystem,
+    default:
+      return completeWithRetry(apiKey, advisorySystem,
         `Fix this SEO issue: "${checkId}" for keyphrase "${keyword}" if applicable.
 Current status: ${context}${advCtx}
 Provide concise but actionable advice in 2-3 sentences${pageTypeStr}.`);
-
-    default:
-      return chatWithRetry(apiKey, advisorySystem,
-        `Provide SEO advice for: "${checkId}" regarding keyphrase "${keyword}".
-Context: ${context}${advCtx}`);
   }
 }
 
-export async function generateH2Suggestion(
+/** Direct Anthropic H2 heading generation (BYO-key path). */
+export async function generateH2SuggestionDirect(
   apiKey: string,
   h2Text: string,
   keyword: string,
@@ -184,7 +180,7 @@ export async function generateH2Suggestion(
     ? ` for a ${advancedOptions.pageType.replace("-", " ")}`
     : "";
 
-  return chatWithRetry(
+  return completeWithRetry(
     apiKey,
     `You are an SEO expert providing ready-to-use content.
 Return ONLY the final H2 heading text with no explanation, quotes, or formatting.${langInst}`,
@@ -200,19 +196,8 @@ Return ONLY the H2 heading text.`,
   );
 }
 
-export async function generateAllH2Suggestions(
-  apiKey: string,
-  h2Texts: string[],
-  keyword: string,
-  advancedOptions?: AdvancedOptions,
-): Promise<string[]> {
-  const results = await Promise.all(
-    h2Texts.map((text) => generateH2Suggestion(apiKey, text, keyword, advancedOptions)),
-  );
-  return results;
-}
-
-export async function generateAltText(
+/** Direct Anthropic alt-text generation (BYO-key path). */
+export async function generateAltTextDirect(
   apiKey: string,
   imageSrc: string,
   keyword: string,
@@ -222,7 +207,7 @@ export async function generateAltText(
   const langInst = buildLanguageInstruction(advancedOptions?.languageCode);
   const filename = imageSrc.split("/").pop()?.split("?")[0] ?? "unknown";
 
-  return chatWithRetry(
+  return completeWithRetry(
     apiKey,
     `You are an SEO and accessibility expert. Return ONLY the alt text string with no explanations, quotes, or formatting.${langInst}`,
     `Create a concise, descriptive alt tag for this image that naturally incorporates the keyphrase "${keyword}".
@@ -235,23 +220,4 @@ Requirements:
 - Make it specific and descriptive
 Return ONLY the alt text.`,
   );
-}
-
-// Legacy exports for backward compatibility in SubscoresPage
-export async function generateTitle(
-  apiKey: string,
-  keyword: string,
-  context: string,
-  advancedOptions?: AdvancedOptions,
-): Promise<string> {
-  return generateRecommendation(apiKey, "title-keyword", keyword, context, advancedOptions);
-}
-
-export async function generateMetaDescription(
-  apiKey: string,
-  keyword: string,
-  context: string,
-  advancedOptions?: AdvancedOptions,
-): Promise<string> {
-  return generateRecommendation(apiKey, "meta-description-keyword", keyword, context, advancedOptions);
 }

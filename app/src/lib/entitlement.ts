@@ -15,7 +15,11 @@ import { getStorageItem, removeStorageItem, setStorageItem } from "@/lib/storage
 export const ENTITLEMENT_TOKEN_KEY = "entitlement_token";
 export const LICENSE_KEY_KEY = "license_key";
 export const INSTALL_ID_KEY = "install_id";
-export const AI_USAGE_KEY = "ai_usage";
+// Server-authoritative AI quota snapshots, refreshed from every /ai/generate
+// response. Pro quota is license-scoped; free quota is install-scoped and
+// survives license changes (it is the anonymous free allowance).
+export const PRO_AI_QUOTA_KEY = "pro_ai_quota";
+export const FREE_AI_QUOTA_KEY = "free_ai_quota";
 export const REFRESH_FAILURES_KEY = "entitlement_refresh_failures";
 
 const ISSUER = "optia-backend";
@@ -37,9 +41,16 @@ export interface VerifyOptions {
   now?: Date;
 }
 
-interface AiUsageRecord {
-  period: string;
-  used: number;
+/** A server-reported AI quota window (monthly). */
+export interface QuotaSnapshot {
+  period: string; // "YYYY-MM"
+  remaining: number;
+  limit: number;
+}
+
+/** Current monthly accounting period, matching the backend's `YYYY-MM`. */
+export function currentAiPeriod(now: Date = new Date()): string {
+  return now.toISOString().slice(0, 7);
 }
 
 /**
@@ -106,6 +117,15 @@ export async function hasStoredLicenseKey(): Promise<boolean> {
 }
 
 /**
+ * The raw stored entitlement JWS, for authenticating Pro-tier proxy calls
+ * (sent as X-Optia-Entitlement). Returns null when no token is cached. The
+ * backend re-verifies it; the client never trusts it beyond presenting it.
+ */
+export async function getRawEntitlementToken(): Promise<string | null> {
+  return getStorageItem<string>(ENTITLEMENT_TOKEN_KEY);
+}
+
+/**
  * The cached entitlement, if it still verifies and has not expired.
  * Missing, expired, or tampered ⇒ null (free tier) — never Pro.
  */
@@ -124,7 +144,9 @@ export async function getRefreshFailureCount(): Promise<number> {
 async function clearLocalLicenseState(): Promise<void> {
   await removeStorageItem(ENTITLEMENT_TOKEN_KEY);
   await removeStorageItem(LICENSE_KEY_KEY);
-  await removeStorageItem(AI_USAGE_KEY);
+  // Pro quota is license-scoped; the free allowance (FREE_AI_QUOTA_KEY) is
+  // install-scoped and intentionally survives deactivation.
+  await removeStorageItem(PRO_AI_QUOTA_KEY);
   await removeStorageItem(REFRESH_FAILURES_KEY);
 }
 
@@ -199,22 +221,33 @@ export async function refreshNow(
   return claims;
 }
 
-/** Remaining AI quota for the given claims' period (own-key calls are not metered). */
-export async function getAiQuotaRemaining(claims: EntitlementClaims): Promise<number> {
-  const usage = await getStorageItem<AiUsageRecord>(AI_USAGE_KEY);
-  const used = usage && usage.period === claims.period ? usage.used : 0;
-  return Math.max(0, claims.quotaLimit - used);
+/** Persist the server-reported Pro quota after an entitlement-metered proxy call. */
+export async function recordProAiQuota(quota: QuotaSnapshot): Promise<void> {
+  await setStorageItem<QuotaSnapshot>(PRO_AI_QUOTA_KEY, quota);
+}
+
+/** Persist the server-reported free quota after an install-metered proxy call. */
+export async function recordFreeAiQuota(quota: QuotaSnapshot): Promise<void> {
+  await setStorageItem<QuotaSnapshot>(FREE_AI_QUOTA_KEY, quota);
 }
 
 /**
- * Records one metered AI call against the current period and returns the
- * remaining quota. No valid entitlement ⇒ 0, nothing recorded.
+ * Remaining Pro quota for the entitlement's period. The server is authoritative
+ * (last /ai/generate response); before any call this period, the token's
+ * quotaLimit is the best estimate.
  */
-export async function consumeAiQuota(options: VerifyOptions = {}): Promise<number> {
-  const claims = await getValidEntitlement(options);
-  if (!claims) return 0;
-  const usage = await getStorageItem<AiUsageRecord>(AI_USAGE_KEY);
-  const used = (usage && usage.period === claims.period ? usage.used : 0) + 1;
-  await setStorageItem<AiUsageRecord>(AI_USAGE_KEY, { period: claims.period, used });
-  return Math.max(0, claims.quotaLimit - used);
+export async function getProAiRemaining(claims: EntitlementClaims): Promise<number> {
+  const quota = await getStorageItem<QuotaSnapshot>(PRO_AI_QUOTA_KEY);
+  if (quota && quota.period === claims.period) return Math.max(0, quota.remaining);
+  return claims.quotaLimit;
+}
+
+/**
+ * The free-tier quota for the current month, or null when unknown (no proxy
+ * call yet this period). Unknown is treated as "available" by callers.
+ */
+export async function getFreeAiQuota(now: Date = new Date()): Promise<QuotaSnapshot | null> {
+  const quota = await getStorageItem<QuotaSnapshot>(FREE_AI_QUOTA_KEY);
+  if (quota && quota.period === currentAiPeriod(now)) return quota;
+  return null;
 }

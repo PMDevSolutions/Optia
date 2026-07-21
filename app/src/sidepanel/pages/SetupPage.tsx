@@ -89,6 +89,8 @@ export function SetupPage({ onAnalyze }: SetupPageProps) {
   const { settings, setSettings, apiKey, setApiKey, error } = useStore();
   const isPro = useEntitlementStore((state) => state.isPro);
   const canUseAdvancedOptions = useEntitlementStore((state) => state.canUseAdvancedOptions);
+  const canUseMultiLanguage = useEntitlementStore((state) => state.canUseMultiLanguage);
+  const canBringOwnKey = useEntitlementStore((state) => state.canBringOwnKey);
   const expiresAt = useEntitlementStore((state) => state.expiresAt);
   const [showSettings, setShowSettings] = useState(false);
   const [localApiKey, setLocalApiKey] = useState(apiKey);
@@ -104,6 +106,13 @@ export function SetupPage({ onAnalyze }: SetupPageProps) {
       setSettings({ advancedMode: false });
     }
   }, [canUseAdvancedOptions, settings.advancedMode, setSettings]);
+
+  // Multi-language output is a Pro feature — pin free users to English
+  useEffect(() => {
+    if (!canUseMultiLanguage && settings.language !== "en") {
+      setSettings({ language: "en" });
+    }
+  }, [canUseMultiLanguage, settings.language, setSettings]);
 
   const handleSaveSettings = async () => {
     await setApiKey(localApiKey);
@@ -181,26 +190,55 @@ export function SetupPage({ onAnalyze }: SetupPageProps) {
             </button>
           </div>
 
-          <div className="flex flex-col gap-2">
-            <label htmlFor="settings-api-key" className="text-body-semibold text-ink">
-              OpenAI API key
-            </label>
-            <input
-              id="settings-api-key"
-              type="password"
-              placeholder="sk-..."
-              value={localApiKey}
-              onChange={(e) => setLocalApiKey(e.target.value)}
-              className="w-full rounded-input border border-border bg-surface px-3.5 py-2.5 text-body text-ink placeholder:text-faint outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/30"
-            />
-          </div>
+          {canBringOwnKey ? (
+            <div className="flex flex-col gap-2">
+              <label htmlFor="settings-api-key" className="text-body-semibold text-ink">
+                Anthropic API key
+              </label>
+              <input
+                id="settings-api-key"
+                type="password"
+                placeholder="sk-ant-..."
+                value={localApiKey}
+                onChange={(e) => setLocalApiKey(e.target.value)}
+                className="w-full rounded-input border border-border bg-surface px-3.5 py-2.5 text-body text-ink placeholder:text-faint outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/30"
+              />
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center gap-2">
+                <span className="text-body-semibold text-ink">Anthropic API key</span>
+                <span className="rounded-pill bg-brand px-2 py-0.5 text-[11px] font-medium text-brand-fg">
+                  Pro
+                </span>
+              </div>
+              <p className="text-body-12 text-muted">
+                Free AI runs through Optia's hosted service. Activate Pro to use your own Anthropic
+                key with no cap.
+              </p>
+            </div>
+          )}
 
-          <Select
-            label="AI recommendations language"
-            options={languages}
-            value={settings.language}
-            onChange={(e) => setSettings({ language: e.target.value })}
-          />
+          {canUseMultiLanguage ? (
+            <Select
+              label="AI recommendations language"
+              options={languages}
+              value={settings.language}
+              onChange={(e) => setSettings({ language: e.target.value })}
+            />
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center gap-2">
+                <span className="text-body-semibold text-ink">AI recommendations language</span>
+                <span className="rounded-pill bg-brand px-2 py-0.5 text-[11px] font-medium text-brand-fg">
+                  Pro
+                </span>
+              </div>
+              <p className="text-body-12 text-muted">
+                English only on the free tier — unlock multi-language output with Optia Pro.
+              </p>
+            </div>
+          )}
 
           <button
             type="button"

@@ -61,7 +61,7 @@ export function RecommendationBox({
             onClick={handleRegenerate}
             disabled={loading || aiDisabled}
             className="rounded-full p-1.5 text-muted transition-colors hover:bg-surface-3 hover:text-ink disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-muted"
-            title={aiDisabled ? "Add an OpenAI API key or activate Optia Pro in options" : "Regenerate"}
+            title={aiDisabled ? "Activate Optia Pro or add your own Anthropic key in options" : "Regenerate"}
             aria-label="Regenerate"
           >
             <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
@@ -71,7 +71,7 @@ export function RecommendationBox({
       <p className="text-body text-ink">{text}</p>
       {aiDisabled && (
         <p className="mt-2 text-body-12 text-faint">
-          Add your OpenAI API key or activate Optia Pro in options to use AI suggestions.
+          Activate Optia Pro or add your own Anthropic key in options to use AI suggestions.
         </p>
       )}
     </div>

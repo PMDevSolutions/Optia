@@ -51,14 +51,14 @@ export const useStore = create<Store>((set) => ({
   setActiveCategory: (category) =>
     set({ activeCategory: category, view: category ? "subscores" : "score" }),
   setApiKey: async (key) => {
-    await setStorageItem("openai_api_key", key);
+    await setStorageItem("anthropic_api_key", key);
     set({ apiKey: key });
   },
   setError: (error) => set({ error }),
   showToast: (message) => set({ toast: { visible: true, message } }),
   hideToast: () => set({ toast: { visible: false, message: "" } }),
   loadApiKey: async () => {
-    const key = await getStorageItem<string>("openai_api_key");
+    const key = await getStorageItem<string>("anthropic_api_key");
     if (key) set({ apiKey: key });
     const lang = await getStorageItem<string>("default_language");
     if (lang) set((state) => ({ settings: { ...state.settings, language: lang } }));

@@ -76,12 +76,12 @@ describe("useStore", () => {
 
     expect(useStore.getState().apiKey).toBe("sk-test-123");
     expect(chrome.storage.local.set).toHaveBeenCalledWith({
-      openai_api_key: "sk-test-123",
+      anthropic_api_key: "sk-test-123",
     });
   });
 
   it("loadApiKey reads api key from storage and sets it", async () => {
-    await chrome.storage.local.set({ openai_api_key: "sk-loaded" });
+    await chrome.storage.local.set({ anthropic_api_key: "sk-loaded" });
 
     await useStore.getState().loadApiKey();
 
