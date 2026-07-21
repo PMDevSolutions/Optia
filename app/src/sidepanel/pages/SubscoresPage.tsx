@@ -8,15 +8,29 @@ import { SchemaDisplay } from "@/components/SchemaDisplay";
 import { Toast } from "@/components/ui/Toast";
 import { Footer } from "@/components/Footer";
 import { useStore } from "@/lib/store";
-import { useCanUseAI, isMeteredAiCall, useEntitlementStore } from "@/lib/entitlement-store";
+import { useCanUseAI, useEntitlementStore } from "@/lib/entitlement-store";
 import {
   generateRecommendation,
   generateH2Suggestion,
   generateAllH2Suggestions,
   generateAltText,
-} from "@/lib/openai";
+} from "@/lib/ai";
 import { getSchemaRecommendations } from "@/lib/schema-recommendations";
 import type { SEOCheck } from "@/types/seo";
+
+/** Friendly upsell shown in place of a Pro-gated feature for free users. */
+function ProUpsell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mt-3 rounded-card border border-border bg-surface-2 p-3">
+      <div className="mb-1 flex items-center gap-2">
+        <span className="rounded-pill bg-brand px-2 py-0.5 text-[11px] font-medium text-brand-fg">
+          Pro
+        </span>
+      </div>
+      <p className="text-body-12 text-muted">{children}</p>
+    </div>
+  );
+}
 
 // Triangle icons for summary pill
 function TriangleUpIcon({ className }: { className?: string }) {
@@ -47,9 +61,10 @@ function sortByPriority(checks: SEOCheck[]): SEOCheck[] {
 }
 
 export function SubscoresPage() {
-  const { analysis, activeCategory, setActiveCategory, apiKey, settings, toast, showToast, hideToast } =
+  const { analysis, activeCategory, setActiveCategory, settings, toast, showToast, hideToast } =
     useStore();
   const aiDisabled = !useCanUseAI();
+  const canUseSchema = useEntitlementStore((s) => s.canUseSchema);
 
   // Scroll to top when entering this page
   useEffect(() => {
@@ -68,10 +83,10 @@ export function SubscoresPage() {
   const failed = category.total - category.passed;
   const keyword = analysis.keyword;
   const sortedChecks = sortByPriority(category.checks);
-  // Generation still runs on the user's OpenAI key; the entitlement-gated AI
-  // proxy for keyless Pro users hooks in here when it lands.
-  const noApiKey = !apiKey;
 
+  // Advanced context (page type, secondary keywords, language) only takes effect
+  // on the BYO-key direct path; the hosted proxy ignores it. advancedMode is
+  // itself Pro-gated in SetupPage, so it is never set for free users.
   const advancedOptions = settings.advancedMode
     ? {
         pageType: settings.pageType,
@@ -79,15 +94,6 @@ export function SubscoresPage() {
         languageCode: settings.language,
       }
     : undefined;
-
-  const rejectNoKey = () => Promise.reject(new Error("No API key configured"));
-
-  // Records metered (Pro-without-key) usage after a successful generation
-  const meterAi = async <T,>(generation: Promise<T>): Promise<T> => {
-    const result = await generation;
-    if (isMeteredAiCall()) void useEntitlementStore.getState().consumeAiQuota();
-    return result;
-  };
 
   const renderCheckRecommendation = (check: SEOCheck) => {
     if (check.status === "pass") return null;
@@ -97,24 +103,15 @@ export function SubscoresPage() {
         <div className="mt-3">
           <H2SelectionList
             items={check.h2Recommendations}
-            onRegenerateOne={
-              noApiKey
-                ? rejectNoKey
-                : (_index, h2Text) =>
-                    meterAi(generateH2Suggestion(apiKey, h2Text, keyword, advancedOptions))
+            onRegenerateOne={(_index, h2Text) =>
+              generateH2Suggestion(h2Text, keyword, advancedOptions)
             }
-            onRegenerateAll={
-              noApiKey
-                ? () => rejectNoKey() as Promise<string[]>
-                : () =>
-                    meterAi(
-                      generateAllH2Suggestions(
-                        apiKey,
-                        check.h2Recommendations!.map((h) => h.text),
-                        keyword,
-                        advancedOptions,
-                      ),
-                    )
+            onRegenerateAll={() =>
+              generateAllH2Suggestions(
+                check.h2Recommendations!.map((h) => h.text),
+                keyword,
+                advancedOptions,
+              )
             }
             onToast={onToast}
             aiDisabled={aiDisabled}
@@ -128,11 +125,7 @@ export function SubscoresPage() {
         <div className="mt-3">
           <ImageAltTextList
             images={check.imageData}
-            onGenerate={
-              noApiKey
-                ? rejectNoKey
-                : (src) => meterAi(generateAltText(apiKey, src, keyword, advancedOptions))
-            }
+            onGenerate={(src) => generateAltText(src, keyword, advancedOptions)}
             onToast={onToast}
             aiDisabled={aiDisabled}
           />
@@ -141,6 +134,14 @@ export function SubscoresPage() {
     }
 
     if (check.id === "schema-markup") {
+      if (!canUseSchema) {
+        return (
+          <ProUpsell>
+            Schema markup generation is an Optia Pro feature. Activate a license in options to
+            generate structured data for this page.
+          </ProUpsell>
+        );
+      }
       const schemas = getSchemaRecommendations(settings.pageType);
       if (schemas.length > 0) {
         return (
@@ -183,13 +184,8 @@ export function SubscoresPage() {
           <EditableRecommendation
             label={label}
             initialValue={check.recommendation ?? "Click regenerate to generate..."}
-            onRegenerate={
-              noApiKey
-                ? rejectNoKey
-                : () =>
-                    meterAi(
-                      generateRecommendation(apiKey, check.id, keyword, context, advancedOptions),
-                    )
+            onRegenerate={() =>
+              generateRecommendation(check.id, keyword, context, advancedOptions)
             }
             onToast={onToast}
             aiDisabled={aiDisabled}

@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { Copy, RefreshCw, Check, Sparkles } from "lucide-react";
 import { Button } from "./ui/Button";
 import { cn } from "@/lib/utils";
+import { aiErrorMessage } from "@/lib/ai-error";
 
 interface H2Item {
   index: number;
@@ -76,8 +77,8 @@ export function H2SelectionList({
         const result = await onRegenerateOne(index, h2Text);
         setSuggestions((prev) => ({ ...prev, [index]: result }));
         onToast("H2 suggestion regenerated");
-      } catch {
-        onToast("Failed to regenerate");
+      } catch (err) {
+        onToast(aiErrorMessage(err, "Failed to regenerate"));
       } finally {
         setLoadingItems((prev) => {
           const next = new Set(prev);
@@ -99,8 +100,8 @@ export function H2SelectionList({
       });
       setSuggestions(newSuggestions);
       onToast("All H2 suggestions generated");
-    } catch {
-      onToast("Failed to generate suggestions");
+    } catch (err) {
+      onToast(aiErrorMessage(err, "Failed to generate suggestions"));
     } finally {
       setLoadingAll(false);
     }
@@ -136,7 +137,7 @@ export function H2SelectionList({
           onClick={handleRegenerateAll}
           loading={loadingAll}
           disabled={aiDisabled}
-          title={aiDisabled ? "Add an OpenAI API key or activate Optia Pro in options" : undefined}
+          title={aiDisabled ? "Activate Optia Pro or add your own Anthropic key in options" : undefined}
         >
           <Sparkles className="h-3 w-3" />
           Generate All
@@ -145,7 +146,7 @@ export function H2SelectionList({
 
       {aiDisabled && (
         <p className="text-body-12 text-muted opacity-70">
-          Add your OpenAI API key or activate Optia Pro in options to use AI suggestions.
+          Activate Optia Pro or add your own Anthropic key in options to use AI suggestions.
         </p>
       )}
 
@@ -196,7 +197,7 @@ export function H2SelectionList({
                   onClick={() => handleRegenerateOne(item.index, item.text)}
                   disabled={isLoading || aiDisabled}
                   className="rounded-full p-1.5 text-muted hover:bg-surface-2 hover:text-ink transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-muted"
-                  title={aiDisabled ? "Add an OpenAI API key or activate Optia Pro in options" : "Regenerate"}
+                  title={aiDisabled ? "Activate Optia Pro or add your own Anthropic key in options" : "Regenerate"}
                 >
                   <RefreshCw
                     className={cn("h-3.5 w-3.5", isLoading && "animate-spin")}

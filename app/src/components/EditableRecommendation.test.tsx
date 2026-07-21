@@ -79,14 +79,14 @@ describe("EditableRecommendation", () => {
   describe("when aiDisabled is true", () => {
     it("disables the regenerate button", () => {
       render(<EditableRecommendation {...defaultProps} aiDisabled />);
-      const btn = screen.getByTitle("Add an OpenAI API key or activate Optia Pro in options");
+      const btn = screen.getByTitle("Activate Optia Pro or add your own Anthropic key in options");
       expect(btn).toBeDisabled();
     });
 
     it("shows a message about setting up the API key", () => {
       render(<EditableRecommendation {...defaultProps} aiDisabled />);
       expect(
-        screen.getByText("Add your OpenAI API key or activate Optia Pro in options to use AI suggestions."),
+        screen.getByText("Activate Optia Pro or add your own Anthropic key in options to use AI suggestions."),
       ).toBeInTheDocument();
     });
 
@@ -96,7 +96,7 @@ describe("EditableRecommendation", () => {
       render(
         <EditableRecommendation {...defaultProps} onRegenerate={onRegenerate} aiDisabled />,
       );
-      const btn = screen.getByTitle("Add an OpenAI API key or activate Optia Pro in options");
+      const btn = screen.getByTitle("Activate Optia Pro or add your own Anthropic key in options");
       await user.click(btn);
       expect(onRegenerate).not.toHaveBeenCalled();
     });

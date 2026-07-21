@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { Copy, RefreshCw, Check, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { aiErrorMessage } from "@/lib/ai-error";
 import type { ImageData } from "@/types/seo";
 
 interface ImageAltTextListProps {
@@ -29,8 +30,8 @@ export function ImageAltTextList({
         const result = await onGenerate(src);
         setAltTexts((prev) => ({ ...prev, [index]: result }));
         onToast("Alt text generated");
-      } catch {
-        onToast("Failed to generate alt text");
+      } catch (err) {
+        onToast(aiErrorMessage(err, "Failed to generate alt text"));
       } finally {
         setLoadingItems((prev) => {
           const next = new Set(prev);
@@ -70,7 +71,7 @@ export function ImageAltTextList({
 
       {aiDisabled && (
         <p className="text-body-12 text-muted opacity-70">
-          Add your OpenAI API key or activate Optia Pro in options to use AI suggestions.
+          Activate Optia Pro or add your own Anthropic key in options to use AI suggestions.
         </p>
       )}
 
@@ -124,7 +125,7 @@ export function ImageAltTextList({
                     onClick={() => handleGenerate(index, img.src)}
                     disabled={isLoading || aiDisabled}
                     className="rounded-full p-1.5 text-muted hover:bg-surface-2 hover:text-ink transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-muted"
-                    title={aiDisabled ? "Add an OpenAI API key or activate Optia Pro in options" : "Generate alt text"}
+                    title={aiDisabled ? "Activate Optia Pro or add your own Anthropic key in options" : "Generate alt text"}
                   >
                     {isLoading ? (
                       <RefreshCw className="h-3.5 w-3.5 animate-spin" />

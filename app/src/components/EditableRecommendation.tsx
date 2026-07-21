@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Copy, RefreshCw, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { aiErrorMessage } from "@/lib/ai-error";
 
 interface EditableRecommendationProps {
   label: string;
@@ -55,8 +56,8 @@ export function EditableRecommendation({
       const newText = await onRegenerate();
       setText(newText);
       onToast("Recommendation regenerated");
-    } catch {
-      onToast("Failed to regenerate");
+    } catch (err) {
+      onToast(aiErrorMessage(err, "Failed to regenerate"));
     } finally {
       setLoading(false);
     }
@@ -89,7 +90,7 @@ export function EditableRecommendation({
             onClick={handleRegenerate}
             disabled={loading || aiDisabled}
             className="rounded-full p-1.5 text-muted hover:bg-surface-2 hover:text-ink transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-muted"
-            title={aiDisabled ? "Add an OpenAI API key or activate Optia Pro in options" : "Regenerate"}
+            title={aiDisabled ? "Activate Optia Pro or add your own Anthropic key in options" : "Regenerate"}
           >
             <RefreshCw
               className={cn("h-3.5 w-3.5", loading && "animate-spin")}
@@ -109,7 +110,7 @@ export function EditableRecommendation({
       />
       {aiDisabled && (
         <p className="mt-2 text-body-12 text-muted opacity-70">
-          Add your OpenAI API key or activate Optia Pro in options to use AI suggestions.
+          Activate Optia Pro or add your own Anthropic key in options to use AI suggestions.
         </p>
       )}
     </div>

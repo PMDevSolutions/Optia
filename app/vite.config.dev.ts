@@ -98,27 +98,36 @@ function fetchPageProxy(): Plugin {
 }
 
 /**
- * Vite plugin that proxies /api/openai/* requests to api.openai.com,
- * avoiding CORS issues when calling OpenAI from the browser in dev mode.
+ * Vite plugin that proxies /api/anthropic/* requests to api.anthropic.com,
+ * avoiding CORS issues when calling Anthropic from the browser in dev mode.
  */
-function openaiProxy(): Plugin {
+function anthropicProxy(): Plugin {
+  const forwarded = [
+    "content-type",
+    "x-api-key",
+    "anthropic-version",
+    "anthropic-beta",
+    "anthropic-dangerous-direct-browser-access",
+  ];
   return {
-    name: "openai-proxy",
+    name: "anthropic-proxy",
     configureServer(server) {
-      server.middlewares.use("/api/openai", async (req, res) => {
+      server.middlewares.use("/api/anthropic", async (req, res) => {
         // Handle CORS preflight
         if (req.method === "OPTIONS") {
           res.writeHead(204, {
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "POST, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+            "Access-Control-Allow-Headers": forwarded.join(", "),
           });
           res.end();
           return;
         }
 
+        // The Anthropic SDK's request path already includes /v1 (e.g. /v1/messages),
+        // so forward it verbatim — do NOT re-prefix /v1 (that yields /v1/v1/...).
         const targetPath = (req.url ?? "").replace(/^\//, "");
-        const targetUrl = `https://api.openai.com/v1/${targetPath}`;
+        const targetUrl = `https://api.anthropic.com/${targetPath}`;
 
         try {
           // Read request body
@@ -128,23 +137,23 @@ function openaiProxy(): Plugin {
           }
           const body = Buffer.concat(chunks).toString();
 
-          const authHeader = req.headers.authorization ?? "";
-          console.log("[OpenAI Proxy] Request to:", targetUrl);
-          console.log("[OpenAI Proxy] Auth header present:", !!authHeader && authHeader.length > 10);
+          const headers: Record<string, string> = {};
+          for (const name of forwarded) {
+            const value = req.headers[name];
+            if (typeof value === "string") headers[name] = value;
+          }
+          console.log("[Anthropic Proxy] Request to:", targetUrl);
 
           const response = await fetch(targetUrl, {
             method: req.method ?? "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: authHeader,
-            },
+            headers,
             body,
           });
 
           const responseBody = await response.text();
-          console.log("[OpenAI Proxy] Response status:", response.status);
+          console.log("[Anthropic Proxy] Response status:", response.status);
           if (response.status !== 200) {
-            console.log("[OpenAI Proxy] Error response:", responseBody.slice(0, 500));
+            console.log("[Anthropic Proxy] Error response:", responseBody.slice(0, 500));
           }
           res.writeHead(response.status, {
             "Content-Type": response.headers.get("content-type") ?? "application/json",
@@ -153,7 +162,7 @@ function openaiProxy(): Plugin {
           res.end(responseBody);
         } catch (err) {
           res.writeHead(502, { "Content-Type": "text/plain" });
-          res.end(`OpenAI proxy error: ${err}`);
+          res.end(`Anthropic proxy error: ${err}`);
         }
       });
     },
@@ -162,7 +171,7 @@ function openaiProxy(): Plugin {
 
 // Dev preview config — no CRXJS, just serves the side panel UI in a browser tab
 export default defineConfig({
-  plugins: [react(), fetchPageProxy(), openaiProxy()],
+  plugins: [react(), fetchPageProxy(), anthropicProxy()],
   resolve: {
     alias: {
       "@": resolve(__dirname, "src"),

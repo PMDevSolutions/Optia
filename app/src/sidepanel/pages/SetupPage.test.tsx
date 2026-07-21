@@ -15,6 +15,9 @@ function setProEntitlement() {
     isPro: true,
     tier: "pro",
     canUseAdvancedOptions: true,
+    canUseMultiLanguage: true,
+    canUseSchema: true,
+    canBringOwnKey: true,
     aiQuotaRemaining: 100,
     quotaLimit: 100,
   });
@@ -27,7 +30,12 @@ beforeEach(() => {
     expiresAt: null,
     quotaLimit: 0,
     aiQuotaRemaining: 0,
+    freeAiRemaining: null,
+    freeAiLimit: null,
     canUseAdvancedOptions: false,
+    canUseMultiLanguage: false,
+    canUseSchema: false,
+    canBringOwnKey: false,
     hasLicenseKey: false,
   });
   useStore.setState({
@@ -145,7 +153,8 @@ describe("SetupPage", () => {
     expect(pageTypeSelect).toHaveValue("homepage");
   });
 
-  it("shows language select in settings panel when gear icon is clicked", async () => {
+  it("shows the language select in the settings panel for Pro users", async () => {
+    setProEntitlement();
     const { userEvent } = await import("@testing-library/user-event");
     const user = userEvent.setup();
     render(<SetupPage onAnalyze={onAnalyze} />);
@@ -153,10 +162,35 @@ describe("SetupPage", () => {
     expect(screen.queryByLabelText(/ai recommendations language/i)).not.toBeInTheDocument();
     // Click the settings gear icon
     await user.click(screen.getByRole("button", { name: /settings/i }));
-    // Now language select should be visible
+    // Now the language select should be visible and editable
     const langSelect = screen.getByLabelText(/ai recommendations language/i);
     expect(langSelect).toBeInTheDocument();
     expect(langSelect).toHaveValue("en");
+  });
+
+  it("gates the API key and language behind Pro in the settings panel for free users", async () => {
+    const { userEvent } = await import("@testing-library/user-event");
+    const user = userEvent.setup();
+    render(<SetupPage onAnalyze={onAnalyze} />);
+    await user.click(screen.getByRole("button", { name: /settings/i }));
+
+    // No editable Anthropic key input and no language select for free users
+    expect(screen.queryByLabelText(/anthropic api key/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/ai recommendations language/i)).not.toBeInTheDocument();
+    // Both surfaces show a Pro pill instead
+    expect(screen.getAllByText("Pro").length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("shows the Anthropic API key input in the settings panel for Pro users", async () => {
+    setProEntitlement();
+    const { userEvent } = await import("@testing-library/user-event");
+    const user = userEvent.setup();
+    render(<SetupPage onAnalyze={onAnalyze} />);
+    await user.click(screen.getByRole("button", { name: /settings/i }));
+
+    const keyInput = screen.getByLabelText(/anthropic api key/i);
+    expect(keyInput).toBeInTheDocument();
+    expect(keyInput).toHaveAttribute("type", "password");
   });
 
   it("shows secondary keywords textarea in advanced mode", () => {
