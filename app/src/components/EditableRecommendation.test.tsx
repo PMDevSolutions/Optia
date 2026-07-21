@@ -76,17 +76,17 @@ describe("EditableRecommendation", () => {
     expect(defaultProps.onToast).toHaveBeenCalledWith("Failed to regenerate");
   });
 
-  describe("when apiKeyMissing is true", () => {
+  describe("when aiDisabled is true", () => {
     it("disables the regenerate button", () => {
-      render(<EditableRecommendation {...defaultProps} apiKeyMissing />);
-      const btn = screen.getByTitle("Set up API key in options");
+      render(<EditableRecommendation {...defaultProps} aiDisabled />);
+      const btn = screen.getByTitle("Add an OpenAI API key or activate Optia Pro in options");
       expect(btn).toBeDisabled();
     });
 
     it("shows a message about setting up the API key", () => {
-      render(<EditableRecommendation {...defaultProps} apiKeyMissing />);
+      render(<EditableRecommendation {...defaultProps} aiDisabled />);
       expect(
-        screen.getByText("Set up your OpenAI API key in options to use AI suggestions."),
+        screen.getByText("Add your OpenAI API key or activate Optia Pro in options to use AI suggestions."),
       ).toBeInTheDocument();
     });
 
@@ -94,9 +94,9 @@ describe("EditableRecommendation", () => {
       const onRegenerate = vi.fn();
       const user = userEvent.setup();
       render(
-        <EditableRecommendation {...defaultProps} onRegenerate={onRegenerate} apiKeyMissing />,
+        <EditableRecommendation {...defaultProps} onRegenerate={onRegenerate} aiDisabled />,
       );
-      const btn = screen.getByTitle("Set up API key in options");
+      const btn = screen.getByTitle("Add an OpenAI API key or activate Optia Pro in options");
       await user.click(btn);
       expect(onRegenerate).not.toHaveBeenCalled();
     });

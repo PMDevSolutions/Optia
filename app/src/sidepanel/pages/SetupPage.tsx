@@ -7,6 +7,7 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { OptiaWordmark } from "@/components/ui/Logo";
 import { Footer } from "@/components/Footer";
 import { useStore } from "@/lib/store";
+import { useEntitlementStore } from "@/lib/entitlement-store";
 import { SUPPORTED_LANGUAGES } from "@/lib/languages";
 import { getKeywordForUrl, getAdvancedOptions } from "@/lib/storage";
 import { Settings, X } from "lucide-react";
@@ -86,6 +87,9 @@ function useProgrammaticInputSync(
 
 export function SetupPage({ onAnalyze }: SetupPageProps) {
   const { settings, setSettings, apiKey, setApiKey, error } = useStore();
+  const isPro = useEntitlementStore((state) => state.isPro);
+  const canUseAdvancedOptions = useEntitlementStore((state) => state.canUseAdvancedOptions);
+  const expiresAt = useEntitlementStore((state) => state.expiresAt);
   const [showSettings, setShowSettings] = useState(false);
   const [localApiKey, setLocalApiKey] = useState(apiKey);
   const [settingsSaved, setSettingsSaved] = useState(false);
@@ -93,6 +97,13 @@ export function SetupPage({ onAnalyze }: SetupPageProps) {
   useEffect(() => {
     setLocalApiKey(apiKey);
   }, [apiKey]);
+
+  // Advanced Analysis is a Pro feature — never leave it enabled without entitlement
+  useEffect(() => {
+    if (!canUseAdvancedOptions && settings.advancedMode) {
+      setSettings({ advancedMode: false });
+    }
+  }, [canUseAdvancedOptions, settings.advancedMode, setSettings]);
 
   const handleSaveSettings = async () => {
     await setApiKey(localApiKey);
@@ -123,7 +134,7 @@ export function SetupPage({ onAnalyze }: SetupPageProps) {
           pageType: savedOptions.pageType,
           secondaryKeywords: savedOptions.secondaryKeywords,
           language: savedOptions.language,
-          advancedMode: true,
+          advancedMode: useEntitlementStore.getState().canUseAdvancedOptions,
         });
       }
     } catch {
@@ -200,6 +211,27 @@ export function SetupPage({ onAnalyze }: SetupPageProps) {
           </button>
 
           {settingsSaved && <p className="text-body-semibold text-good">Settings saved.</p>}
+
+          {/* License status */}
+          <div className="flex items-center justify-between border-t border-border pt-3">
+            <div className="flex items-center gap-2">
+              <span className="text-body-semibold text-ink">Plan</span>
+              {isPro ? (
+                <span className="rounded-pill bg-brand px-2 py-0.5 text-[11px] font-medium text-brand-fg">
+                  Pro
+                </span>
+              ) : (
+                <span className="rounded-pill bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-muted">
+                  Free
+                </span>
+              )}
+            </div>
+            <span className="text-body-12 text-muted">
+              {isPro && expiresAt
+                ? `renews by ${new Date(expiresAt).toLocaleDateString()}`
+                : "Manage your license in extension options"}
+            </span>
+          </div>
         </div>
       )}
 
@@ -236,16 +268,25 @@ export function SetupPage({ onAnalyze }: SetupPageProps) {
         <div className="flex flex-col gap-2.5">
           <div className="flex items-center gap-2">
             <span className="text-h2 text-ink">Advanced Analysis</span>
-            <span className="rounded-pill bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-muted">
-              optional
-            </span>
+            {canUseAdvancedOptions ? (
+              <span className="rounded-pill bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-muted">
+                optional
+              </span>
+            ) : (
+              <span className="rounded-pill bg-brand px-2 py-0.5 text-[11px] font-medium text-brand-fg">
+                Pro
+              </span>
+            )}
           </div>
           <div className="flex items-start justify-between gap-4">
             <p className="text-body text-muted">
-              Get smarter, page-specific recommendations based on your page context.
+              {canUseAdvancedOptions
+                ? "Get smarter, page-specific recommendations based on your page context."
+                : "Activate an Optia Pro license in extension options to unlock page-specific recommendations."}
             </p>
             <Toggle
               checked={settings.advancedMode}
+              disabled={!canUseAdvancedOptions}
               onChange={(checked) => setSettings({ advancedMode: checked })}
             />
           </div>

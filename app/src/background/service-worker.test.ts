@@ -58,7 +58,15 @@ beforeEach(() => {
           },
         ),
       },
+      onInstalled: { addListener: vi.fn() },
+      onStartup: { addListener: vi.fn() },
       lastError: null,
+    },
+    alarms: {
+      create: vi.fn(),
+      clear: vi.fn().mockResolvedValue(true),
+      get: vi.fn().mockResolvedValue(undefined),
+      onAlarm: { addListener: vi.fn() },
     },
     scripting: {
       executeScript: vi.fn(),
@@ -74,6 +82,7 @@ beforeEach(() => {
         set: vi.fn().mockResolvedValue(undefined),
         remove: vi.fn().mockResolvedValue(undefined),
       },
+      onChanged: { addListener: vi.fn() },
     },
   };
 

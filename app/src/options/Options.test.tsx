@@ -1,7 +1,45 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Options } from "./Options";
+import { useEntitlementStore } from "@/lib/entitlement-store";
+import {
+  activate,
+  deactivate,
+  getAiQuotaRemaining,
+  getValidEntitlement,
+  hasStoredLicenseKey,
+  type EntitlementClaims,
+} from "@/lib/entitlement";
+import { LicenseError } from "@/lib/backend";
+
+vi.mock("@/lib/entitlement", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/lib/entitlement")>();
+  return {
+    ...original,
+    activate: vi.fn(),
+    deactivate: vi.fn(),
+    getValidEntitlement: vi.fn(),
+    getAiQuotaRemaining: vi.fn(),
+    hasStoredLicenseKey: vi.fn(),
+    consumeAiQuota: vi.fn(),
+  };
+});
+
+const activateMock = vi.mocked(activate);
+const deactivateMock = vi.mocked(deactivate);
+const getValidEntitlementMock = vi.mocked(getValidEntitlement);
+const getAiQuotaRemainingMock = vi.mocked(getAiQuotaRemaining);
+const hasStoredLicenseKeyMock = vi.mocked(hasStoredLicenseKey);
+
+const proClaims: EntitlementClaims = {
+  sub: "lic_1",
+  subjectType: "license",
+  tier: "pro",
+  quotaLimit: 100,
+  period: "2026-07",
+  exp: Math.floor(Date.now() / 1000) + 3600,
+};
 
 describe("Options page", () => {
   beforeEach(() => {
@@ -9,6 +47,21 @@ describe("Options page", () => {
     (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockImplementation(
       () => Promise.resolve({}),
     );
+    getValidEntitlementMock.mockResolvedValue(null);
+    getAiQuotaRemainingMock.mockResolvedValue(0);
+    hasStoredLicenseKeyMock.mockResolvedValue(false);
+    useEntitlementStore.setState({
+      entitlementLoaded: false,
+      isPro: false,
+      tier: "free",
+      expiresAt: null,
+      quotaLimit: 0,
+      aiQuotaRemaining: 0,
+      canUseAdvancedOptions: false,
+      hasLicenseKey: false,
+      activating: false,
+      activationError: null,
+    });
   });
 
   // --- Rendering ---
@@ -145,5 +198,73 @@ describe("Options page", () => {
     // These will throw if no label is associated
     expect(screen.getByLabelText(/openai api key/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/default language/i)).toBeInTheDocument();
+  });
+
+  // --- License card ---
+
+  it("shows the free state with a license key input and Activate button", async () => {
+    render(<Options />);
+
+    expect(screen.getByRole("heading", { name: /license/i })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Free")).toBeInTheDocument();
+    });
+    expect(screen.getByLabelText(/license key/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^activate$/i })).toBeDisabled();
+  });
+
+  it("activates a license key and switches to the Pro state", async () => {
+    const user = userEvent.setup();
+    activateMock.mockImplementation(async () => {
+      getValidEntitlementMock.mockResolvedValue(proClaims);
+      getAiQuotaRemainingMock.mockResolvedValue(100);
+      hasStoredLicenseKeyMock.mockResolvedValue(true);
+      return proClaims;
+    });
+    render(<Options />);
+
+    await user.type(screen.getByLabelText(/license key/i), "optia_live_abc");
+    await user.click(screen.getByRole("button", { name: /^activate$/i }));
+
+    expect(activateMock).toHaveBeenCalledWith("optia_live_abc");
+    await waitFor(() => {
+      expect(screen.getByText("Pro")).toBeInTheDocument();
+    });
+    expect(screen.getByText(/100 of 100 remaining/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /deactivate/i })).toBeInTheDocument();
+  });
+
+  it("shows an activation error for an invalid key and stays free", async () => {
+    const user = userEvent.setup();
+    activateMock.mockRejectedValue(new LicenseError("invalid", "This license key is not valid."));
+    render(<Options />);
+
+    await user.type(screen.getByLabelText(/license key/i), "bad-key");
+    await user.click(screen.getByRole("button", { name: /^activate$/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("This license key is not valid.");
+    });
+    expect(screen.getByText("Free")).toBeInTheDocument();
+  });
+
+  it("deactivates and returns to the free state", async () => {
+    const user = userEvent.setup();
+    getValidEntitlementMock.mockResolvedValue(proClaims);
+    getAiQuotaRemainingMock.mockResolvedValue(80);
+    hasStoredLicenseKeyMock.mockResolvedValue(true);
+    deactivateMock.mockResolvedValue();
+    render(<Options />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Pro")).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole("button", { name: /deactivate/i }));
+
+    expect(deactivateMock).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(screen.getByText("Free")).toBeInTheDocument();
+    });
+    expect(screen.getByLabelText(/license key/i)).toBeInTheDocument();
   });
 });

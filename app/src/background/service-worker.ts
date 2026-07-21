@@ -1,6 +1,10 @@
 import { extractPageDataInline } from "@/lib/extract-page-data-inline";
+import { registerEntitlementAlarms } from "@/background/entitlement-alarm";
 
 console.log("[Optia] Service worker initializing...");
+
+// Entitlement auto-refresh (alarms + install/startup + storage sync)
+registerEntitlementAlarms();
 
 // Disable automatic panel opening - we'll handle it manually for per-tab scoping
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false });

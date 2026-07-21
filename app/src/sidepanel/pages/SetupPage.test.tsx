@@ -1,5 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { useStore } from "@/lib/store";
+import { useEntitlementStore } from "@/lib/entitlement-store";
 import { SetupPage } from "./SetupPage";
 
 vi.mock("@/lib/storage", () => ({
@@ -9,7 +10,26 @@ vi.mock("@/lib/storage", () => ({
   setStorageItem: vi.fn().mockResolvedValue(undefined),
 }));
 
+function setProEntitlement() {
+  useEntitlementStore.setState({
+    isPro: true,
+    tier: "pro",
+    canUseAdvancedOptions: true,
+    aiQuotaRemaining: 100,
+    quotaLimit: 100,
+  });
+}
+
 beforeEach(() => {
+  useEntitlementStore.setState({
+    isPro: false,
+    tier: "free",
+    expiresAt: null,
+    quotaLimit: 0,
+    aiQuotaRemaining: 0,
+    canUseAdvancedOptions: false,
+    hasLicenseKey: false,
+  });
   useStore.setState({
     view: "setup",
     analysis: null,
@@ -89,6 +109,7 @@ describe("SetupPage", () => {
   });
 
   it("shows advanced fields when advancedMode is true", () => {
+    setProEntitlement();
     useStore.setState({
       settings: {
         keyword: "",
@@ -107,6 +128,7 @@ describe("SetupPage", () => {
   });
 
   it("shows page type select in advanced mode", () => {
+    setProEntitlement();
     useStore.setState({
       settings: {
         keyword: "",
@@ -138,6 +160,7 @@ describe("SetupPage", () => {
   });
 
   it("shows secondary keywords textarea in advanced mode", () => {
+    setProEntitlement();
     useStore.setState({
       settings: {
         keyword: "",
@@ -155,6 +178,7 @@ describe("SetupPage", () => {
   });
 
   it("shows character counter for secondary keywords", () => {
+    setProEntitlement();
     useStore.setState({
       settings: {
         keyword: "",
@@ -172,5 +196,47 @@ describe("SetupPage", () => {
   it("shows 'Page URL to analyze' input in dev mode", () => {
     render(<SetupPage onAnalyze={onAnalyze} />);
     expect(screen.getByLabelText(/page url to analyze/i)).toBeInTheDocument();
+  });
+
+  it("disables the Advanced Analysis toggle with a Pro badge for free users", () => {
+    render(<SetupPage onAnalyze={onAnalyze} />);
+    expect(screen.getByRole("checkbox")).toBeDisabled();
+    expect(screen.getByText("Pro")).toBeInTheDocument();
+    expect(screen.getByText(/activate an optia pro license/i)).toBeInTheDocument();
+  });
+
+  it("enables the Advanced Analysis toggle for Pro users", () => {
+    setProEntitlement();
+    render(<SetupPage onAnalyze={onAnalyze} />);
+    expect(screen.getByRole("checkbox")).toBeEnabled();
+    expect(screen.getByText(/optional/i)).toBeInTheDocument();
+  });
+
+  it("forces advancedMode off when there is no Pro entitlement", async () => {
+    useStore.setState({
+      settings: {
+        keyword: "",
+        secondaryKeywords: "",
+        pageType: "homepage",
+        language: "en",
+        advancedMode: true,
+        targetUrl: "",
+      },
+    });
+    render(<SetupPage onAnalyze={onAnalyze} />);
+    await waitFor(() => {
+      expect(useStore.getState().settings.advancedMode).toBe(false);
+    });
+    expect(screen.queryByLabelText(/page type/i)).not.toBeInTheDocument();
+  });
+
+  it("shows the plan status row in the settings panel", async () => {
+    const { userEvent } = await import("@testing-library/user-event");
+    const user = userEvent.setup();
+    render(<SetupPage onAnalyze={onAnalyze} />);
+    await user.click(screen.getByRole("button", { name: /settings/i }));
+    expect(screen.getByText("Plan")).toBeInTheDocument();
+    expect(screen.getByText("Free")).toBeInTheDocument();
+    expect(screen.getByText(/manage your license/i)).toBeInTheDocument();
   });
 });

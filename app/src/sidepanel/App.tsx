@@ -1,5 +1,6 @@
 import { useEffect, useCallback } from "react";
 import { useStore } from "@/lib/store";
+import { useEntitlementStore } from "@/lib/entitlement-store";
 import { runSEOChecks } from "@/lib/seo-analyzer";
 import { calculateAnalysis } from "@/lib/scoring";
 import { fetchAndAnalyzePage } from "@/lib/fetch-page";
@@ -203,9 +204,12 @@ export default function App() {
   const { view, setView, setAnalysis, setError, settings, setSettings, loadApiKey, hideToast, toast, reset } =
     useStore();
 
+  const hydrateEntitlement = useEntitlementStore((state) => state.hydrateEntitlement);
+
   useEffect(() => {
     loadApiKey();
-  }, [loadApiKey]);
+    void hydrateEntitlement();
+  }, [loadApiKey, hydrateEntitlement]);
 
   // Register this tab with the service worker for per-tab panel scoping
   useEffect(() => {
