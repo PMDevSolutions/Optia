@@ -20,11 +20,11 @@
     "release:dry": "standard-version --dry-run"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.112.3",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
     "jose": "^6.2.3",
     "lucide-react": "^0.511.0",
-    "openai": "^4.97.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "tailwind-merge": "^3.3.0",

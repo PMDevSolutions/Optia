@@ -87,7 +87,7 @@ describe("ImageAltTextList", () => {
   describe("when aiDisabled is true", () => {
     it("disables all generate buttons", () => {
       render(<ImageAltTextList {...defaultProps} aiDisabled />);
-      const generateButtons = screen.getAllByTitle("Add an OpenAI API key or activate Optia Pro in options");
+      const generateButtons = screen.getAllByTitle("Activate Optia Pro or add your own Anthropic key in options");
       for (const btn of generateButtons) {
         expect(btn).toBeDisabled();
       }
@@ -96,7 +96,7 @@ describe("ImageAltTextList", () => {
     it("shows a message about setting up the API key", () => {
       render(<ImageAltTextList {...defaultProps} aiDisabled />);
       expect(
-        screen.getByText("Add your OpenAI API key or activate Optia Pro in options to use AI suggestions."),
+        screen.getByText("Activate Optia Pro or add your own Anthropic key in options to use AI suggestions."),
       ).toBeInTheDocument();
     });
 
@@ -106,7 +106,7 @@ describe("ImageAltTextList", () => {
       render(
         <ImageAltTextList {...defaultProps} onGenerate={onGenerate} aiDisabled />,
       );
-      const generateButtons = screen.getAllByTitle("Add an OpenAI API key or activate Optia Pro in options");
+      const generateButtons = screen.getAllByTitle("Activate Optia Pro or add your own Anthropic key in options");
       await user.click(generateButtons[0]);
       expect(onGenerate).not.toHaveBeenCalled();
     });

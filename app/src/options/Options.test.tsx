@@ -6,7 +6,8 @@ import { useEntitlementStore } from "@/lib/entitlement-store";
 import {
   activate,
   deactivate,
-  getAiQuotaRemaining,
+  getFreeAiQuota,
+  getProAiRemaining,
   getValidEntitlement,
   hasStoredLicenseKey,
   type EntitlementClaims,
@@ -20,16 +21,19 @@ vi.mock("@/lib/entitlement", async (importOriginal) => {
     activate: vi.fn(),
     deactivate: vi.fn(),
     getValidEntitlement: vi.fn(),
-    getAiQuotaRemaining: vi.fn(),
+    getFreeAiQuota: vi.fn(),
+    getProAiRemaining: vi.fn(),
     hasStoredLicenseKey: vi.fn(),
-    consumeAiQuota: vi.fn(),
+    recordProAiQuota: vi.fn(),
+    recordFreeAiQuota: vi.fn(),
   };
 });
 
 const activateMock = vi.mocked(activate);
 const deactivateMock = vi.mocked(deactivate);
 const getValidEntitlementMock = vi.mocked(getValidEntitlement);
-const getAiQuotaRemainingMock = vi.mocked(getAiQuotaRemaining);
+const getFreeAiQuotaMock = vi.mocked(getFreeAiQuota);
+const getProAiRemainingMock = vi.mocked(getProAiRemaining);
 const hasStoredLicenseKeyMock = vi.mocked(hasStoredLicenseKey);
 
 const proClaims: EntitlementClaims = {
@@ -41,132 +45,133 @@ const proClaims: EntitlementClaims = {
   exp: Math.floor(Date.now() / 1000) + 3600,
 };
 
+function resetEntitlementState() {
+  useEntitlementStore.setState({
+    entitlementLoaded: false,
+    isPro: false,
+    tier: "free",
+    expiresAt: null,
+    quotaLimit: 0,
+    aiQuotaRemaining: 0,
+    freeAiRemaining: null,
+    freeAiLimit: null,
+    canUseAdvancedOptions: false,
+    canUseMultiLanguage: false,
+    canUseSchema: false,
+    canBringOwnKey: false,
+    hasLicenseKey: false,
+    activating: false,
+    activationError: null,
+  });
+}
+
+/** Makes hydrateEntitlement resolve to a Pro entitlement (all canUse* true). */
+function mockPro(remaining = 100) {
+  getValidEntitlementMock.mockResolvedValue(proClaims);
+  getProAiRemainingMock.mockResolvedValue(remaining);
+  hasStoredLicenseKeyMock.mockResolvedValue(true);
+}
+
 describe("Options page", () => {
   beforeEach(() => {
-    // Reset chrome.storage mock between tests
-    (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockImplementation(
-      () => Promise.resolve({}),
+    (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockImplementation(() =>
+      Promise.resolve({}),
     );
     getValidEntitlementMock.mockResolvedValue(null);
-    getAiQuotaRemainingMock.mockResolvedValue(0);
+    getFreeAiQuotaMock.mockResolvedValue(null);
+    getProAiRemainingMock.mockResolvedValue(0);
     hasStoredLicenseKeyMock.mockResolvedValue(false);
-    useEntitlementStore.setState({
-      entitlementLoaded: false,
-      isPro: false,
-      tier: "free",
-      expiresAt: null,
-      quotaLimit: 0,
-      aiQuotaRemaining: 0,
-      canUseAdvancedOptions: false,
-      hasLicenseKey: false,
-      activating: false,
-      activationError: null,
-    });
+    resetEntitlementState();
   });
 
   // --- Rendering ---
 
   it("renders the settings heading", () => {
     render(<Options />);
+    expect(screen.getByRole("heading", { name: /settings/i })).toBeInTheDocument();
+  });
+
+  it("renders the default language control and a save button", () => {
+    render(<Options />);
+    expect(screen.getByLabelText(/default language/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
+  });
+
+  // --- Free tier gating ---
+
+  it("hides the Anthropic API key input for free users (Pro upsell instead)", async () => {
+    render(<Options />);
+    await waitFor(() => expect(screen.getByText("Free")).toBeInTheDocument());
+
+    expect(screen.queryByLabelText(/anthropic api key/i)).not.toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: /settings/i }),
+      screen.getByText(/bring your own anthropic key with optia pro/i),
     ).toBeInTheDocument();
   });
 
-  it("renders the OpenAI API key field", () => {
-    render(<Options />);
-    expect(screen.getByLabelText(/openai api key/i)).toBeInTheDocument();
-  });
-
-  it("renders the default language select", () => {
-    render(<Options />);
-    expect(
-      screen.getByLabelText(/default language/i),
-    ).toBeInTheDocument();
-  });
-
-  it("renders a save button", () => {
-    render(<Options />);
-    expect(
-      screen.getByRole("button", { name: /save/i }),
-    ).toBeInTheDocument();
-  });
-
-  // --- Loading saved values ---
-
-  it("loads saved API key from chrome.storage on mount", async () => {
-    (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockImplementation(
-      () =>
-        Promise.resolve({
-          openai_api_key: "sk-test-key-123",
-          default_language: "en",
-        }),
+  it("disables the language select and pins English for free users", async () => {
+    (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockImplementation(() =>
+      Promise.resolve({ default_language: "fr" }),
     );
+    render(<Options />);
+    await waitFor(() => expect(screen.getByText("Free")).toBeInTheDocument());
 
+    const select = screen.getByLabelText(/default language/i);
+    expect(select).toBeDisabled();
+    expect(select).toHaveValue("en");
+  });
+
+  it("saves only the language (English) for free users, never a key", async () => {
+    const user = userEvent.setup();
+    render(<Options />);
+    await waitFor(() => expect(screen.getByText("Free")).toBeInTheDocument());
+
+    await user.click(screen.getByRole("button", { name: /save/i }));
+
+    expect(chrome.storage.local.set).toHaveBeenCalledWith({ default_language: "en" });
+    const call = (chrome.storage.local.set as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    expect(call).not.toHaveProperty("anthropic_api_key");
+  });
+
+  // --- Pro tier ---
+
+  it("renders the Anthropic API key input (password) for Pro users", async () => {
+    mockPro();
     render(<Options />);
 
     await waitFor(() => {
-      expect(screen.getByLabelText(/openai api key/i)).toHaveValue(
-        "sk-test-key-123",
-      );
+      expect(screen.getByLabelText(/anthropic api key/i)).toBeInTheDocument();
     });
+    expect(screen.getByLabelText(/anthropic api key/i)).toHaveAttribute("type", "password");
+    expect(screen.getByLabelText(/default language/i)).toBeEnabled();
   });
 
-  it("loads saved language from chrome.storage on mount", async () => {
-    (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockImplementation(
-      () =>
-        Promise.resolve({
-          openai_api_key: "",
-          default_language: "fr",
-        }),
+  it("loads a saved Anthropic key and language for Pro users", async () => {
+    mockPro();
+    (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockImplementation(() =>
+      Promise.resolve({ anthropic_api_key: "sk-ant-123", default_language: "de" }),
     );
-
     render(<Options />);
 
     await waitFor(() => {
-      expect(screen.getByLabelText(/default language/i)).toHaveValue("fr");
+      expect(screen.getByLabelText(/anthropic api key/i)).toHaveValue("sk-ant-123");
     });
+    expect(screen.getByLabelText(/default language/i)).toHaveValue("de");
   });
 
-  // --- User interactions ---
-
-  it("allows typing an API key", async () => {
+  it("saves the Anthropic key and language for Pro users", async () => {
+    mockPro();
     const user = userEvent.setup();
     render(<Options />);
+    await waitFor(() => expect(screen.getByLabelText(/anthropic api key/i)).toBeInTheDocument());
 
-    const input = screen.getByLabelText(/openai api key/i);
-    await user.clear(input);
-    await user.type(input, "sk-new-key");
-
-    expect(input).toHaveValue("sk-new-key");
-  });
-
-  it("allows selecting a language", async () => {
-    const user = userEvent.setup();
-    render(<Options />);
-
-    const select = screen.getByLabelText(/default language/i);
-    await user.selectOptions(select, "de");
-
-    expect(select).toHaveValue("de");
-  });
-
-  it("saves settings to chrome.storage when save is clicked", async () => {
-    const user = userEvent.setup();
-    render(<Options />);
-
-    const input = screen.getByLabelText(/openai api key/i);
-    await user.clear(input);
-    await user.type(input, "sk-saved-key");
-
-    const select = screen.getByLabelText(/default language/i);
-    await user.selectOptions(select, "es");
-
+    await user.type(screen.getByLabelText(/anthropic api key/i), "sk-ant-saved");
+    await user.selectOptions(screen.getByLabelText(/default language/i), "es");
     await user.click(screen.getByRole("button", { name: /save/i }));
 
     expect(chrome.storage.local.set).toHaveBeenCalledWith(
       expect.objectContaining({
-        openai_api_key: "sk-saved-key",
+        anthropic_api_key: "sk-ant-saved",
         default_language: "es",
       }),
     );
@@ -175,29 +180,8 @@ describe("Options page", () => {
   it("shows a success message after saving", async () => {
     const user = userEvent.setup();
     render(<Options />);
-
     await user.click(screen.getByRole("button", { name: /save/i }));
-
-    await waitFor(() => {
-      expect(screen.getByText(/saved/i)).toBeInTheDocument();
-    });
-  });
-
-  // --- Accessibility ---
-
-  it("API key input has password type for security", () => {
-    render(<Options />);
-    expect(screen.getByLabelText(/openai api key/i)).toHaveAttribute(
-      "type",
-      "password",
-    );
-  });
-
-  it("all form controls have associated labels", () => {
-    render(<Options />);
-    // These will throw if no label is associated
-    expect(screen.getByLabelText(/openai api key/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/default language/i)).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText(/saved/i)).toBeInTheDocument());
   });
 
   // --- License card ---
@@ -206,9 +190,7 @@ describe("Options page", () => {
     render(<Options />);
 
     expect(screen.getByRole("heading", { name: /license/i })).toBeInTheDocument();
-    await waitFor(() => {
-      expect(screen.getByText("Free")).toBeInTheDocument();
-    });
+    await waitFor(() => expect(screen.getByText("Free")).toBeInTheDocument());
     expect(screen.getByLabelText(/license key/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^activate$/i })).toBeDisabled();
   });
@@ -216,9 +198,7 @@ describe("Options page", () => {
   it("activates a license key and switches to the Pro state", async () => {
     const user = userEvent.setup();
     activateMock.mockImplementation(async () => {
-      getValidEntitlementMock.mockResolvedValue(proClaims);
-      getAiQuotaRemainingMock.mockResolvedValue(100);
-      hasStoredLicenseKeyMock.mockResolvedValue(true);
+      mockPro(100);
       return proClaims;
     });
     render(<Options />);
@@ -227,9 +207,7 @@ describe("Options page", () => {
     await user.click(screen.getByRole("button", { name: /^activate$/i }));
 
     expect(activateMock).toHaveBeenCalledWith("optia_live_abc");
-    await waitFor(() => {
-      expect(screen.getByText("Pro")).toBeInTheDocument();
-    });
+    await waitFor(() => expect(screen.getByText("Pro")).toBeInTheDocument());
     expect(screen.getByText(/100 of 100 remaining/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /deactivate/i })).toBeInTheDocument();
   });
@@ -250,21 +228,19 @@ describe("Options page", () => {
 
   it("deactivates and returns to the free state", async () => {
     const user = userEvent.setup();
-    getValidEntitlementMock.mockResolvedValue(proClaims);
-    getAiQuotaRemainingMock.mockResolvedValue(80);
-    hasStoredLicenseKeyMock.mockResolvedValue(true);
-    deactivateMock.mockResolvedValue();
+    mockPro(80);
+    deactivateMock.mockImplementation(async () => {
+      // After deactivation the entitlement is gone; next hydrate resolves free.
+      getValidEntitlementMock.mockResolvedValue(null);
+      hasStoredLicenseKeyMock.mockResolvedValue(false);
+    });
     render(<Options />);
 
-    await waitFor(() => {
-      expect(screen.getByText("Pro")).toBeInTheDocument();
-    });
+    await waitFor(() => expect(screen.getByText("Pro")).toBeInTheDocument());
     await user.click(screen.getByRole("button", { name: /deactivate/i }));
 
     expect(deactivateMock).toHaveBeenCalled();
-    await waitFor(() => {
-      expect(screen.getByText("Free")).toBeInTheDocument();
-    });
+    await waitFor(() => expect(screen.getByText("Free")).toBeInTheDocument());
     expect(screen.getByLabelText(/license key/i)).toBeInTheDocument();
   });
 });
