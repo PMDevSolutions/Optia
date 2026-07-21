@@ -7,7 +7,7 @@ interface ImageAltTextListProps {
   images: ImageData[];
   onGenerate: (imageSrc: string) => Promise<string>;
   onToast: (message: string) => void;
-  apiKeyMissing?: boolean;
+  aiDisabled?: boolean;
   className?: string;
 }
 
@@ -15,7 +15,7 @@ export function ImageAltTextList({
   images,
   onGenerate,
   onToast,
-  apiKeyMissing = false,
+  aiDisabled = false,
   className,
 }: ImageAltTextListProps) {
   const [altTexts, setAltTexts] = useState<Record<number, string>>({});
@@ -68,9 +68,9 @@ export function ImageAltTextList({
         Images Missing Alt Text
       </span>
 
-      {apiKeyMissing && (
+      {aiDisabled && (
         <p className="text-body-12 text-muted opacity-70">
-          Set up your OpenAI API key in options to use AI suggestions.
+          Add your OpenAI API key or activate Optia Pro in options to use AI suggestions.
         </p>
       )}
 
@@ -122,9 +122,9 @@ export function ImageAltTextList({
                   </button>
                   <button
                     onClick={() => handleGenerate(index, img.src)}
-                    disabled={isLoading || apiKeyMissing}
+                    disabled={isLoading || aiDisabled}
                     className="rounded-full p-1.5 text-muted hover:bg-surface-2 hover:text-ink transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-muted"
-                    title={apiKeyMissing ? "Set up API key in options" : "Generate alt text"}
+                    title={aiDisabled ? "Add an OpenAI API key or activate Optia Pro in options" : "Generate alt text"}
                   >
                     {isLoading ? (
                       <RefreshCw className="h-3.5 w-3.5 animate-spin" />

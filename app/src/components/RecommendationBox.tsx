@@ -7,7 +7,7 @@ interface RecommendationBoxProps {
   value: string;
   onRegenerate: () => Promise<string>;
   onToast: (message: string) => void;
-  apiKeyMissing?: boolean;
+  aiDisabled?: boolean;
   className?: string;
 }
 
@@ -16,7 +16,7 @@ export function RecommendationBox({
   value,
   onRegenerate,
   onToast,
-  apiKeyMissing = false,
+  aiDisabled = false,
   className,
 }: RecommendationBoxProps) {
   const [text, setText] = useState(value);
@@ -59,9 +59,9 @@ export function RecommendationBox({
           </button>
           <button
             onClick={handleRegenerate}
-            disabled={loading || apiKeyMissing}
+            disabled={loading || aiDisabled}
             className="rounded-full p-1.5 text-muted transition-colors hover:bg-surface-3 hover:text-ink disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-muted"
-            title={apiKeyMissing ? "Set up API key in options" : "Regenerate"}
+            title={aiDisabled ? "Add an OpenAI API key or activate Optia Pro in options" : "Regenerate"}
             aria-label="Regenerate"
           >
             <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
@@ -69,9 +69,9 @@ export function RecommendationBox({
         </div>
       </div>
       <p className="text-body text-ink">{text}</p>
-      {apiKeyMissing && (
+      {aiDisabled && (
         <p className="mt-2 text-body-12 text-faint">
-          Set up your OpenAI API key in options to use AI suggestions.
+          Add your OpenAI API key or activate Optia Pro in options to use AI suggestions.
         </p>
       )}
     </div>

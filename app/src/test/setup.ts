@@ -1,4 +1,13 @@
 import "@testing-library/jest-dom/vitest";
+import { webcrypto } from "node:crypto";
+
+// jsdom has no SubtleCrypto; jose needs WebCrypto (incl. Ed25519) for JWS verification
+if (!globalThis.crypto?.subtle) {
+  Object.defineProperty(globalThis, "crypto", {
+    value: webcrypto,
+    configurable: true,
+  });
+}
 
 // Mock chrome.storage API for tests
 const storage: Record<string, unknown> = {};
@@ -33,6 +42,7 @@ function createStorageMock(store: Record<string, unknown>) {
 const chromeStorageMock = {
   local: createStorageMock(storage),
   session: createStorageMock(sessionStorage),
+  onChanged: { addListener: vi.fn(), removeListener: vi.fn() },
 };
 
 Object.defineProperty(globalThis, "chrome", {
@@ -41,6 +51,14 @@ Object.defineProperty(globalThis, "chrome", {
     runtime: {
       sendMessage: vi.fn(),
       onMessage: { addListener: vi.fn() },
+      onInstalled: { addListener: vi.fn() },
+      onStartup: { addListener: vi.fn() },
+    },
+    alarms: {
+      create: vi.fn(),
+      clear: vi.fn().mockResolvedValue(true),
+      get: vi.fn().mockResolvedValue(undefined),
+      onAlarm: { addListener: vi.fn() },
     },
   },
   writable: true,

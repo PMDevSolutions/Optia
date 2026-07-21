@@ -1,3 +1,6 @@
+allowBuilds:
+  esbuild: true
+  sharp: true
 # Approve the dependencies allowed to run install/build scripts during
 # `pnpm install` (pnpm blocks dependency build scripts by default). This is
 # pnpm v10's documented mechanism — https://pnpm.io/settings#onlybuiltdependencies

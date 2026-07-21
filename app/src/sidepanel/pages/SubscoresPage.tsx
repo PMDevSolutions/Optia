@@ -8,6 +8,7 @@ import { SchemaDisplay } from "@/components/SchemaDisplay";
 import { Toast } from "@/components/ui/Toast";
 import { Footer } from "@/components/Footer";
 import { useStore } from "@/lib/store";
+import { useCanUseAI, isMeteredAiCall, useEntitlementStore } from "@/lib/entitlement-store";
 import {
   generateRecommendation,
   generateH2Suggestion,
@@ -48,6 +49,7 @@ function sortByPriority(checks: SEOCheck[]): SEOCheck[] {
 export function SubscoresPage() {
   const { analysis, activeCategory, setActiveCategory, apiKey, settings, toast, showToast, hideToast } =
     useStore();
+  const aiDisabled = !useCanUseAI();
 
   // Scroll to top when entering this page
   useEffect(() => {
@@ -66,6 +68,8 @@ export function SubscoresPage() {
   const failed = category.total - category.passed;
   const keyword = analysis.keyword;
   const sortedChecks = sortByPriority(category.checks);
+  // Generation still runs on the user's OpenAI key; the entitlement-gated AI
+  // proxy for keyless Pro users hooks in here when it lands.
   const noApiKey = !apiKey;
 
   const advancedOptions = settings.advancedMode
@@ -77,6 +81,13 @@ export function SubscoresPage() {
     : undefined;
 
   const rejectNoKey = () => Promise.reject(new Error("No API key configured"));
+
+  // Records metered (Pro-without-key) usage after a successful generation
+  const meterAi = async <T,>(generation: Promise<T>): Promise<T> => {
+    const result = await generation;
+    if (isMeteredAiCall()) void useEntitlementStore.getState().consumeAiQuota();
+    return result;
+  };
 
   const renderCheckRecommendation = (check: SEOCheck) => {
     if (check.status === "pass") return null;
@@ -90,21 +101,23 @@ export function SubscoresPage() {
               noApiKey
                 ? rejectNoKey
                 : (_index, h2Text) =>
-                    generateH2Suggestion(apiKey, h2Text, keyword, advancedOptions)
+                    meterAi(generateH2Suggestion(apiKey, h2Text, keyword, advancedOptions))
             }
             onRegenerateAll={
               noApiKey
                 ? () => rejectNoKey() as Promise<string[]>
                 : () =>
-                    generateAllH2Suggestions(
-                      apiKey,
-                      check.h2Recommendations!.map((h) => h.text),
-                      keyword,
-                      advancedOptions,
+                    meterAi(
+                      generateAllH2Suggestions(
+                        apiKey,
+                        check.h2Recommendations!.map((h) => h.text),
+                        keyword,
+                        advancedOptions,
+                      ),
                     )
             }
             onToast={onToast}
-            apiKeyMissing={noApiKey}
+            aiDisabled={aiDisabled}
           />
         </div>
       );
@@ -118,10 +131,10 @@ export function SubscoresPage() {
             onGenerate={
               noApiKey
                 ? rejectNoKey
-                : (src) => generateAltText(apiKey, src, keyword, advancedOptions)
+                : (src) => meterAi(generateAltText(apiKey, src, keyword, advancedOptions))
             }
             onToast={onToast}
-            apiKeyMissing={noApiKey}
+            aiDisabled={aiDisabled}
           />
         </div>
       );
@@ -174,10 +187,12 @@ export function SubscoresPage() {
               noApiKey
                 ? rejectNoKey
                 : () =>
-                    generateRecommendation(apiKey, check.id, keyword, context, advancedOptions)
+                    meterAi(
+                      generateRecommendation(apiKey, check.id, keyword, context, advancedOptions),
+                    )
             }
             onToast={onToast}
-            apiKeyMissing={noApiKey}
+            aiDisabled={aiDisabled}
           />
         </div>
       );

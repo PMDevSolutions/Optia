@@ -5,18 +5,26 @@ interface ToggleProps {
   onChange: (checked: boolean) => void;
   label?: string;
   id?: string;
+  disabled?: boolean;
 }
 
-export function Toggle({ checked, onChange, label, id }: ToggleProps) {
+export function Toggle({ checked, onChange, label, id, disabled = false }: ToggleProps) {
   const toggleId = id || label?.toLowerCase().replace(/\s+/g, "-");
   return (
-    <label htmlFor={toggleId} className="inline-flex items-center gap-3 cursor-pointer">
+    <label
+      htmlFor={toggleId}
+      className={cn(
+        "inline-flex items-center gap-3",
+        disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer",
+      )}
+    >
       <div className="relative">
         <input
           id={toggleId}
           type="checkbox"
           className="peer sr-only"
           checked={checked}
+          disabled={disabled}
           onChange={(e) => onChange(e.target.checked)}
         />
         <div

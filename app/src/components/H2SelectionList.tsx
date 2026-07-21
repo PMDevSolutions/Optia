@@ -14,7 +14,7 @@ interface H2SelectionListProps {
   onRegenerateOne: (index: number, h2Text: string) => Promise<string>;
   onRegenerateAll: () => Promise<string[]>;
   onToast: (message: string) => void;
-  apiKeyMissing?: boolean;
+  aiDisabled?: boolean;
   className?: string;
 }
 
@@ -23,7 +23,7 @@ export function H2SelectionList({
   onRegenerateOne,
   onRegenerateAll,
   onToast,
-  apiKeyMissing = false,
+  aiDisabled = false,
   className,
 }: H2SelectionListProps) {
   const [suggestions, setSuggestions] = useState<Record<number, string>>(() => {
@@ -135,17 +135,17 @@ export function H2SelectionList({
           variant="secondary"
           onClick={handleRegenerateAll}
           loading={loadingAll}
-          disabled={apiKeyMissing}
-          title={apiKeyMissing ? "Set up API key in options" : undefined}
+          disabled={aiDisabled}
+          title={aiDisabled ? "Add an OpenAI API key or activate Optia Pro in options" : undefined}
         >
           <Sparkles className="h-3 w-3" />
           Generate All
         </Button>
       </div>
 
-      {apiKeyMissing && (
+      {aiDisabled && (
         <p className="text-body-12 text-muted opacity-70">
-          Set up your OpenAI API key in options to use AI suggestions.
+          Add your OpenAI API key or activate Optia Pro in options to use AI suggestions.
         </p>
       )}
 
@@ -194,9 +194,9 @@ export function H2SelectionList({
                 </button>
                 <button
                   onClick={() => handleRegenerateOne(item.index, item.text)}
-                  disabled={isLoading || apiKeyMissing}
+                  disabled={isLoading || aiDisabled}
                   className="rounded-full p-1.5 text-muted hover:bg-surface-2 hover:text-ink transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-muted"
-                  title={apiKeyMissing ? "Set up API key in options" : "Regenerate"}
+                  title={aiDisabled ? "Add an OpenAI API key or activate Optia Pro in options" : "Regenerate"}
                 >
                   <RefreshCw
                     className={cn("h-3.5 w-3.5", isLoading && "animate-spin")}
