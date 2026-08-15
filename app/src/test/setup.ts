@@ -50,10 +50,14 @@ Object.defineProperty(globalThis, "chrome", {
     storage: chromeStorageMock,
     runtime: {
       sendMessage: vi.fn(),
+      openOptionsPage: vi.fn(),
       onMessage: { addListener: vi.fn() },
       onInstalled: { addListener: vi.fn() },
       onStartup: { addListener: vi.fn() },
     },
+    // NOTE: chrome.tabs is deliberately NOT mocked — dev-mode detection relies
+    // on `chrome.tabs === undefined`. Tab opening goes through @/lib/tabs,
+    // which tests mock instead.
     alarms: {
       create: vi.fn(),
       clear: vi.fn().mockResolvedValue(true),

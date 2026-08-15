@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { useStore } from "@/lib/store";
+import { useCheckoutStore } from "@/lib/checkout-store";
 import { useEntitlementStore } from "@/lib/entitlement-store";
 import { getSchemaRecommendations } from "@/lib/schema-recommendations";
 import { SubscoresPage } from "./SubscoresPage";
@@ -159,6 +160,7 @@ function setFreeAiLocked() {
 
 beforeEach(() => {
   vi.mocked(getSchemaRecommendations).mockReturnValue([]);
+  useCheckoutStore.setState({ paywallOpen: false, trigger: null, phase: "idle" });
   useEntitlementStore.setState({
     entitlementLoaded: true,
     isPro: false,
@@ -313,6 +315,58 @@ describe("SubscoresPage", () => {
         screen.queryByText(/Schema markup generation is an Optia Pro feature/i),
       ).not.toBeInTheDocument();
     });
+  });
+
+  // ── Over-quota prompt ──
+  describe("over-quota notice", () => {
+    it("shows the friendly prompt with an upgrade CTA when a free user runs out of AI", () => {
+      setFreeAiLocked();
+      useStore.setState({ analysis: mockAnalysis, activeCategory: "meta" });
+      render(<SubscoresPage />);
+
+      expect(screen.getByText(/used all 10 free ai generations/i)).toBeInTheDocument();
+      expect(screen.getByText(/resets/i)).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /upgrade to pro/i })).toBeInTheDocument();
+    });
+
+    it("does not show the prompt while free AI is still available", () => {
+      setFreeAiAvailable();
+      useStore.setState({ analysis: mockAnalysis, activeCategory: "meta" });
+      render(<SubscoresPage />);
+
+      expect(screen.queryByText(/free ai generations/i)).not.toBeInTheDocument();
+    });
+
+    it("shows reset timing without any upgrade CTA for an over-quota Pro user", () => {
+      useEntitlementStore.setState({
+        isPro: true,
+        tier: "pro",
+        quotaLimit: 1000,
+        aiQuotaRemaining: 0,
+        canUseSchema: true,
+      });
+      useStore.setState({ analysis: mockAnalysis, activeCategory: "meta" });
+      render(<SubscoresPage />);
+
+      expect(screen.getByText(/pro ai generations/i)).toBeInTheDocument();
+      expect(screen.queryByText(/upgrade/i)).not.toBeInTheDocument();
+    });
+  });
+
+  // ── Pro users never see upgrade surfaces ──
+  it("shows no upgrade text anywhere for a Pro user with quota available", () => {
+    useEntitlementStore.setState({
+      isPro: true,
+      tier: "pro",
+      quotaLimit: 1000,
+      aiQuotaRemaining: 500,
+      canUseSchema: true,
+    });
+    vi.mocked(getSchemaRecommendations).mockReturnValue([testSchema]);
+    useStore.setState({ analysis: schemaAnalysis, activeCategory: "meta" });
+    render(<SubscoresPage />);
+
+    expect(screen.queryByText(/upgrade/i)).not.toBeInTheDocument();
   });
 
   // ── AI regenerate widgets track useCanUseAI() ──

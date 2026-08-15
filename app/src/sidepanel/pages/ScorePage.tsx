@@ -4,8 +4,8 @@ import confetti from "canvas-confetti";
 import { ScoreGauge } from "@/components/ui/ScoreGauge";
 import { SummaryCard } from "@/components/SummaryCard";
 import { Footer } from "@/components/Footer";
+import { PanelHeader } from "@/components/PanelHeader";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
-import { OptiaWordmark } from "@/components/ui/Logo";
 import { useStore } from "@/lib/store";
 import type { CheckCategory } from "@/types/seo";
 
@@ -52,10 +52,9 @@ export function ScorePage() {
   return (
     <div className="flex min-h-screen flex-col bg-canvas p-3">
       {/* App header */}
-      <header className="mb-3 flex items-center justify-between">
-        <OptiaWordmark />
+      <PanelHeader>
         <ThemeToggle />
-      </header>
+      </PanelHeader>
 
       {/* Back / new analysis */}
       <button

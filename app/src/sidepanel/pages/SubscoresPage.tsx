@@ -7,6 +7,8 @@ import { ImageAltTextList } from "@/components/ImageAltTextList";
 import { SchemaDisplay } from "@/components/SchemaDisplay";
 import { Toast } from "@/components/ui/Toast";
 import { Footer } from "@/components/Footer";
+import { OverQuotaNotice } from "@/components/paywall/OverQuotaNotice";
+import { ProUpsell } from "@/components/paywall/ProUpsell";
 import { useStore } from "@/lib/store";
 import { useCanUseAI, useEntitlementStore } from "@/lib/entitlement-store";
 import {
@@ -17,20 +19,6 @@ import {
 } from "@/lib/ai";
 import { getSchemaRecommendations } from "@/lib/schema-recommendations";
 import type { SEOCheck } from "@/types/seo";
-
-/** Friendly upsell shown in place of a Pro-gated feature for free users. */
-function ProUpsell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="mt-3 rounded-card border border-border bg-surface-2 p-3">
-      <div className="mb-1 flex items-center gap-2">
-        <span className="rounded-pill bg-brand px-2 py-0.5 text-[11px] font-medium text-brand-fg">
-          Pro
-        </span>
-      </div>
-      <p className="text-body-12 text-muted">{children}</p>
-    </div>
-  );
-}
 
 // Triangle icons for summary pill
 function TriangleUpIcon({ className }: { className?: string }) {
@@ -137,8 +125,8 @@ export function SubscoresPage() {
       if (!canUseSchema) {
         return (
           <ProUpsell>
-            Schema markup generation is an Optia Pro feature. Activate a license in options to
-            generate structured data for this page.
+            Schema markup generation is an Optia Pro feature. Upgrade to generate structured data
+            for this page.
           </ProUpsell>
         );
       }
@@ -226,6 +214,9 @@ export function SubscoresPage() {
             </span>
           </div>
         </div>
+
+        {/* Monthly AI allowance exhausted */}
+        <OverQuotaNotice />
 
         {/* Check items — flat list with dividers */}
         <div className="flex flex-col">
