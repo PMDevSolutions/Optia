@@ -18,6 +18,8 @@ import {
 } from "@/lib/storage";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Onboarding } from "@/components/Onboarding";
+import { PaywallModal } from "@/components/paywall/PaywallModal";
+import { useCheckoutStore } from "@/lib/checkout-store";
 import { Toast } from "@/components/ui/Toast";
 import { SetupPage } from "./pages/SetupPage";
 import { LoadingPage } from "./pages/LoadingPage";
@@ -210,7 +212,11 @@ export default function App() {
 
   useEffect(() => {
     loadApiKey();
-    void hydrateEntitlement();
+    void hydrateEntitlement().then(() => {
+      // After entitlement state is known, pick up any checkout that was paid
+      // for while the panel was closed and finish the claim.
+      void useCheckoutStore.getState().resumePendingCheckout();
+    });
   }, [loadApiKey, hydrateEntitlement]);
 
   // Register this tab with the service worker for per-tab panel scoping
@@ -482,6 +488,7 @@ export default function App() {
     <ErrorBoundary>
       <div className="min-h-screen bg-canvas">
         <Onboarding />
+        <PaywallModal />
         {view === "setup" && <SetupPage onAnalyze={handleAnalyze} />}
         {view === "loading" && <LoadingPage />}
         {view === "score" && <ScorePage />}

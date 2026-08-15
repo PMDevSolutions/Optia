@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { useStore } from "@/lib/store";
+import { useEntitlementStore } from "@/lib/entitlement-store";
 import { ScorePage } from "./ScorePage";
 import type { SEOAnalysis, PageSEOData } from "@/types/seo";
 
@@ -56,6 +57,7 @@ const mockAnalysis: SEOAnalysis = {
 };
 
 beforeEach(() => {
+  useEntitlementStore.setState({ entitlementLoaded: false, isPro: false, tier: "free" });
   useStore.setState({
     view: "score",
     analysis: null,
@@ -120,6 +122,20 @@ describe("ScorePage", () => {
     expect(
       screen.getByRole("button", { name: /new analysis/i }),
     ).toBeInTheDocument();
+  });
+
+  it("shows the header Upgrade pill for free users", () => {
+    useEntitlementStore.setState({ entitlementLoaded: true, isPro: false });
+    useStore.setState({ analysis: mockAnalysis });
+    render(<ScorePage />);
+    expect(screen.getByRole("button", { name: /upgrade/i })).toBeInTheDocument();
+  });
+
+  it("hides the header Upgrade pill for Pro users", () => {
+    useEntitlementStore.setState({ entitlementLoaded: true, isPro: true, tier: "pro" });
+    useStore.setState({ analysis: mockAnalysis });
+    render(<ScorePage />);
+    expect(screen.queryByRole("button", { name: /upgrade/i })).not.toBeInTheDocument();
   });
 
   it("shows warning banner when fetchWarnings present", () => {

@@ -25,6 +25,7 @@ function setProEntitlement() {
 
 beforeEach(() => {
   useEntitlementStore.setState({
+    entitlementLoaded: false,
     isPro: false,
     tier: "free",
     expiresAt: null,
@@ -264,13 +265,27 @@ describe("SetupPage", () => {
     expect(screen.queryByLabelText(/page type/i)).not.toBeInTheDocument();
   });
 
-  it("shows the plan status row in the settings panel", async () => {
+  it("shows the plan status row with free quota and an upgrade link in the settings panel", async () => {
+    useEntitlementStore.setState({ freeAiRemaining: 7, freeAiLimit: 25 });
     const { userEvent } = await import("@testing-library/user-event");
     const user = userEvent.setup();
     render(<SetupPage onAnalyze={onAnalyze} />);
     await user.click(screen.getByRole("button", { name: /settings/i }));
     expect(screen.getByText("Plan")).toBeInTheDocument();
     expect(screen.getByText("Free")).toBeInTheDocument();
-    expect(screen.getByText(/manage your license/i)).toBeInTheDocument();
+    expect(screen.getByText(/7 of 25 AI uses left/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^upgrade$/i })).toBeInTheDocument();
+  });
+
+  it("shows the persistent Upgrade pill in the header for free users only", () => {
+    useEntitlementStore.setState({ entitlementLoaded: true });
+    const { unmount } = render(<SetupPage onAnalyze={onAnalyze} />);
+    expect(screen.getByRole("button", { name: /upgrade/i })).toBeInTheDocument();
+    unmount();
+
+    setProEntitlement();
+    useEntitlementStore.setState({ entitlementLoaded: true });
+    render(<SetupPage onAnalyze={onAnalyze} />);
+    expect(screen.queryByRole("button", { name: /upgrade/i })).not.toBeInTheDocument();
   });
 });
