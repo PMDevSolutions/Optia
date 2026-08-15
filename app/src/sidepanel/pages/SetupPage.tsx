@@ -4,10 +4,12 @@ import { Select } from "@/components/ui/Select";
 import { Toggle } from "@/components/ui/Toggle";
 import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
-import { OptiaWordmark } from "@/components/ui/Logo";
 import { Footer } from "@/components/Footer";
+import { PanelHeader } from "@/components/PanelHeader";
 import { useStore } from "@/lib/store";
+import { useCheckoutStore } from "@/lib/checkout-store";
 import { useEntitlementStore } from "@/lib/entitlement-store";
+import { FREE_AI_LIMIT } from "@/lib/plans";
 import { SUPPORTED_LANGUAGES } from "@/lib/languages";
 import { getKeywordForUrl, getAdvancedOptions } from "@/lib/storage";
 import { Settings, X } from "lucide-react";
@@ -92,6 +94,9 @@ export function SetupPage({ onAnalyze }: SetupPageProps) {
   const canUseMultiLanguage = useEntitlementStore((state) => state.canUseMultiLanguage);
   const canBringOwnKey = useEntitlementStore((state) => state.canBringOwnKey);
   const expiresAt = useEntitlementStore((state) => state.expiresAt);
+  const freeAiRemaining = useEntitlementStore((state) => state.freeAiRemaining);
+  const freeAiLimit = useEntitlementStore((state) => state.freeAiLimit);
+  const openPaywall = useCheckoutStore((state) => state.openPaywall);
   const [showSettings, setShowSettings] = useState(false);
   const [localApiKey, setLocalApiKey] = useState(apiKey);
   const [settingsSaved, setSettingsSaved] = useState(false);
@@ -160,20 +165,17 @@ export function SetupPage({ onAnalyze }: SetupPageProps) {
   return (
     <div className="flex min-h-screen flex-col bg-canvas p-3">
       {/* App header */}
-      <header className="mb-3 flex items-center justify-between">
-        <OptiaWordmark />
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => setShowSettings(!showSettings)}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface text-muted transition-colors hover:bg-surface-2 hover:text-ink"
-            aria-label="Settings"
-          >
-            <Settings className="h-[18px] w-[18px]" />
-          </button>
-          <ThemeToggle />
-        </div>
-      </header>
+      <PanelHeader>
+        <button
+          type="button"
+          onClick={() => setShowSettings(!showSettings)}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface text-muted transition-colors hover:bg-surface-2 hover:text-ink"
+          aria-label="Settings"
+        >
+          <Settings className="h-[18px] w-[18px]" />
+        </button>
+        <ThemeToggle />
+      </PanelHeader>
 
       {/* Inline settings panel */}
       {showSettings && (
@@ -264,11 +266,22 @@ export function SetupPage({ onAnalyze }: SetupPageProps) {
                 </span>
               )}
             </div>
-            <span className="text-body-12 text-muted">
-              {isPro && expiresAt
-                ? `renews by ${new Date(expiresAt).toLocaleDateString()}`
-                : "Manage your license in extension options"}
-            </span>
+            {isPro ? (
+              <span className="text-body-12 text-muted">
+                {expiresAt ? `active until ${new Date(expiresAt).toLocaleDateString()}` : ""}
+              </span>
+            ) : (
+              <span className="flex items-center gap-2 text-body-12 text-muted">
+                {freeAiRemaining ?? FREE_AI_LIMIT} of {freeAiLimit ?? FREE_AI_LIMIT} AI uses left
+                <button
+                  type="button"
+                  onClick={() => openPaywall("settings")}
+                  className="font-semibold text-brand underline-offset-2 transition-colors hover:underline"
+                >
+                  Upgrade
+                </button>
+              </span>
+            )}
           </div>
         </div>
       )}
