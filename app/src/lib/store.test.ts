@@ -14,6 +14,8 @@ beforeEach(() => {
     },
     activeCategory: null,
     apiKey: "",
+    useOwnKey: true,
+    apiKeyInvalid: false,
     error: null,
     toast: { visible: false, message: "" },
   });
@@ -86,6 +88,40 @@ describe("useStore", () => {
     await useStore.getState().loadApiKey();
 
     expect(useStore.getState().apiKey).toBe("sk-loaded");
+  });
+
+  it("setApiKey clears a prior key rejection", async () => {
+    useStore.setState({ apiKeyInvalid: true });
+
+    await useStore.getState().setApiKey("sk-fresh");
+
+    expect(useStore.getState().apiKeyInvalid).toBe(false);
+  });
+
+  it("setUseOwnKey persists the preference and clears a prior key rejection", async () => {
+    useStore.setState({ apiKeyInvalid: true });
+
+    await useStore.getState().setUseOwnKey(false);
+
+    expect(useStore.getState().useOwnKey).toBe(false);
+    expect(useStore.getState().apiKeyInvalid).toBe(false);
+    expect(chrome.storage.local.set).toHaveBeenCalledWith({ use_own_key: false });
+  });
+
+  it("loadApiKey treats an unset use_own_key as true", async () => {
+    useStore.setState({ useOwnKey: false });
+
+    await useStore.getState().loadApiKey();
+
+    expect(useStore.getState().useOwnKey).toBe(true);
+  });
+
+  it("loadApiKey respects a stored use_own_key: false", async () => {
+    await chrome.storage.local.set({ use_own_key: false });
+
+    await useStore.getState().loadApiKey();
+
+    expect(useStore.getState().useOwnKey).toBe(false);
   });
 
   it("loadApiKey also loads default_language into settings", async () => {

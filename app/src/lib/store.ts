@@ -14,11 +14,17 @@ interface ToastState {
 
 interface Store extends AppState {
   toast: ToastState;
+  /** Pro preference: route AI through the user's own Anthropic key. Unset in storage means true. */
+  useOwnKey: boolean;
+  /** Session-scoped: the stored key was rejected by Anthropic (401/403). Never persisted. */
+  apiKeyInvalid: boolean;
   setView: (view: AppState["view"]) => void;
   setAnalysis: (analysis: SEOAnalysis) => void;
   setSettings: (settings: Partial<AnalysisSettings>) => void;
   setActiveCategory: (category: CheckCategory | null) => void;
   setApiKey: (key: string) => void;
+  setUseOwnKey: (value: boolean) => Promise<void>;
+  setApiKeyInvalid: (value: boolean) => void;
   setError: (error: string | null) => void;
   showToast: (message: string) => void;
   hideToast: () => void;
@@ -41,6 +47,8 @@ export const useStore = create<Store>((set) => ({
   settings: { ...defaultSettings },
   activeCategory: null,
   apiKey: "",
+  useOwnKey: true,
+  apiKeyInvalid: false,
   error: null,
   toast: { visible: false, message: "" },
 
@@ -52,14 +60,24 @@ export const useStore = create<Store>((set) => ({
     set({ activeCategory: category, view: category ? "subscores" : "score" }),
   setApiKey: async (key) => {
     await setStorageItem("anthropic_api_key", key);
-    set({ apiKey: key });
+    // A new key is fresh trust — clear any prior rejection.
+    set({ apiKey: key, apiKeyInvalid: false });
   },
+  setUseOwnKey: async (value) => {
+    await setStorageItem("use_own_key", value);
+    // Turning the toggle is a deliberate retry — clear any prior rejection.
+    set({ useOwnKey: value, apiKeyInvalid: false });
+  },
+  setApiKeyInvalid: (value) => set({ apiKeyInvalid: value }),
   setError: (error) => set({ error }),
   showToast: (message) => set({ toast: { visible: true, message } }),
   hideToast: () => set({ toast: { visible: false, message: "" } }),
   loadApiKey: async () => {
     const key = await getStorageItem<string>("anthropic_api_key");
     if (key) set({ apiKey: key });
+    const useOwn = await getStorageItem<boolean>("use_own_key");
+    // Unset means true: a stored key defaults to being used (preserves pre-toggle behavior).
+    set({ useOwnKey: useOwn !== false });
     const lang = await getStorageItem<string>("default_language");
     if (lang) set((state) => ({ settings: { ...state.settings, language: lang } }));
   },

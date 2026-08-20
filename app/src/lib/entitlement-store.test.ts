@@ -93,7 +93,7 @@ function resetEntitlementState() {
 
 beforeEach(() => {
   resetEntitlementState();
-  useStore.setState({ apiKey: "" });
+  useStore.setState({ apiKey: "", useOwnKey: true, apiKeyInvalid: false });
   hasStoredLicenseKeyMock.mockResolvedValue(false);
   getValidEntitlementMock.mockResolvedValue(null);
   getFreeAiQuotaMock.mockResolvedValue(null);
@@ -209,6 +209,27 @@ describe("aiStatusNow (computeAiStatus truth table)", () => {
     useEntitlementStore.setState({ isPro: true, aiQuotaRemaining: 0, quotaLimit: 100 });
 
     expect(aiStatusNow()).toEqual({ mode: "locked", remaining: 0, limit: 100 });
+  });
+
+  it("Pro + own key + toggle off + quota remaining → pro (metered)", () => {
+    useStore.setState({ apiKey: "sk-own", useOwnKey: false });
+    useEntitlementStore.setState({ isPro: true, aiQuotaRemaining: 5, quotaLimit: 100 });
+
+    expect(aiStatusNow()).toEqual({ mode: "pro", remaining: 5, limit: 100 });
+  });
+
+  it("Pro + own key + toggle off + quota exhausted → locked", () => {
+    useStore.setState({ apiKey: "sk-own", useOwnKey: false });
+    useEntitlementStore.setState({ isPro: true, aiQuotaRemaining: 0, quotaLimit: 100 });
+
+    expect(aiStatusNow()).toEqual({ mode: "locked", remaining: 0, limit: 100 });
+  });
+
+  it("Pro + rejected key → pro (degrades to the metered proxy)", () => {
+    useStore.setState({ apiKey: "sk-own", apiKeyInvalid: true });
+    useEntitlementStore.setState({ isPro: true, aiQuotaRemaining: 5, quotaLimit: 100 });
+
+    expect(aiStatusNow()).toEqual({ mode: "pro", remaining: 5, limit: 100 });
   });
 
   it("free + own key → free (a stray key never grants byok)", () => {
@@ -443,6 +464,10 @@ describe("openBillingPortal", () => {
 });
 
 describe("initEntitlementSync", () => {
+  // Captured by the first test; syncInitialized is module-level so later tests
+  // can't re-register (and clearAllMocks wipes addListener's call history).
+  let capturedListener: Parameters<typeof chrome.storage.onChanged.addListener>[0];
+
   it("re-hydrates on watched local key changes, and is idempotent", () => {
     initEntitlementSync();
     initEntitlementSync(); // idempotent: only one listener is ever registered
@@ -450,6 +475,7 @@ describe("initEntitlementSync", () => {
     expect(addListener).toHaveBeenCalledTimes(1);
 
     const listener = addListener.mock.calls[0][0];
+    capturedListener = listener;
     getValidEntitlementMock.mockResolvedValue(null);
 
     // Each of the four watched keys re-triggers hydration.
@@ -464,5 +490,44 @@ describe("initEntitlementSync", () => {
     listener({ unrelated_key: { newValue: 1 } }, "local");
     listener({ [ENTITLEMENT_TOKEN_KEY]: { newValue: "x" } }, "session");
     expect(getValidEntitlementMock).not.toHaveBeenCalled();
+  });
+
+  it("mirrors anthropic_api_key changes into the app store and clears a rejection", () => {
+    useStore.setState({ apiKey: "old", apiKeyInvalid: true });
+
+    capturedListener({ anthropic_api_key: { newValue: "sk-new" } }, "local");
+
+    expect(useStore.getState().apiKey).toBe("sk-new");
+    expect(useStore.getState().apiKeyInvalid).toBe(false);
+    // A pure BYOK-settings change must not re-hydrate the entitlement.
+    expect(getValidEntitlementMock).not.toHaveBeenCalled();
+  });
+
+  it("mirrors a key removal as an empty key", () => {
+    useStore.setState({ apiKey: "old" });
+
+    capturedListener({ anthropic_api_key: { oldValue: "old" } }, "local");
+
+    expect(useStore.getState().apiKey).toBe("");
+  });
+
+  it("mirrors use_own_key changes, treating removal as true", () => {
+    useStore.setState({ useOwnKey: true });
+
+    capturedListener({ use_own_key: { newValue: false } }, "local");
+    expect(useStore.getState().useOwnKey).toBe(false);
+
+    capturedListener({ use_own_key: { oldValue: false } }, "local");
+    expect(useStore.getState().useOwnKey).toBe(true);
+  });
+
+  it("ignores BYOK-settings changes outside the local area", () => {
+    useStore.setState({ apiKey: "old", useOwnKey: true });
+
+    capturedListener({ anthropic_api_key: { newValue: "sk-new" } }, "session");
+    capturedListener({ use_own_key: { newValue: false } }, "session");
+
+    expect(useStore.getState().apiKey).toBe("old");
+    expect(useStore.getState().useOwnKey).toBe(true);
   });
 });
