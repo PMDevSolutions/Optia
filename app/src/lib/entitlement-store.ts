@@ -210,6 +210,8 @@ export interface AiStatus {
 
 interface AiInputs {
   apiKey: string;
+  useOwnKey: boolean;
+  apiKeyInvalid: boolean;
   isPro: boolean;
   aiQuotaRemaining: number;
   quotaLimit: number;
@@ -218,7 +220,11 @@ interface AiInputs {
 }
 
 function computeAiStatus(i: AiInputs): AiStatus {
-  if (i.isPro && i.apiKey) return { mode: "byok", remaining: null, limit: null };
+  // BYOK needs an explicit opt-in (useOwnKey, default true) and a key Anthropic
+  // hasn't rejected this session — otherwise a Pro user degrades to the metered proxy.
+  if (i.isPro && i.apiKey && i.useOwnKey && !i.apiKeyInvalid) {
+    return { mode: "byok", remaining: null, limit: null };
+  }
   if (i.isPro) {
     return i.aiQuotaRemaining > 0
       ? { mode: "pro", remaining: i.aiQuotaRemaining, limit: i.quotaLimit }
@@ -233,12 +239,23 @@ function computeAiStatus(i: AiInputs): AiStatus {
 
 export function useAiStatus(): AiStatus {
   const apiKey = useStore((s) => s.apiKey);
+  const useOwnKey = useStore((s) => s.useOwnKey);
+  const apiKeyInvalid = useStore((s) => s.apiKeyInvalid);
   const isPro = useEntitlementStore((s) => s.isPro);
   const aiQuotaRemaining = useEntitlementStore((s) => s.aiQuotaRemaining);
   const quotaLimit = useEntitlementStore((s) => s.quotaLimit);
   const freeAiRemaining = useEntitlementStore((s) => s.freeAiRemaining);
   const freeAiLimit = useEntitlementStore((s) => s.freeAiLimit);
-  return computeAiStatus({ apiKey, isPro, aiQuotaRemaining, quotaLimit, freeAiRemaining, freeAiLimit });
+  return computeAiStatus({
+    apiKey,
+    useOwnKey,
+    apiKeyInvalid,
+    isPro,
+    aiQuotaRemaining,
+    quotaLimit,
+    freeAiRemaining,
+    freeAiLimit,
+  });
 }
 
 export function useCanUseAI(): boolean {
@@ -248,8 +265,11 @@ export function useCanUseAI(): boolean {
 /** Non-reactive Ai status for imperative call sites (async handlers). */
 export function aiStatusNow(): AiStatus {
   const e = useEntitlementStore.getState();
+  const s = useStore.getState();
   return computeAiStatus({
-    apiKey: useStore.getState().apiKey,
+    apiKey: s.apiKey,
+    useOwnKey: s.useOwnKey,
+    apiKeyInvalid: s.apiKeyInvalid,
     isPro: e.isPro,
     aiQuotaRemaining: e.aiQuotaRemaining,
     quotaLimit: e.quotaLimit,
@@ -274,6 +294,18 @@ export function initEntitlementSync(): void {
     if (area !== "local") return;
     if (watched.some((key) => changes[key])) {
       void useEntitlementStore.getState().hydrateEntitlement();
+    }
+    // Mirror BYOK settings written by other contexts (e.g. the options page
+    // writes chrome.storage directly) into the app store. setState — not
+    // setApiKey/setUseOwnKey — so we never echo a write back into storage.
+    if (changes["anthropic_api_key"]) {
+      useStore.setState({
+        apiKey: (changes["anthropic_api_key"].newValue as string | undefined) ?? "",
+        apiKeyInvalid: false,
+      });
+    }
+    if (changes["use_own_key"]) {
+      useStore.setState({ useOwnKey: changes["use_own_key"].newValue !== false });
     }
   });
 }

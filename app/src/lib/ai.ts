@@ -30,11 +30,61 @@ export class AiUnavailableError extends Error {
 /** Locked-state message tailored to the tier so it never dead-ends the user. */
 function lockedError(): AiUnavailableError {
   const isPro = useEntitlementStore.getState().isPro;
+  if (!isPro) {
+    return new AiUnavailableError(
+      "You've used your free AI recommendations for this month. Upgrade to Optia Pro for more.",
+    );
+  }
+  const { apiKey, useOwnKey, apiKeyInvalid } = useStore.getState();
+  if (apiKeyInvalid) {
+    return new AiUnavailableError(
+      "You've reached your monthly AI limit and your Anthropic key was rejected. Update your key in settings for unlimited AI.",
+    );
+  }
+  if (apiKey && !useOwnKey) {
+    return new AiUnavailableError(
+      "You've reached your monthly AI limit. Turn on 'Use my Anthropic key' in settings for unlimited AI.",
+    );
+  }
   return new AiUnavailableError(
-    isPro
-      ? "You've reached your monthly AI limit. Add your own Anthropic key in options for unlimited AI."
-      : "You've used your free AI recommendations for this month. Upgrade to Optia Pro for more.",
+    "You've reached your monthly AI limit. Add your own Anthropic key in options for unlimited AI.",
   );
+}
+
+/** Anthropic rejected the credential (same duck-typing as completeWithRetry). */
+function isAuthError(err: unknown): boolean {
+  const status = (err as { status?: number } | null)?.status;
+  return status === 401 || status === 403;
+}
+
+/**
+ * Runs a BYOK direct call; if Anthropic rejects the key (401/403), flags the key
+ * invalid (so computeAiStatus degrades byok → pro for later calls), surfaces one
+ * toast, and gracefully falls back to the hosted proxy for this request.
+ */
+async function runDirectWithFallback(
+  direct: () => Promise<string>,
+  proxy: () => Promise<string>,
+): Promise<string> {
+  try {
+    return await direct();
+  } catch (err) {
+    if (!isAuthError(err)) throw err;
+    const store = useStore.getState();
+    if (!store.apiKeyInvalid) {
+      // Guard: generate-all runs concurrently — flag and toast only once.
+      store.setApiKeyInvalid(true);
+      store.showToast(
+        "Your Anthropic API key was rejected — using Optia's hosted AI instead. Check your key in settings.",
+      );
+    }
+    if (aiStatusNow().mode === "locked") {
+      throw new AiUnavailableError(
+        "Your Anthropic API key was rejected and your monthly Optia AI quota is used up. Update your key in settings.",
+      );
+    }
+    return proxy();
+  }
 }
 
 async function runProxy(
@@ -74,12 +124,16 @@ export async function generateRecommendation(
   const status = aiStatusNow();
   if (status.mode === "locked") throw lockedError();
   if (status.mode === "byok") {
-    return generateRecommendationDirect(
-      useStore.getState().apiKey,
-      checkId,
-      keyword,
-      context,
-      advancedOptions,
+    return runDirectWithFallback(
+      () =>
+        generateRecommendationDirect(
+          useStore.getState().apiKey,
+          checkId,
+          keyword,
+          context,
+          advancedOptions,
+        ),
+      () => runProxy(checkId, keyword, context, true),
     );
   }
   return runProxy(checkId, keyword, context, status.mode === "pro");
@@ -93,7 +147,10 @@ export async function generateH2Suggestion(
   const status = aiStatusNow();
   if (status.mode === "locked") throw lockedError();
   if (status.mode === "byok") {
-    return generateH2SuggestionDirect(useStore.getState().apiKey, h2Text, keyword, advancedOptions);
+    return runDirectWithFallback(
+      () => generateH2SuggestionDirect(useStore.getState().apiKey, h2Text, keyword, advancedOptions),
+      () => runProxy("h2-keyword", keyword, h2Text, true),
+    );
   }
   return runProxy("h2-keyword", keyword, h2Text, status.mode === "pro");
 }
@@ -114,7 +171,10 @@ export async function generateAltText(
   const status = aiStatusNow();
   if (status.mode === "locked") throw lockedError();
   if (status.mode === "byok") {
-    return generateAltTextDirect(useStore.getState().apiKey, imageSrc, keyword, advancedOptions);
+    return runDirectWithFallback(
+      () => generateAltTextDirect(useStore.getState().apiKey, imageSrc, keyword, advancedOptions),
+      () => runProxy("images-alt", keyword, imageSrc, true),
+    );
   }
   return runProxy("images-alt", keyword, imageSrc, status.mode === "pro");
 }

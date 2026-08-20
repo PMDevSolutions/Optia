@@ -3,7 +3,9 @@ import { ChevronDown } from "lucide-react";
 import { SUPPORTED_LANGUAGES } from "@/lib/languages";
 import { OptiaWordmark } from "@/components/ui/Logo";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
-import { useEntitlementStore } from "@/lib/entitlement-store";
+import { Toggle } from "@/components/ui/Toggle";
+import { useAiStatus, useEntitlementStore } from "@/lib/entitlement-store";
+import { useStore } from "@/lib/store";
 
 /** Opens an external URL in a new tab (extension page or dev preview). */
 function openExternalUrl(url: string) {
@@ -29,6 +31,7 @@ function LicenseCard() {
   const deactivateLicense = useEntitlementStore((state) => state.deactivateLicense);
   const openBillingPortal = useEntitlementStore((state) => state.openBillingPortal);
   const hydrateEntitlement = useEntitlementStore((state) => state.hydrateEntitlement);
+  const aiStatus = useAiStatus();
   const [licenseKey, setLicenseKey] = useState("");
   const [deactivating, setDeactivating] = useState(false);
 
@@ -79,10 +82,16 @@ function LicenseCard() {
               <> Your entitlement auto-renews by {new Date(expiresAt).toLocaleDateString()}.</>
             )}
           </p>
-          {quotaLimit > 0 && (
+          {aiStatus.mode === "byok" ? (
             <p className="text-body-12 text-muted">
-              AI quota this month: {aiQuotaRemaining} of {quotaLimit} remaining.
+              AI: using your Anthropic key — not metered.
             </p>
+          ) : (
+            quotaLimit > 0 && (
+              <p className="text-body-12 text-muted">
+                AI quota this month: {aiQuotaRemaining} of {quotaLimit} remaining.
+              </p>
+            )
           )}
           {billingPortalError && (
             <p role="alert" className="text-body text-poor">
@@ -161,15 +170,20 @@ export function Options() {
   const canUseMultiLanguage = useEntitlementStore((s) => s.canUseMultiLanguage);
   const hydrateEntitlement = useEntitlementStore((s) => s.hydrateEntitlement);
   const [apiKey, setApiKey] = useState("");
+  const [useOwnKey, setUseOwnKey] = useState(true);
   const [language, setLanguage] = useState("en");
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     void hydrateEntitlement();
+    // Hydrate the app store too so useAiStatus() reflects reality in this context.
+    void useStore.getState().loadApiKey();
     chrome.storage.local
-      .get(["anthropic_api_key", "default_language"])
+      .get(["anthropic_api_key", "use_own_key", "default_language"])
       .then((result) => {
         if (result.anthropic_api_key) setApiKey(result.anthropic_api_key);
+        // Unset means true: a stored key defaults to being used.
+        setUseOwnKey(result.use_own_key !== false);
         if (result.default_language) setLanguage(result.default_language);
       });
   }, [hydrateEntitlement]);
@@ -218,6 +232,24 @@ export function Options() {
                 <p className="text-body-12 text-faint">
                   Stored locally in your browser — only ever sent directly to Anthropic.
                 </p>
+                <div className="mt-2 flex flex-col gap-1.5">
+                  <Toggle
+                    id="use-own-key"
+                    label="Use my Anthropic key"
+                    checked={useOwnKey}
+                    onChange={(checked) => {
+                      // Toggles act immediately (no Save); the storage watcher
+                      // propagates the change to any open sidepanel.
+                      setUseOwnKey(checked);
+                      void chrome.storage.local.set({ use_own_key: checked });
+                    }}
+                  />
+                  <p className="text-body-12 text-muted">
+                    {useOwnKey
+                      ? "AI requests go directly to Anthropic with your key — unlimited, not metered."
+                      : "AI runs through Optia's hosted service and counts toward your monthly Pro quota."}
+                  </p>
+                </div>
               </div>
             ) : (
               <div className="flex flex-col gap-2">

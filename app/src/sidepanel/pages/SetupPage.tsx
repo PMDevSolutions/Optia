@@ -8,7 +8,7 @@ import { Footer } from "@/components/Footer";
 import { PanelHeader } from "@/components/PanelHeader";
 import { useStore } from "@/lib/store";
 import { useCheckoutStore } from "@/lib/checkout-store";
-import { useEntitlementStore } from "@/lib/entitlement-store";
+import { useAiStatus, useEntitlementStore } from "@/lib/entitlement-store";
 import { FREE_AI_LIMIT } from "@/lib/plans";
 import { SUPPORTED_LANGUAGES } from "@/lib/languages";
 import { getKeywordForUrl, getAdvancedOptions } from "@/lib/storage";
@@ -88,7 +88,9 @@ function useProgrammaticInputSync(
 }
 
 export function SetupPage({ onAnalyze }: SetupPageProps) {
-  const { settings, setSettings, apiKey, setApiKey, error } = useStore();
+  const { settings, setSettings, apiKey, setApiKey, useOwnKey, setUseOwnKey, apiKeyInvalid, error } =
+    useStore();
+  const aiStatus = useAiStatus();
   const isPro = useEntitlementStore((state) => state.isPro);
   const canUseAdvancedOptions = useEntitlementStore((state) => state.canUseAdvancedOptions);
   const canUseMultiLanguage = useEntitlementStore((state) => state.canUseMultiLanguage);
@@ -205,6 +207,24 @@ export function SetupPage({ onAnalyze }: SetupPageProps) {
                 onChange={(e) => setLocalApiKey(e.target.value)}
                 className="w-full rounded-input border border-border bg-surface px-3.5 py-2.5 text-body text-ink placeholder:text-faint outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/30"
               />
+              {apiKeyInvalid && (
+                <p role="alert" className="text-body-12 text-poor">
+                  This key was rejected by Anthropic. AI is falling back to Optia's hosted service.
+                </p>
+              )}
+              <div className="mt-1 flex flex-col gap-1.5">
+                <Toggle
+                  id="settings-use-own-key"
+                  label="Use my Anthropic key"
+                  checked={useOwnKey}
+                  onChange={(checked) => void setUseOwnKey(checked)}
+                />
+                <p className="text-body-12 text-muted">
+                  {useOwnKey
+                    ? "AI requests go directly to Anthropic with your key — unlimited, not metered."
+                    : "AI runs through Optia's hosted service and counts toward your monthly Pro quota."}
+                </p>
+              </div>
             </div>
           ) : (
             <div className="flex flex-col gap-1.5">
@@ -283,6 +303,9 @@ export function SetupPage({ onAnalyze }: SetupPageProps) {
               </span>
             )}
           </div>
+          {aiStatus.mode === "byok" && (
+            <p className="text-body-12 text-muted">AI: using your key — not metered.</p>
+          )}
         </div>
       )}
 

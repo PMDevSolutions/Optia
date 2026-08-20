@@ -56,15 +56,22 @@ const advancedOptions: AdvancedOptions = {
 // applyProxyQuota is a store action; we swap it for a spy each test so we can
 // assert the recorded (quota, subject) without touching real storage.
 let applyProxyQuotaMock: ReturnType<typeof vi.fn>;
+let showToastMock: ReturnType<typeof vi.fn>;
 
 function setMode(mode: AiStatus["mode"]): void {
   aiStatusNowMock.mockReturnValue({ mode, remaining: null, limit: null });
 }
 
+/** An Anthropic SDK-shaped rejection (duck-typed on .status, like completeWithRetry). */
+function anthropicError(status: number): Error {
+  return Object.assign(new Error(`${status} error`), { status });
+}
+
 beforeEach(() => {
   applyProxyQuotaMock = vi.fn().mockResolvedValue(undefined);
+  showToastMock = vi.fn();
   useEntitlementStore.setState({ applyProxyQuota: applyProxyQuotaMock });
-  useStore.setState({ apiKey: "" });
+  useStore.setState({ apiKey: "", useOwnKey: true, apiKeyInvalid: false, showToast: showToastMock });
 
   generateRecommendationDirectMock.mockResolvedValue("direct recommendation");
   generateH2SuggestionDirectMock.mockResolvedValue("direct h2");
@@ -181,6 +188,127 @@ describe("generateRecommendation", () => {
     await generateRecommendation("title-keyword", "kw", "ctx");
 
     expect(applyProxyQuotaMock).toHaveBeenCalledWith(testQuota, "free");
+  });
+});
+
+describe("byok fallback on a rejected key", () => {
+  it("401 from the direct path → flags the key invalid, toasts once, and falls back to the proxy as Pro", async () => {
+    setMode("byok");
+    useStore.setState({ apiKey: TEST_KEY });
+    generateRecommendationDirectMock.mockRejectedValue(anthropicError(401));
+
+    const result = await generateRecommendation("title-keyword", "kw", "ctx");
+
+    expect(result).toBe("proxy recommendation");
+    expect(useStore.getState().apiKeyInvalid).toBe(true);
+    expect(showToastMock).toHaveBeenCalledTimes(1);
+    expect(showToastMock.mock.calls[0][0]).toMatch(/key was rejected/i);
+    expect(generateViaProxyMock).toHaveBeenCalledWith({
+      checkId: "title-keyword",
+      keyword: "kw",
+      context: "ctx",
+      authenticated: true,
+    });
+    expect(applyProxyQuotaMock).toHaveBeenCalledWith(testQuota, "pro");
+  });
+
+  it("403 falls back the same way for H2 and alt-text with their proxy checkIds", async () => {
+    setMode("byok");
+    useStore.setState({ apiKey: TEST_KEY });
+    generateH2SuggestionDirectMock.mockRejectedValue(anthropicError(403));
+
+    const result = await generateH2Suggestion("Heading", "kw");
+
+    expect(result).toBe("proxy recommendation");
+    expect(generateViaProxyMock).toHaveBeenCalledWith({
+      checkId: "h2-keyword",
+      keyword: "kw",
+      context: "Heading",
+      authenticated: true,
+    });
+  });
+
+  it("concurrent failures toast and flag only once", async () => {
+    setMode("byok");
+    useStore.setState({ apiKey: TEST_KEY });
+    generateH2SuggestionDirectMock.mockRejectedValue(anthropicError(401));
+
+    await generateAllH2Suggestions(["A", "B", "C"], "kw");
+
+    expect(showToastMock).toHaveBeenCalledTimes(1);
+    expect(generateViaProxyMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("non-auth errors rethrow unchanged with no fallback and no flag", async () => {
+    setMode("byok");
+    useStore.setState({ apiKey: TEST_KEY });
+    generateRecommendationDirectMock.mockRejectedValue(anthropicError(500));
+
+    const error = await generateRecommendation("title-keyword", "kw", "ctx").then(
+      () => null,
+      (e: unknown) => e,
+    );
+
+    expect((error as { status?: number }).status).toBe(500);
+    expect(useStore.getState().apiKeyInvalid).toBe(false);
+    expect(showToastMock).not.toHaveBeenCalled();
+    expect(generateViaProxyMock).not.toHaveBeenCalled();
+  });
+
+  it("401 with Pro quota already exhausted → AiUnavailableError naming both problems, proxy untouched", async () => {
+    // byok on entry; locked once the invalid key degrades the mode.
+    aiStatusNowMock
+      .mockReturnValueOnce({ mode: "byok", remaining: null, limit: null })
+      .mockReturnValue({ mode: "locked", remaining: 0, limit: 100 });
+    useStore.setState({ apiKey: TEST_KEY });
+    generateRecommendationDirectMock.mockRejectedValue(anthropicError(401));
+
+    const error = await generateRecommendation("title-keyword", "kw", "ctx").then(
+      () => null,
+      (e: unknown) => e,
+    );
+
+    expect(error).toBeInstanceOf(AiUnavailableError);
+    expect((error as Error).message).toMatch(/rejected/i);
+    expect((error as Error).message).toMatch(/quota is used up/i);
+    expect(useStore.getState().apiKeyInvalid).toBe(true);
+    expect(generateViaProxyMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("lockedError copy", () => {
+  beforeEach(() => {
+    setMode("locked");
+  });
+
+  async function lockedMessage(): Promise<string> {
+    const error = await generateRecommendation("title-keyword", "kw", "ctx").then(
+      () => null,
+      (e: unknown) => e,
+    );
+    return (error as Error).message;
+  }
+
+  it("free → upgrade prompt", async () => {
+    useEntitlementStore.setState({ isPro: false });
+    expect(await lockedMessage()).toMatch(/upgrade to optia pro/i);
+  });
+
+  it("pro without a key → suggests adding a key", async () => {
+    useEntitlementStore.setState({ isPro: true });
+    expect(await lockedMessage()).toMatch(/add your own anthropic key/i);
+  });
+
+  it("pro with a key but toggle off → suggests turning the toggle on", async () => {
+    useEntitlementStore.setState({ isPro: true });
+    useStore.setState({ apiKey: TEST_KEY, useOwnKey: false });
+    expect(await lockedMessage()).toMatch(/turn on 'use my anthropic key'/i);
+  });
+
+  it("pro with a rejected key → suggests updating the key", async () => {
+    useEntitlementStore.setState({ isPro: true });
+    useStore.setState({ apiKey: TEST_KEY, apiKeyInvalid: true });
+    expect(await lockedMessage()).toMatch(/key was rejected/i);
   });
 });
 

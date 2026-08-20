@@ -52,6 +52,8 @@ beforeEach(() => {
     },
     activeCategory: null,
     apiKey: "",
+    useOwnKey: true,
+    apiKeyInvalid: false,
     error: null,
     toast: { visible: false, message: "" },
   });
@@ -192,6 +194,55 @@ describe("SetupPage", () => {
     const keyInput = screen.getByLabelText(/anthropic api key/i);
     expect(keyInput).toBeInTheDocument();
     expect(keyInput).toHaveAttribute("type", "password");
+  });
+
+  it("shows the BYOK toggle for Pro users and persists changes through the store", async () => {
+    setProEntitlement();
+    const { userEvent } = await import("@testing-library/user-event");
+    const user = userEvent.setup();
+    render(<SetupPage onAnalyze={onAnalyze} />);
+    await user.click(screen.getByRole("button", { name: /settings/i }));
+
+    const toggle = screen.getByLabelText(/use my anthropic key/i);
+    expect(toggle).toBeChecked();
+
+    await user.click(toggle);
+
+    await waitFor(() => expect(useStore.getState().useOwnKey).toBe(false));
+    const { setStorageItem } = await import("@/lib/storage");
+    expect(vi.mocked(setStorageItem)).toHaveBeenCalledWith("use_own_key", false);
+    expect(screen.getByText(/counts toward your monthly pro quota/i)).toBeInTheDocument();
+  });
+
+  it("hides the BYOK toggle from free users", async () => {
+    const { userEvent } = await import("@testing-library/user-event");
+    const user = userEvent.setup();
+    render(<SetupPage onAnalyze={onAnalyze} />);
+    await user.click(screen.getByRole("button", { name: /settings/i }));
+
+    expect(screen.queryByLabelText(/use my anthropic key/i)).not.toBeInTheDocument();
+  });
+
+  it("shows a rejection warning next to the key input when the key was rejected", async () => {
+    setProEntitlement();
+    useStore.setState({ apiKey: "sk-bad", apiKeyInvalid: true });
+    const { userEvent } = await import("@testing-library/user-event");
+    const user = userEvent.setup();
+    render(<SetupPage onAnalyze={onAnalyze} />);
+    await user.click(screen.getByRole("button", { name: /settings/i }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent(/rejected by anthropic/i);
+  });
+
+  it("shows a 'using your key' line in the settings panel when BYOK is active", async () => {
+    setProEntitlement();
+    useStore.setState({ apiKey: "sk-own" });
+    const { userEvent } = await import("@testing-library/user-event");
+    const user = userEvent.setup();
+    render(<SetupPage onAnalyze={onAnalyze} />);
+    await user.click(screen.getByRole("button", { name: /settings/i }));
+
+    expect(screen.getByText(/using your key — not metered/i)).toBeInTheDocument();
   });
 
   it("shows secondary keywords textarea in advanced mode", () => {

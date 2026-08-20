@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Options } from "./Options";
 import { useEntitlementStore } from "@/lib/entitlement-store";
+import { useStore } from "@/lib/store";
 import {
   activate,
   deactivate,
@@ -87,6 +88,9 @@ describe("Options page", () => {
     getProAiRemainingMock.mockResolvedValue(0);
     hasStoredLicenseKeyMock.mockResolvedValue(false);
     resetEntitlementState();
+    // The app store leaks between tests (module-level zustand instance) and now
+    // feeds useAiStatus in the License card — reset the BYOK inputs.
+    useStore.setState({ apiKey: "", useOwnKey: true, apiKeyInvalid: false });
   });
 
   // --- Rendering ---
@@ -182,6 +186,50 @@ describe("Options page", () => {
     );
   });
 
+  // --- BYOK toggle ---
+
+  it("renders the 'Use my Anthropic key' toggle checked by default for Pro users", async () => {
+    mockPro();
+    render(<Options />);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/use my anthropic key/i)).toBeInTheDocument();
+    });
+    expect(screen.getByLabelText(/use my anthropic key/i)).toBeChecked();
+    expect(screen.getByText(/unlimited, not metered/i)).toBeInTheDocument();
+  });
+
+  it("renders the toggle unchecked when use_own_key is stored as false", async () => {
+    mockPro();
+    (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockImplementation(() =>
+      Promise.resolve({ anthropic_api_key: "sk-ant-123", use_own_key: false }),
+    );
+    render(<Options />);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/use my anthropic key/i)).not.toBeChecked();
+    });
+    expect(screen.getByText(/counts toward your monthly pro quota/i)).toBeInTheDocument();
+  });
+
+  it("persists a toggle change immediately, without pressing Save", async () => {
+    mockPro();
+    const user = userEvent.setup();
+    render(<Options />);
+    await waitFor(() => expect(screen.getByLabelText(/use my anthropic key/i)).toBeInTheDocument());
+
+    await user.click(screen.getByLabelText(/use my anthropic key/i));
+
+    expect(chrome.storage.local.set).toHaveBeenCalledWith({ use_own_key: false });
+  });
+
+  it("hides the toggle from free users", async () => {
+    render(<Options />);
+    await waitFor(() => expect(screen.getByText("Free")).toBeInTheDocument());
+
+    expect(screen.queryByLabelText(/use my anthropic key/i)).not.toBeInTheDocument();
+  });
+
   it("shows a success message after saving", async () => {
     const user = userEvent.setup();
     render(<Options />);
@@ -238,6 +286,32 @@ describe("Options page", () => {
     await waitFor(() => {
       expect(screen.getByText(/free ai quota this month: 3 of 10 remaining/i)).toBeInTheDocument();
     });
+  });
+
+  it("replaces the Pro quota meter with a 'using your key' line when BYOK is active", async () => {
+    mockPro(80);
+    (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockImplementation(() =>
+      Promise.resolve({ anthropic_api_key: "sk-ant-123" }),
+    );
+    render(<Options />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/using your anthropic key — not metered/i)).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/of 100 remaining/i)).not.toBeInTheDocument();
+  });
+
+  it("shows the Pro quota meter when the BYOK toggle is off", async () => {
+    mockPro(80);
+    (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockImplementation(() =>
+      Promise.resolve({ anthropic_api_key: "sk-ant-123", use_own_key: false }),
+    );
+    render(<Options />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/80 of 100 remaining/i)).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/using your anthropic key/i)).not.toBeInTheDocument();
   });
 
   it("hides the free quota line when it is unknown (no call yet this period)", async () => {
