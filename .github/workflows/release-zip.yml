@@ -1,14 +1,16 @@
-name: Release Zip
+name: Release Zip (manual fallback)
 
-# Builds the extension at the released tag and attaches the Chrome Web Store
-# upload package to the GitHub Release. The zip's contents are dist/ at the
-# archive root (manifest.json at top level), which is what the CWS Developer
-# Dashboard expects.
+# Rebuilds the Chrome Web Store upload package at a given tag and re-attaches
+# it to that GitHub Release. The normal path is the attach-zip job inside
+# release-please.yml — use this only to repair or regenerate a release asset.
 
 on:
-  release:
-    types: [published]
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to build and attach to (e.g. v0.2.0)"
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -23,6 +25,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag }}
       - uses: pnpm/action-setup@v6
         with:
           version: 10
@@ -33,22 +37,13 @@ jobs:
           cache-dependency-path: app/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
-      - name: Zip dist for the Chrome Web Store
+      - name: Zip dist and attach to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           VERSION=$(node -p "require('./manifest.json').version")
           cd dist
           zip -r "../optia-${VERSION}.zip" .
           cd ..
-          unzip -l "optia-${VERSION}.zip" | head -20
-          echo "ZIP_NAME=optia-${VERSION}.zip" >> "$GITHUB_ENV"
-      - name: Attach zip to the release
-        if: github.event_name == 'release'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" "app/${ZIP_NAME}" --clobber
-        working-directory: .
-      - uses: actions/upload-artifact@v7
-        with:
-          name: chrome-web-store-package
-          path: app/optia-*.zip
-          retention-days: 30
+          unzip -l "optia-${VERSION}.zip" | head -10
+          gh release upload "${{ inputs.tag }}" "optia-${VERSION}.zip" --clobber

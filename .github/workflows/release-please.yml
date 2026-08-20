@@ -4,7 +4,12 @@ name: Release Please
 # the human release gate: it stamps the version into package.json,
 # app/package.json, and app/manifest.json (see release-please-config.json
 # extra-files), updates CHANGELOG.md, tags vX.Y.Z, and publishes a GitHub
-# Release — which triggers release-zip.yml to attach the store package.
+# Release.
+#
+# The store zip is built and attached HERE, in the same run, because releases
+# created with the default GITHUB_TOKEN do not trigger `on: release` workflows
+# (this bit v0.2.0 — its zip had to be attached manually). release-zip.yml
+# remains as a manual re-run fallback.
 
 on:
   push:
@@ -17,8 +22,46 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
       - uses: googleapis/release-please-action@v4
+        id: release
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+  attach-zip:
+    name: Build & attach store zip
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.release-please.outputs.tag_name }}
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: app/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Zip dist and attach to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(node -p "require('./manifest.json').version")
+          cd dist
+          zip -r "../optia-${VERSION}.zip" .
+          cd ..
+          gh release upload "${{ needs.release-please.outputs.tag_name }}" "optia-${VERSION}.zip" --clobber

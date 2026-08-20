@@ -21,6 +21,8 @@ node_modules/
 dist/
 build/
 out/
+# ...but the rendered Chrome Web Store assets are deliverables, not build junk
+!marketing/store-assets/out/
 .next/
 .nuxt/
 .output/

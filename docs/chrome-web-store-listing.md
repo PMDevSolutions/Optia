@@ -54,7 +54,7 @@ Enter your target keyword, click "Optimize my SEO," and instantly see what's wor
 
 — Structured data (schema) recommendations
 
-Billing is handled securely by Stripe. Activate on any browser with your license key; manage or cancel any time from the extension's options page.
+Note: Optia Pro is purchased from us and billed securely through Stripe — not through the Chrome Web Store. Google is not the merchant of record. Activate on any browser with your license key; manage or cancel any time from the extension's options page via the Stripe billing portal.
 
 **PRIVACY FIRST**
 
@@ -71,6 +71,10 @@ Full privacy policy: <!-- TODO: hosted privacy-policy URL (see docs/privacy-poli
 <!-- TODO: product site or the GitHub repo's issues page. -->
 
 ---
+
+## External Payments Disclosure
+
+Chrome Web Store policy requires honest disclosure of paid features: the listing copy above states that Pro is a paid upgrade billed externally via Stripe (Google no longer processes extension payments). Keep this disclosure in the detailed description whenever the copy is edited — omitting it risks review rejection or takedown (see issue #14).
 
 ## Single Purpose Statement (Dashboard field)
 
@@ -101,8 +105,8 @@ Answers for the Dashboard's Privacy practices tab live in `docs/chrome-web-store
 | Asset | Spec | Status |
 |---|---|---|
 | Store icon | 128×128 PNG (generated from `app/public/icons/icon-128.svg` by `pnpm icons`, ships in `dist/icons/`) | ✅ exists |
-| Screenshots (1–5) | 1280×800 or 640×400 PNG/JPEG, no transparency | ⬜ render via `marketing/store-assets/` |
-| Small promo tile | 440×280 PNG/JPEG (shown in search/category) | ⬜ render via `marketing/store-assets/` |
+| Screenshots (1–5) | 1280×800 or 640×400 PNG/JPEG, no transparency | ✅ `marketing/store-assets/out/screenshot-{1..5}-*.png` (score, checks, setup, Pro paywall, options/BYO-key) |
+| Small promo tile | 440×280 PNG/JPEG (shown in search/category) | ✅ `marketing/store-assets/out/promo-tile-440x280.png` |
 | Marquee promo tile | 1400×560 (optional, featured placements) | ⬜ optional |
 
-Generate the frames with `node marketing/store-assets/render-asset.mjs` (see its README), dropping real product captures into the screenshot slots.
+Assets are generated from real UI captures: `node marketing/store-assets/capture.mjs` (needs `pnpm dev` running and a built `app/dist`) then `render-asset.mjs` frames them — see `marketing/store-assets/README.md`. Screenshot 4 shows the Pro paywall, satisfying the "upgrade surface" requirement of issue #14; its caption repeats the Stripe external-billing disclosure.
