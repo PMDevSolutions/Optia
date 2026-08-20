@@ -35,7 +35,7 @@ async function extractErrorMessage(response: Response): Promise<string | null> {
   }
 }
 
-async function postLicense(path: string, request: LicenseRequest): Promise<Response> {
+async function postBackend(path: string, request: unknown): Promise<Response> {
   let response: Response;
   try {
     response = await fetch(`${BACKEND_BASE_URL}${path}`, {
@@ -65,7 +65,7 @@ async function postLicense(path: string, request: LicenseRequest): Promise<Respo
 }
 
 async function fetchEntitlementToken(path: string, request: LicenseRequest): Promise<string> {
-  const response = await postLicense(path, request);
+  const response = await postBackend(path, request);
   const body = (await response.json().catch(() => null)) as { entitlement?: string } | null;
   if (!body || typeof body.entitlement !== "string") {
     throw new LicenseError("server", "License server returned an unexpected response.");
@@ -88,5 +88,19 @@ export async function refreshEntitlementToken(
 
 /** Releases this install's seat. Best-effort: callers may ignore failures. */
 export async function deactivateLicense(licenseKey: string, installId: string): Promise<void> {
-  await postLicense("/license/deactivate", { licenseKey, installId });
+  await postBackend("/license/deactivate", { licenseKey, installId });
+}
+
+/**
+ * Creates a Stripe Billing Portal session for the license and returns its URL.
+ * Billing is fully Stripe-hosted: the extension only ever handles this URL,
+ * never card or payment data.
+ */
+export async function createBillingPortalSession(licenseKey: string): Promise<string> {
+  const response = await postBackend("/billing/portal", { licenseKey });
+  const body = (await response.json().catch(() => null)) as { url?: string } | null;
+  if (!body || typeof body.url !== "string") {
+    throw new LicenseError("server", "License server returned an unexpected response.");
+  }
+  return body.url;
 }

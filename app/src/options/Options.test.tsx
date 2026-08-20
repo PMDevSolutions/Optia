@@ -6,6 +6,7 @@ import { useEntitlementStore } from "@/lib/entitlement-store";
 import {
   activate,
   deactivate,
+  getBillingPortalUrl,
   getFreeAiQuota,
   getProAiRemaining,
   getValidEntitlement,
@@ -20,6 +21,7 @@ vi.mock("@/lib/entitlement", async (importOriginal) => {
     ...original,
     activate: vi.fn(),
     deactivate: vi.fn(),
+    getBillingPortalUrl: vi.fn(),
     getValidEntitlement: vi.fn(),
     getFreeAiQuota: vi.fn(),
     getProAiRemaining: vi.fn(),
@@ -31,6 +33,7 @@ vi.mock("@/lib/entitlement", async (importOriginal) => {
 
 const activateMock = vi.mocked(activate);
 const deactivateMock = vi.mocked(deactivate);
+const getBillingPortalUrlMock = vi.mocked(getBillingPortalUrl);
 const getValidEntitlementMock = vi.mocked(getValidEntitlement);
 const getFreeAiQuotaMock = vi.mocked(getFreeAiQuota);
 const getProAiRemainingMock = vi.mocked(getProAiRemaining);
@@ -62,6 +65,8 @@ function resetEntitlementState() {
     hasLicenseKey: false,
     activating: false,
     activationError: null,
+    openingBillingPortal: false,
+    billingPortalError: null,
   });
 }
 
@@ -224,6 +229,70 @@ describe("Options page", () => {
       expect(screen.getByRole("alert")).toHaveTextContent("This license key is not valid.");
     });
     expect(screen.getByText("Free")).toBeInTheDocument();
+  });
+
+  it("shows the free AI quota when a snapshot exists this period", async () => {
+    getFreeAiQuotaMock.mockResolvedValue({ period: "2026-07", remaining: 3, limit: 10 });
+    render(<Options />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/free ai quota this month: 3 of 10 remaining/i)).toBeInTheDocument();
+    });
+  });
+
+  it("hides the free quota line when it is unknown (no call yet this period)", async () => {
+    render(<Options />);
+    await waitFor(() => expect(screen.getByText("Free")).toBeInTheDocument());
+
+    expect(screen.queryByText(/free ai quota this month/i)).not.toBeInTheDocument();
+  });
+
+  // --- Manage billing (Stripe customer portal) ---
+
+  it("opens the Stripe billing portal in a new tab for Pro users", async () => {
+    const user = userEvent.setup();
+    mockPro();
+    getBillingPortalUrlMock.mockResolvedValue("https://billing.stripe.com/p/session_123");
+    const openSpy = vi.spyOn(window, "open").mockReturnValue(null);
+    render(<Options />);
+
+    await waitFor(() => expect(screen.getByText("Pro")).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: /manage billing/i }));
+
+    await waitFor(() => {
+      expect(openSpy).toHaveBeenCalledWith(
+        "https://billing.stripe.com/p/session_123",
+        "_blank",
+        "noopener",
+      );
+    });
+    openSpy.mockRestore();
+  });
+
+  it("shows a billing error and opens nothing when the portal request fails", async () => {
+    const user = userEvent.setup();
+    mockPro();
+    getBillingPortalUrlMock.mockRejectedValue(
+      new LicenseError("network", "Could not reach the license server."),
+    );
+    const openSpy = vi.spyOn(window, "open").mockReturnValue(null);
+    render(<Options />);
+
+    await waitFor(() => expect(screen.getByText("Pro")).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: /manage billing/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("Could not reach the license server.");
+    });
+    expect(openSpy).not.toHaveBeenCalled();
+    openSpy.mockRestore();
+  });
+
+  it("does not offer billing management to free users", async () => {
+    render(<Options />);
+    await waitFor(() => expect(screen.getByText("Free")).toBeInTheDocument());
+
+    expect(screen.queryByRole("button", { name: /manage billing/i })).not.toBeInTheDocument();
   });
 
   it("deactivates and returns to the free state", async () => {

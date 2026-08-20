@@ -6,6 +6,7 @@ import {
   activate,
   currentAiPeriod,
   deactivate,
+  getBillingPortalUrl,
   getFreeAiQuota,
   getInstallId,
   getProAiRemaining,
@@ -37,6 +38,7 @@ import {
 } from "@/test/entitlement-fixtures";
 import {
   activateLicense,
+  createBillingPortalSession,
   deactivateLicense,
   refreshEntitlementToken,
   LicenseError,
@@ -49,12 +51,14 @@ vi.mock("@/lib/backend", async (importOriginal) => {
     activateLicense: vi.fn(),
     refreshEntitlementToken: vi.fn(),
     deactivateLicense: vi.fn(),
+    createBillingPortalSession: vi.fn(),
   };
 });
 
 const activateLicenseMock = vi.mocked(activateLicense);
 const refreshTokenMock = vi.mocked(refreshEntitlementToken);
 const deactivateLicenseMock = vi.mocked(deactivateLicense);
+const createBillingPortalSessionMock = vi.mocked(createBillingPortalSession);
 
 let keys: TestSigningKeys;
 let verifyOpts: { jwks: [typeof keys.jwk] };
@@ -289,6 +293,39 @@ describe("deactivate", () => {
     // install-scoped and survives deactivation.
     expect(await getStorageItem(PRO_AI_QUOTA_KEY)).toBeNull();
     expect(await getStorageItem(FREE_AI_QUOTA_KEY)).not.toBeNull();
+  });
+});
+
+describe("getBillingPortalUrl", () => {
+  it("creates a portal session for the stored license key", async () => {
+    await setStorageItem(LICENSE_KEY_KEY, "optia_live_abc");
+    createBillingPortalSessionMock.mockResolvedValue("https://billing.stripe.com/p/session_123");
+
+    await expect(getBillingPortalUrl()).resolves.toBe("https://billing.stripe.com/p/session_123");
+    expect(createBillingPortalSessionMock).toHaveBeenCalledWith("optia_live_abc");
+  });
+
+  it("throws an invalid-license error when no license key is stored", async () => {
+    const error = await getBillingPortalUrl().then(
+      () => null,
+      (e: unknown) => e,
+    );
+    expect(error).toBeInstanceOf(LicenseError);
+    expect((error as LicenseError).code).toBe("invalid");
+    expect(createBillingPortalSessionMock).not.toHaveBeenCalled();
+  });
+
+  it("propagates backend errors unchanged", async () => {
+    await setStorageItem(LICENSE_KEY_KEY, "optia_live_abc");
+    createBillingPortalSessionMock.mockRejectedValue(
+      new LicenseError("network", "Could not reach the license server."),
+    );
+
+    const error = await getBillingPortalUrl().then(
+      () => null,
+      (e: unknown) => e,
+    );
+    expect((error as LicenseError).code).toBe("network");
   });
 });
 

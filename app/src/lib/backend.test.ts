@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   activateLicense,
+  createBillingPortalSession,
   refreshEntitlementToken,
   deactivateLicense,
   LicenseError,
@@ -104,5 +105,41 @@ describe("backend license client", () => {
       `${BACKEND_BASE_URL}/license/deactivate`,
       expect.anything(),
     );
+  });
+
+  // --- /billing/portal ---
+
+  it("creates a billing portal session and returns its URL", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(jsonResponse(200, { url: "https://billing.stripe.com/p/session_123" }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(createBillingPortalSession("optia_live_key")).resolves.toBe(
+      "https://billing.stripe.com/p/session_123",
+    );
+    expect(fetchMock).toHaveBeenCalledWith(`${BACKEND_BASE_URL}/billing/portal`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ licenseKey: "optia_live_key" }),
+    });
+  });
+
+  it("maps a portal 404 to an invalid-license error with the server message", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValue(
+          jsonResponse(404, { error: { message: "No billing customer found for that license key." } }),
+        ),
+    );
+    const error = await expectLicenseError(createBillingPortalSession("key"), "invalid");
+    expect(error.message).toBe("No billing customer found for that license key.");
+  });
+
+  it("rejects a portal response without a url", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse(200, { ok: true })));
+    await expectLicenseError(createBillingPortalSession("key"), "server");
   });
 });

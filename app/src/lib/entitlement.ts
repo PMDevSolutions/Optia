@@ -1,6 +1,7 @@
 import { decodeProtectedHeader, importJWK, jwtVerify } from "jose";
 import {
   activateLicense,
+  createBillingPortalSession,
   deactivateLicense,
   refreshEntitlementToken,
   LicenseError,
@@ -172,6 +173,18 @@ export async function activate(
   }
   await persistVerifiedToken(token, licenseKey);
   return claims;
+}
+
+/**
+ * Creates a Stripe Billing Portal session for the stored license and returns
+ * its URL. Throws LicenseError when no license is active on this browser.
+ */
+export async function getBillingPortalUrl(): Promise<string> {
+  const licenseKey = await getStorageItem<string>(LICENSE_KEY_KEY);
+  if (!licenseKey) {
+    throw new LicenseError("invalid", "No license is active on this browser.");
+  }
+  return createBillingPortalSession(licenseKey);
 }
 
 /** Releases this install's seat (best effort) and clears all local license state. */

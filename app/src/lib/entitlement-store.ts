@@ -2,6 +2,7 @@ import { create } from "zustand";
 import {
   activate,
   deactivate,
+  getBillingPortalUrl,
   getFreeAiQuota,
   getProAiRemaining,
   getValidEntitlement,
@@ -39,9 +40,13 @@ interface EntitlementStore {
   hasLicenseKey: boolean;
   activating: boolean;
   activationError: string | null;
+  openingBillingPortal: boolean;
+  billingPortalError: string | null;
   hydrateEntitlement: () => Promise<void>;
   activateLicense: (licenseKey: string) => Promise<boolean>;
   deactivateLicense: () => Promise<void>;
+  /** Creates a Stripe Billing Portal session; returns its URL, or null on failure. */
+  openBillingPortal: () => Promise<string | null>;
   applyProxyQuota: (quota: QuotaSnapshot, subject: "pro" | "free") => Promise<void>;
 }
 
@@ -59,7 +64,7 @@ const freeFlags = {
   canBringOwnKey: false,
 };
 
-function activationErrorMessage(error: unknown): string {
+function licenseErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof LicenseError) {
     if (error.code === "rate_limited") {
       const wait = error.retryAfterSeconds ? ` Try again in ${error.retryAfterSeconds}s.` : "";
@@ -67,7 +72,7 @@ function activationErrorMessage(error: unknown): string {
     }
     return error.message;
   }
-  return "Activation failed. Please try again.";
+  return fallback;
 }
 
 export const useEntitlementStore = create<EntitlementStore>((set) => ({
@@ -80,6 +85,8 @@ export const useEntitlementStore = create<EntitlementStore>((set) => ({
   hasLicenseKey: false,
   activating: false,
   activationError: null,
+  openingBillingPortal: false,
+  billingPortalError: null,
 
   hydrateEntitlement: async () => {
     const claims = await getValidEntitlement();
@@ -128,7 +135,10 @@ export const useEntitlementStore = create<EntitlementStore>((set) => ({
       set({ activating: false });
       return true;
     } catch (error) {
-      set({ activating: false, activationError: activationErrorMessage(error) });
+      set({
+        activating: false,
+        activationError: licenseErrorMessage(error, "Activation failed. Please try again."),
+      });
       return false;
     }
   },
@@ -136,7 +146,25 @@ export const useEntitlementStore = create<EntitlementStore>((set) => ({
   deactivateLicense: async () => {
     await deactivate();
     await useEntitlementStore.getState().hydrateEntitlement();
-    set({ activationError: null });
+    set({ activationError: null, billingPortalError: null });
+  },
+
+  openBillingPortal: async () => {
+    set({ openingBillingPortal: true, billingPortalError: null });
+    try {
+      const url = await getBillingPortalUrl();
+      set({ openingBillingPortal: false });
+      return url;
+    } catch (error) {
+      set({
+        openingBillingPortal: false,
+        billingPortalError: licenseErrorMessage(
+          error,
+          "Could not open the billing portal. Please try again.",
+        ),
+      });
+      return null;
+    }
   },
 
   applyProxyQuota: async (quota, subject) => {

@@ -12,6 +12,7 @@ import {
   getValidEntitlement,
   getFreeAiQuota,
   getProAiRemaining,
+  getBillingPortalUrl,
   hasStoredLicenseKey,
   activate,
   deactivate,
@@ -36,6 +37,7 @@ vi.mock("@/lib/entitlement", async (importOriginal) => {
     getValidEntitlement: vi.fn(),
     getFreeAiQuota: vi.fn(),
     getProAiRemaining: vi.fn(),
+    getBillingPortalUrl: vi.fn(),
     hasStoredLicenseKey: vi.fn(),
     activate: vi.fn(),
     deactivate: vi.fn(),
@@ -50,6 +52,7 @@ const getProAiRemainingMock = vi.mocked(getProAiRemaining);
 const hasStoredLicenseKeyMock = vi.mocked(hasStoredLicenseKey);
 const activateMock = vi.mocked(activate);
 const deactivateMock = vi.mocked(deactivate);
+const getBillingPortalUrlMock = vi.mocked(getBillingPortalUrl);
 const recordProAiQuotaMock = vi.mocked(recordProAiQuota);
 const recordFreeAiQuotaMock = vi.mocked(recordFreeAiQuota);
 
@@ -83,6 +86,8 @@ function resetEntitlementState() {
     hasLicenseKey: false,
     activating: false,
     activationError: null,
+    openingBillingPortal: false,
+    billingPortalError: null,
   });
 }
 
@@ -380,6 +385,60 @@ describe("deactivateLicense", () => {
     expect(state.canUseSchema).toBe(false);
     expect(state.canBringOwnKey).toBe(false);
     expect(state.activationError).toBeNull();
+  });
+
+  it("clears a stale billing portal error", async () => {
+    useEntitlementStore.setState({ billingPortalError: "prior portal error" });
+    deactivateMock.mockResolvedValue();
+
+    await useEntitlementStore.getState().deactivateLicense();
+
+    expect(useEntitlementStore.getState().billingPortalError).toBeNull();
+  });
+});
+
+describe("openBillingPortal", () => {
+  it("returns the portal URL and leaves no error", async () => {
+    getBillingPortalUrlMock.mockResolvedValue("https://billing.stripe.com/p/session_123");
+
+    const url = await useEntitlementStore.getState().openBillingPortal();
+
+    expect(url).toBe("https://billing.stripe.com/p/session_123");
+    const state = useEntitlementStore.getState();
+    expect(state.openingBillingPortal).toBe(false);
+    expect(state.billingPortalError).toBeNull();
+  });
+
+  it("surfaces a LicenseError message and returns null", async () => {
+    getBillingPortalUrlMock.mockRejectedValue(
+      new LicenseError("network", "Could not reach the license server."),
+    );
+
+    const url = await useEntitlementStore.getState().openBillingPortal();
+
+    expect(url).toBeNull();
+    const state = useEntitlementStore.getState();
+    expect(state.openingBillingPortal).toBe(false);
+    expect(state.billingPortalError).toBe("Could not reach the license server.");
+  });
+
+  it("maps an unexpected failure to a generic portal message", async () => {
+    getBillingPortalUrlMock.mockRejectedValue(new Error("boom"));
+
+    await useEntitlementStore.getState().openBillingPortal();
+
+    expect(useEntitlementStore.getState().billingPortalError).toBe(
+      "Could not open the billing portal. Please try again.",
+    );
+  });
+
+  it("clears the previous error when retrying", async () => {
+    useEntitlementStore.setState({ billingPortalError: "prior portal error" });
+    getBillingPortalUrlMock.mockResolvedValue("https://billing.stripe.com/p/session_456");
+
+    await useEntitlementStore.getState().openBillingPortal();
+
+    expect(useEntitlementStore.getState().billingPortalError).toBeNull();
   });
 });
 
