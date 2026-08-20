@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.0](https://github.com/PMDevSolutions/Optia/compare/v0.3.0...v0.4.0) (2026-08-20)
+
+
+### Added
+
+* **site:** GitHub Pages landing page + published privacy policy ([ca01a53](https://github.com/PMDevSolutions/Optia/commit/ca01a53fc122662a11b5c7910f89f6539512907b))
+* **site:** GitHub Pages landing page + published privacy policy ([bf7b158](https://github.com/PMDevSolutions/Optia/commit/bf7b158ff72514ed9f149e73a04f28aa03d62d91))
+
 ## [0.3.0](https://github.com/PMDevSolutions/Optia/compare/v0.2.0...v0.3.0) (2026-08-20)
 
 
