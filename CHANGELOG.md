@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.0](https://github.com/PMDevSolutions/Optia/compare/v0.2.0...v0.3.0) (2026-08-20)
+
+
+### Added
+
+* **store:** freemium disclosure + refreshed listing screenshots ([9df7596](https://github.com/PMDevSolutions/Optia/commit/9df7596414b8a1e28d0c46fb7195ad514dbb855d))
+
+
+### Fixed
+
+* **release:** attach store zip inside release-please run; verified launch state ([525c8c6](https://github.com/PMDevSolutions/Optia/commit/525c8c6e07c549cf0b713916718e513e8b5d3feb)), closes [#14](https://github.com/PMDevSolutions/Optia/issues/14)
+* **release:** zip-attach inside release-please + stranded [#14](https://github.com/PMDevSolutions/Optia/issues/14) work + verified launch state ([bb1fdac](https://github.com/PMDevSolutions/Optia/commit/bb1fdac8fdadf9cfafd5b6d612f577e1b8197029))
+
 ## [0.2.0](https://github.com/PMDevSolutions/Optia/compare/v0.1.0...v0.2.0) (2026-08-20)
 
 
