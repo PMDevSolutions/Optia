@@ -1,5 +1,7 @@
 # Launch Day Social Media Posts
 
+> Rewritten 2026-08 for the freemium launch: AI is served by Claude (Anthropic) through Optia's hosted service — free users get 25 AI recommendations/month with no account or API key; Pro ($5/mo or $50/yr) raises that to 1,000/month and adds bring-your-own-Anthropic-key (unlimited), Advanced Analysis, multi-language output, and schema recommendations. Do not reuse the pre-freemium copy (OpenAI/BYO-only, "open source", old GitHub links).
+
 ## LinkedIn
 
 ### Post 1 — Announcement
@@ -8,11 +10,11 @@ I just shipped my first Chrome extension: Optia.
 
 It analyzes any web page for SEO issues and gives you a score from 0–100 with actionable recommendations. Enter your target keyword, and it shows you exactly what's working and what needs fixing across titles, meta descriptions, headings, images, links, structured data, and more.
 
-The AI part: connect your own OpenAI API key and get one-click suggested titles, meta descriptions, and alt text — tailored to your page content. Uses GPT-4o-mini, so each request costs fractions of a cent.
+The AI part: one-click suggested titles, meta descriptions, and alt text — tailored to your page content and powered by Claude. 25 AI recommendations a month are free, no account or API key needed. Optia Pro ($5/month) raises that to 1,000 and adds page-type-aware analysis, multi-language output, and the option to plug in your own Anthropic key for unlimited AI.
 
-Built this because I got tired of switching between multiple SEO tools that either cost too much or required accounts just to see basic recommendations.
+Built this because I got tired of switching between SEO tools that either cost too much or required accounts just to see basic recommendations.
 
-It's free, open source, and privacy-first — all analysis happens locally in your browser.
+The analysis itself is free, unlimited, and runs locally in your browser.
 
 [Chrome Web Store link]
 
@@ -20,18 +22,19 @@ It's free, open source, and privacy-first — all analysis happens locally in yo
 
 ### Post 2 — Behind the Build
 
-Shipped something new today: Optia, a free Chrome extension for on-page SEO analysis.
+Shipped something new today: Optia, a Chrome extension for on-page SEO analysis.
 
 What it does:
 • Instant SEO score (0–100) with priority-labeled issues
 • Keyword tracking across title, meta, headings, URL, alt text, and content
-• AI-powered suggestions for titles, meta descriptions, and alt text (bring your own OpenAI key)
+• AI suggestions for titles, meta descriptions, and alt text — 25/month free, powered by Claude
 • Works on any website — runs in Chrome's side panel
 
 What made this project different:
-• Privacy-first: no accounts, no tracking, no data sent anywhere
-• Open source: MIT licensed, contributions welcome
-• Built with React + TypeScript + Vite as a Chrome extension
+• Privacy-first: SEO analysis runs locally; AI requests send only the relevant page snippets, and nothing else ever leaves your browser
+• No accounts for the free tier, no tracking, no analytics
+• Freemium done honestly: the analyzer is fully free; you pay only for more AI
+• Built with React + TypeScript + Vite as a Manifest V3 extension, with a Cloudflare Workers backend for billing and the AI proxy
 
 If you work with SEO or just want to improve your site's search visibility, give it a try and let me know what you think.
 
@@ -43,7 +46,7 @@ If you work with SEO or just want to improve your site's search visibility, give
 
 ### r/SEO
 
-**Title:** I built a free, open-source Chrome extension for on-page SEO analysis — Optia
+**Title:** I built a Chrome extension for on-page SEO analysis with a free AI tier — Optia
 
 **Body:**
 
@@ -57,86 +60,47 @@ I built a Chrome extension that analyzes any web page for SEO issues and gives y
 - Get a breakdown of passed checks vs. items to improve
 - Every issue is labeled High Priority or Medium so you know where to focus
 
-**AI features (optional):**
-- Connect your own OpenAI API key
-- Get one-click suggested titles, meta descriptions, and alt text
-- Uses GPT-4o-mini — each request costs fractions of a cent
+**AI features:**
+- One-click suggested titles, meta descriptions, H2s, and alt text, powered by Claude
+- 25 AI recommendations a month free — no account, no API key
+- Pro ($5/mo) bumps it to 1,000/month, adds page-type-aware analysis + multi-language output, or bring your own Anthropic key for unlimited
 
 **Categories it checks:**
 Meta Tags, Headings, Images, Links, Content Quality, Structured Data (JSON-LD), Open Graph, and Twitter Cards
 
 **Privacy:**
-All analysis happens locally in your browser. No accounts, no tracking, no data sent to any server. Your API key stays in local Chrome storage.
-
-It's completely free and open source (MIT license).
+The analysis itself runs locally in your browser. AI requests send only the relevant page snippets (your keyword + the element being improved). No tracking, no analytics, and a Pro user's own API key never touches our servers.
 
 [Chrome Web Store link]
-
-GitHub: https://github.com/die-Manufaktur/AISEOC-Chrome-Extension
 
 Would love feedback from this community — what checks would you want to see added?
 
 ---
 
-### r/webflow
-
-**Title:** Free Chrome extension for SEO analysis — works great with Webflow sites
-
-**Body:**
-
-Hey Webflow community,
-
-I built a Chrome extension called Optia that I've been using to optimize my Webflow projects. Thought I'd share it here since it's free and might be useful for others.
-
-**What it does:**
-- Analyzes any page for SEO issues and gives you a 0–100 score
-- Enter your target keyword and see how it's used across your title, meta description, headings, URL, and content
-- Checks meta tags, Open Graph, Twitter Cards, structured data, image alt text, and more
-- Issues are labeled by priority so you know what to fix first
-
-**AI features:**
-- Connect your own OpenAI API key (optional)
-- Get suggested titles, meta descriptions, and alt text with one click
-- Uses GPT-4o-mini — costs almost nothing per request
-
-Runs in Chrome's side panel, so you can see recommendations while viewing your live Webflow page.
-
-All analysis happens locally — no accounts, no tracking.
-
-[Chrome Web Store link]
-
-It's open source if anyone wants to check out the code or contribute: https://github.com/die-Manufaktur/AISEOC-Chrome-Extension
-
----
-
 ### r/SideProject
 
-**Title:** I shipped my first Chrome extension — Optia (free, open source)
+**Title:** I shipped my first freemium Chrome extension — Optia (SEO analysis + AI)
 
 **Body:**
 
 Just launched Optia on the Chrome Web Store.
 
-**The problem:** I was tired of using multiple SEO tools that either required paid accounts or sent my data to their servers just to get basic on-page recommendations.
+**The problem:** I was tired of SEO tools that either required paid accounts or sent my data to their servers just to get basic on-page recommendations.
 
 **The solution:** A Chrome extension that:
-- Analyzes any web page for SEO issues
+- Analyzes any web page for SEO issues, entirely locally
 - Gives you a 0–100 score with priority-labeled recommendations
-- Runs entirely in your browser (no data sent anywhere)
-- Optionally connects to OpenAI for AI-generated title, meta description, and alt text suggestions (bring your own API key)
+- Generates AI titles, meta descriptions, and alt text (Claude) — 25/month free, 1,000/month on Pro, unlimited if you bring your own Anthropic key
 
 **Tech stack:**
-- React + TypeScript
-- Vite for building
-- Chrome Extension Manifest V3
-- Vitest for testing
+- React + TypeScript + Vite, Manifest V3 (side panel UI)
+- Cloudflare Workers + Hono backend: Stripe billing, Ed25519-signed license entitlements, metered AI proxy
+- Vitest + Playwright extension E2E
 
 **What I learned:**
-- Chrome extension development has some quirks with content scripts and side panels
-- Building something privacy-first actually simplifies a lot of decisions
+- MV3 side panels and content scripts have real quirks — test against the built extension, not just unit tests
+- A freemium quota is a distributed-systems problem: the server must be the quota authority, the client just caches
 - Shipping is the hardest part
-
-It's MIT licensed and open source: https://github.com/die-Manufaktur/AISEOC-Chrome-Extension
 
 [Chrome Web Store link]
 
@@ -146,11 +110,11 @@ Would love feedback — what features would make this more useful for you?
 
 ## Twitter/X
 
-🚀 Just shipped Optia — a free Chrome extension for on-page SEO analysis.
+🚀 Just shipped Optia — a Chrome extension for on-page SEO analysis.
 
 Enter your keyword, get a 0–100 score, and see exactly what to fix across titles, meta, headings, images, and structured data.
 
-AI-powered suggestions (bring your own OpenAI key). Privacy-first. Open source.
+25 free AI suggestions/month powered by Claude — no account needed. Pro for more, or bring your own key.
 
 [Chrome Web Store link]
 
@@ -158,7 +122,7 @@ AI-powered suggestions (bring your own OpenAI key). Privacy-first. Open source.
 
 ## Webflow Community
 
-**Title:** Free Chrome Extension for SEO Analysis — Optia
+**Title:** Chrome extension for SEO analysis with free AI suggestions — Optia
 
 **Body:**
 
@@ -177,22 +141,18 @@ I built a Chrome extension that I've been using alongside my Webflow projects an
 **What it checks:**
 - Meta tags (title, description)
 - Headings (H1, H2 structure)
-- Images (alt text, optimization)
-- Links (internal, external, broken)
+- Images (alt text)
+- Links (internal, external)
 - Content quality
 - Structured data (JSON-LD)
 - Open Graph and Twitter Cards
 
-**AI features (optional):**
-Connect your own OpenAI API key and get one-click suggestions for titles, meta descriptions, and image alt text. Uses GPT-4o-mini, so each request costs almost nothing.
+**AI features:**
+One-click suggestions for titles, meta descriptions, and image alt text, powered by Claude. 25 a month are free with no account or API key; Optia Pro ($5/mo) raises that to 1,000, adds page-type-aware analysis and multi-language output, or plug in your own Anthropic key for unlimited.
 
 **Privacy:**
-All analysis runs locally in your browser. No accounts, no tracking, no data sent anywhere.
-
-It's completely free and open source.
+The analysis runs locally in your browser — AI requests send only the snippet being improved. No accounts for the free tier, no tracking.
 
 [Chrome Web Store link]
-
-GitHub: https://github.com/die-Manufaktur/AISEOC-Chrome-Extension
 
 I'd love to hear what SEO checks would be most useful for Webflow users specifically. Happy to add features based on feedback!

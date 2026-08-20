@@ -81,3 +81,37 @@ jobs:
           cache-dependency-path: app/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      - uses: actions/upload-artifact@v7
+        with:
+          name: extension-dist
+          path: app/dist/
+          retention-days: 7
+
+  e2e:
+    name: Extension E2E (MV3)
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: app/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v7
+        with:
+          name: extension-dist
+          path: app/dist
+      - run: pnpm exec playwright install --with-deps chromium
+      # Extension loading requires headed Chromium — run under a virtual display.
+      - run: xvfb-run --auto-servernum -- pnpm test:e2e
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-report
+          path: app/playwright-report/
+          retention-days: 7
