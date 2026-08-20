@@ -7,8 +7,8 @@ The end-to-end path from this repo to a live, working, paid product. Backend ste
 ## Phase 0 — Decisions (block everything else)
 
 - [ ] **Host permissions**: keep `<all_urls>` (any-site analysis, in-depth CWS review accepted) or narrow to `activeTab` + `scripting` (faster review, but changes UX — content script must be injected on demand). Current decision: **keep `<all_urls>`**; record any change here and in the listing's permission justifications.
-- [ ] **Privacy contact + hosting**: pick the support/privacy email and where `docs/privacy-policy.md` will be publicly hosted. Facts (verified 2026-08-20): the only Optia domain owned is **`optia-api.com`** (Cloudflare Registrar, registered 2026-07-18, on the same Cloudflare account as the backend — a Pages/Worker site there is zero-cost); `optia.com` belongs to someone else; the repo is **public**, so GitHub Pages is also viable and the Chrome Web Store accepts any publicly reachable URL for the privacy policy. Fill the TODOs in `docs/privacy-policy.md`, `docs/chrome-web-store-listing.md`.
-- [ ] **Website URL** for the listing (product site on `optia-api.com`, or the GitHub repo).
+- [x] **Privacy hosting + website**: **decided 2026-08-20 — GitHub Pages.** Landing page + privacy policy live in `site/`, deployed by the Deploy Site workflow to https://pmdevsolutions.github.io/Optia/ (privacy: `/privacy.html`); support = repo issues. Context: the only Optia domain owned is `optia-api.com` (Cloudflare, 2026-07-18, API only); `optia.com` is not ours; `pmds.info` is the business site but doesn't mention Optia yet — either can take over the website slot later (update the CWS listing and Stripe business profile if so).
+- [ ] **Privacy contact email** (optional refinement): the published policy currently points to GitHub issues for contact; add a dedicated email (e.g. on `pmds.info` or `optia-api.com`) if preferred.
 - [ ] **Legal review** of `docs/privacy-policy.md` (drafted with the `legal-advisor` agent; flagged TODOs inside).
 
 ## Phase 1 — Extension readiness
