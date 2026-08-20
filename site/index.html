@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Optia — SEO score & AI recommendations for any page</title>
+<meta name="description" content="Optia is a Chrome extension that scores any page's SEO from 0–100 and generates AI-powered titles, meta descriptions, and alt text. Free tier included." />
+<style>
+  :root {
+    --brand: #4f46e5; --brand-deep: #3730a3; --night: #1e1b4b;
+    --ink: #111827; --muted: #4b5563; --faint: #9ca3af;
+    --surface: #ffffff; --canvas: #f6f7fb; --border: #e5e7eb; --good: #10b981;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--ink); background: var(--canvas); line-height: 1.6; }
+  a { color: var(--brand); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .hero { background: radial-gradient(120% 150% at 15% 0%, var(--brand) 0%, var(--brand-deep) 55%, var(--night) 100%); color: #fff; padding: 64px 24px 72px; text-align: center; }
+  .wordmark { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; }
+  .wordmark::after { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #a5b4fc; margin-left: 3px; }
+  .hero h1 { font-size: clamp(28px, 5vw, 44px); font-weight: 750; letter-spacing: -0.02em; line-height: 1.15; max-width: 720px; margin: 28px auto 0; }
+  .hero p.sub { font-size: 19px; color: rgba(255,255,255,0.82); max-width: 640px; margin: 16px auto 0; }
+  .cta { display: inline-block; margin-top: 32px; background: #fff; color: var(--brand-deep); font-weight: 700; padding: 14px 28px; border-radius: 999px; font-size: 16px; }
+  .cta:hover { text-decoration: none; opacity: 0.92; }
+  .cta-note { display: block; margin-top: 12px; font-size: 13px; color: rgba(255,255,255,0.6); }
+  main { max-width: 960px; margin: 0 auto; padding: 56px 24px; }
+  h2 { font-size: 26px; letter-spacing: -0.01em; margin-bottom: 20px; }
+  .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 56px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+  .card h3 { font-size: 16px; margin-bottom: 6px; }
+  .card p { font-size: 14.5px; color: var(--muted); }
+  .plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 56px; }
+  .plan { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; }
+  .plan.pro { border-color: var(--brand); box-shadow: 0 4px 24px rgba(79,70,229,0.12); }
+  .plan .price { font-size: 30px; font-weight: 800; margin: 6px 0 2px; }
+  .plan .price span { font-size: 15px; font-weight: 500; color: var(--faint); }
+  .plan ul { list-style: none; margin-top: 14px; }
+  .plan li { font-size: 14.5px; color: var(--muted); padding: 5px 0 5px 24px; position: relative; }
+  .plan li::before { content: "✓"; position: absolute; left: 0; color: var(--good); font-weight: 700; }
+  .plan .badge { display: inline-block; background: var(--brand); color: #fff; font-size: 12px; font-weight: 600; border-radius: 999px; padding: 2px 10px; margin-left: 8px; vertical-align: middle; }
+  .privacy-blurb { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; margin-bottom: 56px; }
+  .privacy-blurb p { color: var(--muted); font-size: 15px; }
+  .stripe-note { font-size: 13.5px; color: var(--faint); margin-top: 10px; }
+  footer { border-top: 1px solid var(--border); padding: 28px 24px 40px; text-align: center; font-size: 14px; color: var(--muted); }
+  footer .links { margin-bottom: 8px; }
+  footer .links a { margin: 0 10px; }
+</style>
+</head>
+<body>
+  <header class="hero">
+    <div class="wordmark">Optia</div>
+    <h1>Instant SEO score and AI recommendations for any page</h1>
+    <p class="sub">Enter your keyword, get a 0–100 score with priority-labeled fixes, and generate optimized titles, meta descriptions, and alt text — right in Chrome's side panel.</p>
+    <a class="cta" href="https://chromewebstore.google.com/detail/lgkgkmjldppeidgafolhfpepmabnnbhe">Add to Chrome — it's free</a>
+    <span class="cta-note">Chrome Web Store listing coming soon — this link goes live at launch.</span>
+  </header>
+
+  <main>
+    <h2>What Optia checks</h2>
+    <div class="features">
+      <div class="card"><h3>Instant SEO scoring</h3><p>A 0–100 score for any live page with a clear breakdown of passed checks vs. items to improve — unlimited and free.</p></div>
+      <div class="card"><h3>Keyword tracking</h3><p>See how your target keyword is used across title, meta description, headings, URL, image alt text, and body content.</p></div>
+      <div class="card"><h3>AI recommendations</h3><p>One-click titles, meta descriptions, H2s, and alt text tailored to your page, powered by Claude (Anthropic).</p></div>
+      <div class="card"><h3>Priority-labeled checks</h3><p>18 checks across Meta Tags, Headings, Images, Links, Content, Structured Data, Open Graph, and Twitter Cards.</p></div>
+      <div class="card"><h3>Side panel UI</h3><p>Recommendations live alongside the page you're optimizing. Light and dark themes.</p></div>
+      <div class="card"><h3>Works everywhere</h3><p>Analyze any site you can open in your browser — no platform lock-in, no account required to start.</p></div>
+    </div>
+
+    <h2>Pricing</h2>
+    <div class="plans">
+      <div class="plan">
+        <h3>Free</h3>
+        <div class="price">$0</div>
+        <ul>
+          <li>Unlimited SEO analysis &amp; scoring</li>
+          <li>25 AI recommendations / month</li>
+          <li>All 18 checks, priority-labeled</li>
+          <li>No account, no API key needed</li>
+        </ul>
+      </div>
+      <div class="plan pro">
+        <h3>Optia Pro<span class="badge">$50/yr = 2 months free</span></h3>
+        <div class="price">$5<span>/month or $50/year</span></div>
+        <ul>
+          <li>1,000 AI recommendations / month</li>
+          <li>Bring your own Anthropic key for unlimited AI</li>
+          <li>Advanced page-type-aware analysis</li>
+          <li>Multi-language AI output</li>
+          <li>Schema (JSON-LD) recommendations</li>
+        </ul>
+        <p class="stripe-note">Pro is billed securely through Stripe — not through the Chrome Web Store. Cancel anytime from the extension's options page.</p>
+      </div>
+    </div>
+
+    <h2>Privacy first</h2>
+    <div class="privacy-blurb">
+      <p>All SEO analysis runs locally in your browser. When you request an AI suggestion, only the relevant page snippets are sent to generate it — nothing else, never in the background. No analytics, no tracking, no ads, and your data is never sold. Pro users who bring their own Anthropic key talk to Anthropic directly; the key never touches our servers.</p>
+      <p style="margin-top:10px"><a href="privacy.html">Read the full privacy policy →</a></p>
+    </div>
+  </main>
+
+  <footer>
+    <div class="links">
+      <a href="https://github.com/PMDevSolutions/Optia">GitHub</a>
+      <a href="https://github.com/PMDevSolutions/Optia/issues">Support</a>
+      <a href="privacy.html">Privacy Policy</a>
+    </div>
+    <div>© 2026 Paul Mulligan Development Solutions (PMDS)</div>
+  </footer>
+</body>
+</html>

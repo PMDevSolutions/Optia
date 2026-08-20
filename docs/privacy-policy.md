@@ -1,9 +1,9 @@
 # Optia Privacy Policy
 
-**Effective date:** <!-- TODO: set on publication -->
+**Effective date:** 2026-08-20
 **Last updated:** 2026-08-20
 
-> ⚠️ Draft prepared for the Chrome Web Store launch, grounded in the extension's actual data flows (see `docs/free-vs-pro-gating.md` and the backend design records). **Have a qualified lawyer review before publication**, and host the final version at a public URL for the store listing.
+> Published at **https://pmdevsolutions.github.io/Optia/privacy.html** (rendered from `site/privacy.html` — keep the two in sync; the HTML version is the user-facing one). Grounded in the extension's actual data flows (see `docs/free-vs-pro-gating.md` and the backend design records). **A qualified lawyer's review is still recommended** — tracked in `docs/launch-checklist.md` Phase 0.
 
 Optia ("we", "our") is a Chrome extension that analyzes web pages for SEO issues and generates AI-powered recommendations. This policy explains what data Optia handles, where it goes, and the choices you have.
 

@@ -60,15 +60,18 @@ Note: Optia Pro is purchased from us and billed securely through Stripe — not 
 
 All SEO analysis happens locally in your browser. When you request an AI recommendation, only the relevant page snippets (like the current title and your keyword) are sent to our AI service to generate the suggestion — nothing else, and never in the background. No accounts required for the free tier. No tracking, no ads, no analytics, and your data is never sold. Pro users who bring their own Anthropic key talk to Anthropic directly; the key never leaves the browser.
 
-Full privacy policy: <!-- TODO: hosted privacy-policy URL (see docs/privacy-policy.md) -->
+Full privacy policy: https://pmdevsolutions.github.io/Optia/privacy.html
 
 ## Privacy Policy URL
 
-<!-- TODO: host docs/privacy-policy.md at a public URL (GitHub Pages or the product site) and paste it here — the Dashboard requires it because Optia handles user data. -->
+https://pmdevsolutions.github.io/Optia/privacy.html
+
+(Served from `site/privacy.html` via the Deploy Site workflow — GitHub Pages, allowed by CWS. Keep `site/` and `docs/privacy-policy.md` in sync.)
 
 ## Website / Support URL
 
-<!-- TODO: product site or the GitHub repo's issues page. -->
+- Website: https://pmdevsolutions.github.io/Optia/ (landing page in `site/`; `pmds.info` can replace it later once it mentions Optia)
+- Support: https://github.com/PMDevSolutions/Optia/issues
 
 ---
 
