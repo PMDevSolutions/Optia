@@ -34,7 +34,7 @@ Follow `docs/PROVISIONING.md` §1–§8 for the production environment:
 ## Phase 3 — Store package, listing, legal
 
 - [ ] Cut the release: merge the Release Please PR (see `docs/RELEASING.md`) → tag → `optia-X.Y.Z.zip` attached to the GitHub Release by the Release Zip workflow.
-- [ ] Render store assets (`marketing/store-assets/README.md`): ≥1 screenshot at 1280×800 (aim for 4–5), small promo tile 440×280.
+- [x] Render store assets (`marketing/store-assets/README.md`): five 1280×800 screenshots (incl. the Pro/upgrade surface) and the 440×280 promo tile are committed in `marketing/store-assets/out/`; re-run `capture.mjs` + `render-asset.mjs` after UI changes.
 - [ ] Listing copy finalized from `docs/chrome-web-store-listing.md` (short + detailed description, category, single-purpose statement, permission justifications).
 - [ ] Privacy policy hosted; URL pasted into the listing doc and dashboard.
 - [ ] Privacy-practices form answered from `docs/chrome-web-store-data-disclosure.md`.
