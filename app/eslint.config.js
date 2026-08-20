@@ -128,6 +128,38 @@ export default [
     },
   },
   {
+    // Extension E2E tests (Playwright) — run in Node, with evaluate() blocks
+    // executing in the extension's browser contexts.
+    files: ["e2e/**/*.ts"],
+    languageOptions: {
+      parser: tsparser,
+      parserOptions: {
+        ecmaVersion: "latest",
+        sourceType: "module",
+      },
+      globals: {
+        ...globals.node,
+        ...globals.browser,
+        chrome: "readonly",
+      },
+    },
+    plugins: {
+      "@typescript-eslint": tseslint,
+    },
+    rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
+      "no-unused-vars": "off",
+      "no-empty": "off",
+      // Playwright's fixture signature uses an empty destructure: async ({}, use)
+      "no-empty-pattern": "off",
+      // Playwright fixtures receive a `use` callback — not a React hook.
+      "react-hooks/rules-of-hooks": "off",
+    },
+  },
+  {
     // Build scripts (icon generation, etc.) - Node.js environment
     files: ["scripts/**/*.{js,mjs}"],
     languageOptions: {

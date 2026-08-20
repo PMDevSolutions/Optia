@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Optia store screenshot frame</title>
+<style>
+  :root {
+    --brand: #4f46e5;
+    --brand-deep: #3730a3;
+    --ink: #ffffff;
+    --muted: rgba(255, 255, 255, 0.78);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1280px; height: 800px; overflow: hidden; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: radial-gradient(120% 140% at 15% 0%, var(--brand) 0%, var(--brand-deep) 55%, #1e1b4b 100%);
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    padding: 56px 64px 0;
+  }
+  header { display: flex; align-items: baseline; gap: 24px; margin-bottom: 36px; }
+  .wordmark { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; }
+  .wordmark::after { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #a5b4fc; margin-left: 4px; }
+  h1 { font-size: 46px; font-weight: 750; letter-spacing: -0.025em; line-height: 1.12; max-width: 900px; }
+  .subhead { margin-top: 14px; font-size: 22px; font-weight: 450; color: var(--muted); max-width: 860px; }
+  .window {
+    margin-top: 40px;
+    flex: 1;
+    background: #f8fafc;
+    border-radius: 14px 14px 0 0;
+    box-shadow: 0 -8px 60px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .chrome-bar {
+    height: 40px;
+    background: #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 16px;
+    flex: none;
+  }
+  .dot { width: 11px; height: 11px; border-radius: 50%; }
+  .shot { flex: 1; position: relative; background: #ffffff; }
+  .shot img { width: 100%; height: 100%; object-fit: cover; object-position: top left; display: block; }
+  .placeholder {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    color: #94a3b8; font-size: 24px; font-weight: 600; border: 3px dashed #cbd5e1; margin: 24px; border-radius: 12px;
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="wordmark">Optia</div>
+  </header>
+  <h1 id="headline">Instant SEO score for any page</h1>
+  <p class="subhead" id="subhead">Enter your keyword, get a 0–100 score with priority-labeled fixes.</p>
+  <div class="window">
+    <div class="chrome-bar">
+      <span class="dot" style="background:#f87171"></span>
+      <span class="dot" style="background:#fbbf24"></span>
+      <span class="dot" style="background:#34d399"></span>
+    </div>
+    <div class="shot" id="shot">
+      <div class="placeholder">Drop a product capture here (--param shot=path/to.png)</div>
+    </div>
+  </div>
+  <script>
+    const q = new URLSearchParams(location.search);
+    if (q.get("headline")) document.getElementById("headline").textContent = q.get("headline");
+    if (q.get("subhead")) document.getElementById("subhead").textContent = q.get("subhead");
+    const shot = q.get("shot");
+    if (shot) {
+      const img = new Image();
+      img.src = shot; // resolved relative to this template's directory
+      const slot = document.getElementById("shot");
+      slot.innerHTML = "";
+      slot.appendChild(img);
+    }
+  </script>
+</body>
+</html>

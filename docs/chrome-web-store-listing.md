@@ -1,16 +1,22 @@
 # Chrome Web Store Listing
 
+Source of truth for everything entered in the CWS Developer Dashboard. Keep this in sync with the product — the previous version of this file described the pre-freemium OpenAI/BYO-only build and must not be resubmitted.
+
 ## Extension Name
 
 Optia
 
-## Short Description
+## Short Description (132 chars max)
 
 Analyze any page's SEO and get an instant score with AI-powered title, meta description, and alt text recommendations.
 
 ## Category
 
-Productivity
+Productivity → SEO & marketing tools
+
+## Language
+
+English (Pro adds multi-language AI output; the listing itself is English)
 
 ## Detailed Description
 
@@ -20,15 +26,13 @@ Enter your target keyword, click "Optimize my SEO," and instantly see what's wor
 
 **FEATURES**
 
-— Instant SEO scoring: Get a visual score from 0–100 with a clear breakdown of passed checks vs. items to improve.
+— Instant SEO scoring: A visual score from 0–100 with a clear breakdown of passed checks vs. items to improve. Unlimited, on every page.
 
 — Keyword optimization tracking: See how your target keyword is used across your title, meta description, headings, URL, image alt text, and body content.
 
-— AI-powered recommendations: Connect your own OpenAI API key and get one-click suggested titles, meta descriptions, and alt text tailored to your page content and keyword. Uses GPT-4o-mini so each request costs fractions of a cent.
+— AI-powered recommendations: One-click suggested titles, meta descriptions, H2 headings, and image alt text tailored to your page content and keyword — served by Claude (Anthropic). Free users get 25 AI recommendations every month, no account or API key required.
 
-— Advanced Analysis mode: Toggle on page-type-aware analysis (Homepage, Blog Post, Product Page, etc.) for smarter, context-specific recommendations.
-
-— Priority-labeled checks: Every issue is tagged High Priority or Medium so you can work through fixes in the right order.
+— Priority-labeled checks: Every issue is tagged High or Medium priority so you fix the right things first.
 
 — One-click copy: Copy any AI suggestion straight to your clipboard.
 
@@ -36,23 +40,69 @@ Enter your target keyword, click "Optimize my SEO," and instantly see what's wor
 
 — Works on any website: Analyze any live page in your browser — not limited to any specific platform.
 
-— Side panel UI: Runs neatly in Chrome's side panel so you can see recommendations alongside the page you're optimizing.
+— Side panel UI: Runs neatly in Chrome's side panel so you can see recommendations alongside the page you're optimizing. Light and dark themes.
+
+**OPTIA PRO — $5/month or $50/year (2 months free)**
+
+— 1,000 AI recommendations per month (40× the free allowance)
+
+— Bring your own Anthropic API key for unlimited AI: your key is stored only in your browser and used for direct calls to Anthropic — it never touches our servers
+
+— Advanced Analysis mode: page-type-aware recommendations (Homepage, Blog Post, Product Page, and 13 more)
+
+— Multi-language AI output
+
+— Structured data (schema) recommendations
+
+Billing is handled securely by Stripe. Activate on any browser with your license key; manage or cancel any time from the extension's options page.
 
 **PRIVACY FIRST**
 
-All analysis happens locally in your browser. No data is sent to our servers. Your OpenAI API key is stored in local Chrome storage and only used for direct calls from your browser to OpenAI's API. No accounts, no tracking, no cookies, no analytics.
+All SEO analysis happens locally in your browser. When you request an AI recommendation, only the relevant page snippets (like the current title and your keyword) are sent to our AI service to generate the suggestion — nothing else, and never in the background. No accounts required for the free tier. No tracking, no ads, no analytics, and your data is never sold. Pro users who bring their own Anthropic key talk to Anthropic directly; the key never leaves the browser.
 
-Full privacy policy: https://github.com/die-Manufaktur/AISEOC-Chrome-Extension/blob/main/app/PRIVACY_POLICY.md
-
-**FREE & OPEN SOURCE**
-
-Optia is completely free to use and open source. View the source code, report issues, or contribute on GitHub:
-https://github.com/die-Manufaktur/AISEOC-Chrome-Extension
+Full privacy policy: <!-- TODO: hosted privacy-policy URL (see docs/privacy-policy.md) -->
 
 ## Privacy Policy URL
 
-https://github.com/die-Manufaktur/AISEOC-Chrome-Extension/blob/main/app/PRIVACY_POLICY.md
+<!-- TODO: host docs/privacy-policy.md at a public URL (GitHub Pages or the product site) and paste it here — the Dashboard requires it because Optia handles user data. -->
 
-## Website
+## Website / Support URL
 
-https://ai-seo-copilot.webflow.io/
+<!-- TODO: product site or the GitHub repo's issues page. -->
+
+---
+
+## Single Purpose Statement (Dashboard field)
+
+Optia's single purpose is on-page SEO analysis: it scores the page the user is viewing against SEO best practices for a keyword the user provides, and generates suggested improvements (titles, meta descriptions, headings, alt text) on request.
+
+## Permission Justifications (Dashboard fields)
+
+| Permission | Justification |
+|---|---|
+| `tabs` | Identify the active tab so the side panel analyzes the page the user is viewing, and detect navigation to refresh results. |
+| `sidePanel` | Optia's entire UI runs in Chrome's side panel, opened from the toolbar action. |
+| `storage` | Store the user's settings, keyword history, license entitlement, and (Pro) their own API key locally. Nothing is synced or transmitted. |
+| `scripting` | Inject the analysis content script that reads the page's SEO elements and optionally highlights issues in place. |
+| `alarms` | Periodically refresh the Pro license entitlement token in the background. |
+| Host access `<all_urls>` | The user can analyze any page they choose to open; the content script must be able to read the DOM of that page. It extracts SEO data only when the user runs an analysis. |
+| Remote code | None — all code ships in the package; the extension calls remote APIs (our backend / Anthropic) for data only. |
+
+Note: `<all_urls>` puts the listing in the in-depth review queue. See `docs/launch-checklist.md` for the accepted trade-off and the decision record on not narrowing to `activeTab`.
+
+## Data Disclosure
+
+Answers for the Dashboard's Privacy practices tab live in `docs/chrome-web-store-data-disclosure.md`.
+
+---
+
+## Asset Checklist
+
+| Asset | Spec | Status |
+|---|---|---|
+| Store icon | 128×128 PNG (generated from `app/public/icons/icon-128.svg` by `pnpm icons`, ships in `dist/icons/`) | ✅ exists |
+| Screenshots (1–5) | 1280×800 or 640×400 PNG/JPEG, no transparency | ⬜ render via `marketing/store-assets/` |
+| Small promo tile | 440×280 PNG/JPEG (shown in search/category) | ⬜ render via `marketing/store-assets/` |
+| Marquee promo tile | 1400×560 (optional, featured placements) | ⬜ optional |
+
+Generate the frames with `node marketing/store-assets/render-asset.mjs` (see its README), dropping real product captures into the screenshot slots.

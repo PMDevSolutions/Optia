@@ -1,0 +1,54 @@
+name: Release Zip
+
+# Builds the extension at the released tag and attaches the Chrome Web Store
+# upload package to the GitHub Release. The zip's contents are dist/ at the
+# archive root (manifest.json at top level), which is what the CWS Developer
+# Dashboard expects.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    working-directory: app
+
+jobs:
+  package:
+    name: Build & attach store zip
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: app/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Zip dist for the Chrome Web Store
+        run: |
+          VERSION=$(node -p "require('./manifest.json').version")
+          cd dist
+          zip -r "../optia-${VERSION}.zip" .
+          cd ..
+          unzip -l "optia-${VERSION}.zip" | head -20
+          echo "ZIP_NAME=optia-${VERSION}.zip" >> "$GITHUB_ENV"
+      - name: Attach zip to the release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "app/${ZIP_NAME}" --clobber
+        working-directory: .
+      - uses: actions/upload-artifact@v7
+        with:
+          name: chrome-web-store-package
+          path: app/optia-*.zip
+          retention-days: 30
