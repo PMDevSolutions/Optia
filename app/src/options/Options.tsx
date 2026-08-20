@@ -5,15 +5,29 @@ import { OptiaWordmark } from "@/components/ui/Logo";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useEntitlementStore } from "@/lib/entitlement-store";
 
+/** Opens an external URL in a new tab (extension page or dev preview). */
+function openExternalUrl(url: string) {
+  if (typeof chrome !== "undefined" && chrome.tabs?.create) {
+    void chrome.tabs.create({ url });
+  } else {
+    window.open(url, "_blank", "noopener");
+  }
+}
+
 function LicenseCard() {
   const isPro = useEntitlementStore((state) => state.isPro);
   const expiresAt = useEntitlementStore((state) => state.expiresAt);
   const aiQuotaRemaining = useEntitlementStore((state) => state.aiQuotaRemaining);
   const quotaLimit = useEntitlementStore((state) => state.quotaLimit);
+  const freeAiRemaining = useEntitlementStore((state) => state.freeAiRemaining);
+  const freeAiLimit = useEntitlementStore((state) => state.freeAiLimit);
   const activating = useEntitlementStore((state) => state.activating);
   const activationError = useEntitlementStore((state) => state.activationError);
+  const openingBillingPortal = useEntitlementStore((state) => state.openingBillingPortal);
+  const billingPortalError = useEntitlementStore((state) => state.billingPortalError);
   const activateLicense = useEntitlementStore((state) => state.activateLicense);
   const deactivateLicense = useEntitlementStore((state) => state.deactivateLicense);
+  const openBillingPortal = useEntitlementStore((state) => state.openBillingPortal);
   const hydrateEntitlement = useEntitlementStore((state) => state.hydrateEntitlement);
   const [licenseKey, setLicenseKey] = useState("");
   const [deactivating, setDeactivating] = useState(false);
@@ -35,6 +49,11 @@ function LicenseCard() {
     } finally {
       setDeactivating(false);
     }
+  };
+
+  const handleManageBilling = async () => {
+    const url = await openBillingPortal();
+    if (url) openExternalUrl(url);
   };
 
   return (
@@ -65,13 +84,30 @@ function LicenseCard() {
               AI quota this month: {aiQuotaRemaining} of {quotaLimit} remaining.
             </p>
           )}
-          <button
-            onClick={handleDeactivate}
-            disabled={deactivating}
-            className="self-start rounded-pill border border-border bg-surface px-6 py-2.5 text-button text-ink transition-colors hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {deactivating ? "Deactivating..." : "Deactivate on this browser"}
-          </button>
+          {billingPortalError && (
+            <p role="alert" className="text-body text-poor">
+              {billingPortalError}
+            </p>
+          )}
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={handleManageBilling}
+              disabled={openingBillingPortal}
+              className="rounded-pill bg-brand px-6 py-2.5 text-button text-brand-fg shadow-brand transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {openingBillingPortal ? "Opening portal..." : "Manage billing"}
+            </button>
+            <button
+              onClick={handleDeactivate}
+              disabled={deactivating}
+              className="rounded-pill border border-border bg-surface px-6 py-2.5 text-button text-ink transition-colors hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {deactivating ? "Deactivating..." : "Deactivate on this browser"}
+            </button>
+          </div>
+          <p className="text-body-12 text-faint">
+            Billing is handled securely by Stripe — Optia never sees your payment details.
+          </p>
         </div>
       ) : (
         <div className="mt-1 flex flex-col gap-4">
@@ -79,6 +115,11 @@ function LicenseCard() {
             Enter your Optia Pro license key to unlock AI without an Anthropic key and advanced
             analysis.
           </p>
+          {freeAiRemaining !== null && freeAiLimit !== null && (
+            <p className="text-body-12 text-muted">
+              Free AI quota this month: {freeAiRemaining} of {freeAiLimit} remaining.
+            </p>
+          )}
           <div className="flex flex-col gap-2">
             <label htmlFor="license-key" className="text-body-semibold text-ink">
               License key
