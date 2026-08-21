@@ -18,7 +18,7 @@ The end-to-end path from this repo to a live, working, paid product. Backend ste
 - [x] **Production Stripe price IDs substituted** in `app/src/lib/plans.ts` (2026-08-20): monthly `price_1U6faNRDHttKIwLT8gOTOVIe` ($5), annual `price_1U6flvRDHttKIwLTjOIPGpVG` ($50), created live on `acct_1U6Z2iRDHttKIwLT` (product `prod_V6tNs5AY55KP6R`). The old `price_1Tuc…` IDs were stale/foreign and are replaced in `optia-backend/wrangler.toml` too.
 - [x] **Production entitlement public key bundled** — verified 2026-08-20: `entitlement-keys.ts` kid `7nwkI8jgmbJnMjWEZXnEIdd53-DlDXdARJxVhTOmDnQ` matches the live `GET https://api.optia-api.com/license/public-key` exactly.
 - [x] `BACKEND_BASE_URL` resolves to `https://api.optia-api.com` in production builds (verified in `entitlement-keys.ts` mode switch).
-- [ ] Manual QA sweep per **`docs/qa-checklist-v1.md`** (fresh profile, light + dark, consoles clean) — the human half of issue #16; the automated half is the 500+ unit tests plus `app/e2e/` (26 tests incl. freemium/error-path E2E with a mocked backend). When green, cut v1.0.0 via a `Release-As: 1.0.0` commit footer; release notes draft: `docs/release-notes-v1.0.0.md`.
+- [x] Manual QA sweep per **`docs/qa-checklist-v1.md`** — **completed 2026-08-21** (issue #16 closed): full freemium flow live-driven against staging + production (checkout, Pro unlock, claim resume, BYOK incl. invalid-key fallback, multi-language, downgrade, offline, SW kill, restart persistence; light + dark at 360/500px; zero console errors). Seven defects found and fixed (Optia #45/#47/#49/#51, optia-backend #22/#23/#24). **v1.0.0 cut 2026-08-21** (`optia-1.0.0.zip` attached to the release).
 
 ## Phase 2 — Backend go-live (`optia-backend`)
 
@@ -29,7 +29,7 @@ The end-to-end path from this repo to a live, working, paid product. Backend ste
 - [x] Live webhook endpoint created: `we_1U6frWRDHttKIwLTMQgb9FU9` → `https://api.optia-api.com/billing/webhook` (checkout.session.completed, customer.subscription.updated/deleted). ⚠️ Destination API version is `2026-07-29.dahlia`; backend pins `2026-06-24.dahlia` — same family, verify event shapes in staging or align the pin.
 - [x] Webhook signing secret set as `STRIPE_WEBHOOK_SECRET` production secret (owner, 2026-08-20; verified present via `wrangler secret list`)
 - [x] Billing Portal configured in live mode (default configuration `bpc_1U6…` saved — what `/billing/portal` sessions use)
-- [ ] Also wire the missing **sandbox** webhook + portal for staging parity
+- [x] Sandbox webhook + portal verified working end-to-end 2026-08-21 (staging checkout minted a license via the webhook; portal session opened) — the #16 QA pass exercised both. The live-endpoint API-version note above is de-risked the same way: the sandbox destination processed `checkout.session.completed` and `customer.subscription.deleted` with the current pin.
 
 Follow `docs/PROVISIONING.md` §1–§8 for the production environment:
 
