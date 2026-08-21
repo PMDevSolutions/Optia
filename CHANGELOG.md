@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.0](https://github.com/PMDevSolutions/Optia/compare/v0.5.0...v0.6.0) (2026-08-21)
+
+
+### Added
+
+* **billing:** live Stripe price IDs + hosted checkout/portal return pages ([5aba18a](https://github.com/PMDevSolutions/Optia/commit/5aba18a26329723da2ab579a66bb59ab47021413))
+* **billing:** live Stripe price IDs + hosted checkout/portal return pages ([a80a838](https://github.com/PMDevSolutions/Optia/commit/a80a8388bf0205ee84c9a7be2ae52388c70f71ed))
+
 ## [0.5.0](https://github.com/PMDevSolutions/Optia/compare/v0.4.0...v0.5.0) (2026-08-20)
 
 
