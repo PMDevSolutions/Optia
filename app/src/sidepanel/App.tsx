@@ -238,10 +238,12 @@ export default function App() {
         const savedOptions = await getAdvancedOptions(host);
         if (savedKeyword) setSettings({ keyword: savedKeyword });
         if (savedOptions) {
+          // language is deliberately NOT restored: it is a global setting
+          // (default_language, chosen in options), not per-host state — a
+          // stale per-host value would silently override the user's default.
           setSettings({
             pageType: savedOptions.pageType,
             secondaryKeywords: savedOptions.secondaryKeywords,
-            language: savedOptions.language,
             advancedMode: true,
           });
         }
@@ -317,7 +319,9 @@ export default function App() {
             // Restore the analysis
             setAnalysis(savedState.analysis);
             if (savedState.settings) {
-              setSettings(savedState.settings);
+              // Guard against pre-fix snapshots that still carry a language.
+              const { language: _staleLanguage, ...restored } = savedState.settings;
+              setSettings(restored);
             }
             setView("score");
           } else {
@@ -382,13 +386,18 @@ export default function App() {
       // recommendation so a single analysis doesn't drain their monthly allowance.
       const aiMode = aiStatusNow().mode;
       if (aiMode === "byok" || aiMode === "pro") {
-        const advancedOptions = settings.advancedMode
-          ? {
-              pageType: settings.pageType,
-              secondaryKeywords: settings.secondaryKeywords,
-              languageCode: settings.language,
-            }
-          : undefined;
+        // Language is its own Pro feature (default_language in options) and
+        // applies regardless of the Advanced Analysis toggle; page-type and
+        // secondary keywords are the Advanced-only refinements.
+        const advancedOptions = {
+          ...(settings.advancedMode
+            ? {
+                pageType: settings.pageType,
+                secondaryKeywords: settings.secondaryKeywords,
+              }
+            : {}),
+          languageCode: settings.language,
+        };
 
         generateAIRecommendations(
           analysis,
@@ -426,7 +435,6 @@ export default function App() {
           await saveAdvancedOptions(host, {
             pageType: settings.pageType,
             secondaryKeywords: settings.secondaryKeywords,
-            language: settings.language,
           });
         }
       } catch {
@@ -440,11 +448,13 @@ export default function App() {
           if (tab?.id) {
             await saveTabAnalysis(tab.id, {
               analysis,
+              // language is deliberately excluded: it is a global setting
+              // (default_language) — restoring a snapshot of it on tab switch
+              // would silently revert a change made in options.
               settings: {
                 keyword: settings.keyword,
                 secondaryKeywords: settings.secondaryKeywords,
                 pageType: settings.pageType,
-                language: settings.language,
                 advancedMode: settings.advancedMode,
               },
               url: pageData.url,

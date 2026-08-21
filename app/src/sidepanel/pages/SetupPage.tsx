@@ -94,6 +94,7 @@ export function SetupPage({ onAnalyze }: SetupPageProps) {
   const isPro = useEntitlementStore((state) => state.isPro);
   const canUseAdvancedOptions = useEntitlementStore((state) => state.canUseAdvancedOptions);
   const canUseMultiLanguage = useEntitlementStore((state) => state.canUseMultiLanguage);
+  const entitlementLoaded = useEntitlementStore((state) => state.entitlementLoaded);
   const canBringOwnKey = useEntitlementStore((state) => state.canBringOwnKey);
   const expiresAt = useEntitlementStore((state) => state.expiresAt);
   const freeAiRemaining = useEntitlementStore((state) => state.freeAiRemaining);
@@ -114,12 +115,14 @@ export function SetupPage({ onAnalyze }: SetupPageProps) {
     }
   }, [canUseAdvancedOptions, settings.advancedMode, setSettings]);
 
-  // Multi-language output is a Pro feature — pin free users to English
+  // Multi-language output is a Pro feature — pin free users to English. Only
+  // act once entitlement hydration has resolved: before that the flag is
+  // always false and this would stomp a Pro user's hydrated default language.
   useEffect(() => {
-    if (!canUseMultiLanguage && settings.language !== "en") {
+    if (entitlementLoaded && !canUseMultiLanguage && settings.language !== "en") {
       setSettings({ language: "en" });
     }
-  }, [canUseMultiLanguage, settings.language, setSettings]);
+  }, [entitlementLoaded, canUseMultiLanguage, settings.language, setSettings]);
 
   const handleSaveSettings = async () => {
     await setApiKey(localApiKey);
@@ -146,10 +149,10 @@ export function SetupPage({ onAnalyze }: SetupPageProps) {
       const host = new URL(url).hostname;
       const savedOptions = await getAdvancedOptions(host);
       if (savedOptions) {
+        // language is a global setting (default_language), never per-host.
         setSettings({
           pageType: savedOptions.pageType,
           secondaryKeywords: savedOptions.secondaryKeywords,
-          language: savedOptions.language,
           advancedMode: useEntitlementStore.getState().canUseAdvancedOptions,
         });
       }

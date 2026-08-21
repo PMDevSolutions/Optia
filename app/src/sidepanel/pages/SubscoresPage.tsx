@@ -72,16 +72,20 @@ export function SubscoresPage() {
   const keyword = analysis.keyword;
   const sortedChecks = sortByPriority(category.checks);
 
-  // Advanced context (page type, secondary keywords, language) only takes effect
-  // on the BYO-key direct path; the hosted proxy ignores it. advancedMode is
-  // itself Pro-gated in SetupPage, so it is never set for free users.
-  const advancedOptions = settings.advancedMode
-    ? {
-        pageType: settings.pageType,
-        secondaryKeywords: settings.secondaryKeywords,
-        languageCode: settings.language,
-      }
-    : undefined;
+  // Language is its own Pro feature (default_language in options) and applies
+  // regardless of the Advanced Analysis toggle; page-type and secondary
+  // keywords are the Advanced-only refinements. The AI layer forwards these to
+  // the BYOK direct call or the hosted proxy (Pro-authenticated) — free users
+  // never carry them (the options UI pins free to English).
+  const advancedOptions = {
+    ...(settings.advancedMode
+      ? {
+          pageType: settings.pageType,
+          secondaryKeywords: settings.secondaryKeywords,
+        }
+      : {}),
+    languageCode: settings.language,
+  };
 
   const renderCheckRecommendation = (check: SEOCheck) => {
     if (check.status === "pass") return null;

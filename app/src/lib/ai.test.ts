@@ -117,12 +117,30 @@ describe("generateRecommendation", () => {
       keyword: "kw",
       context: "current title",
       authenticated: true,
+      // Pro requests carry the advanced options so the hosted proxy can honor
+      // multi-language and page-type-aware analysis (Pro features).
+      advanced: {
+        languageCode: "fr",
+        pageType: "product-page",
+        secondaryKeywords: "seo, ranking",
+      },
     });
-    // advancedOptions are a BYO-key enhancement and must NOT reach the proxy.
     expect(generateViaProxyMock).toHaveBeenCalledTimes(1);
-    expect(generateViaProxyMock.mock.calls[0][0]).not.toHaveProperty("advancedOptions");
     expect(applyProxyQuotaMock).toHaveBeenCalledWith(testQuota, "pro");
     expect(generateRecommendationDirectMock).not.toHaveBeenCalled();
+  });
+
+  it("free → advanced options never reach the proxy even if passed", async () => {
+    setMode("free");
+
+    await generateRecommendation("title-keyword", "kw", "current title", advancedOptions);
+
+    expect(generateViaProxyMock).toHaveBeenCalledWith({
+      checkId: "title-keyword",
+      keyword: "kw",
+      context: "current title",
+      authenticated: false,
+    });
   });
 
   it("free → routes to the proxy unauthenticated and records the quota as 'free'", async () => {
@@ -341,6 +359,11 @@ describe("generateH2Suggestion", () => {
       keyword: "kw",
       context: "Current Heading",
       authenticated: true,
+      advanced: {
+        languageCode: "fr",
+        pageType: "product-page",
+        secondaryKeywords: "seo, ranking",
+      },
     });
     expect(applyProxyQuotaMock).toHaveBeenCalledWith(testQuota, "pro");
   });

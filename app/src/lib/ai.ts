@@ -17,8 +17,10 @@ export type { AdvancedOptions };
 //   free  → hosted proxy metered by install id (capped monthly allowance)
 //   locked → no path available → AiUnavailableError (surface a friendly upsell)
 //
-// The proxy accepts only { checkId, keyword, context }; advanced options are a
-// BYO-key enhancement and are not forwarded to it.
+// Advanced options (language, page type, secondary keywords) are Pro features:
+// the BYOK direct path applies them locally, and the hosted proxy honors them
+// on entitlement-authenticated (Pro) requests. Free-tier requests never carry
+// them — the settings UI gates them behind Pro.
 
 export class AiUnavailableError extends Error {
   constructor(message: string) {
@@ -92,9 +94,28 @@ async function runProxy(
   keyword: string,
   context: string,
   authenticated: boolean,
+  advancedOptions?: AdvancedOptions,
 ): Promise<string> {
   try {
-    const result = await generateViaProxy({ checkId, keyword, context, authenticated });
+    const result = await generateViaProxy({
+      checkId,
+      keyword,
+      context,
+      authenticated,
+      ...(authenticated && advancedOptions
+        ? {
+            advanced: {
+              ...(advancedOptions.languageCode
+                ? { languageCode: advancedOptions.languageCode }
+                : {}),
+              ...(advancedOptions.pageType ? { pageType: advancedOptions.pageType } : {}),
+              ...(advancedOptions.secondaryKeywords
+                ? { secondaryKeywords: advancedOptions.secondaryKeywords }
+                : {}),
+            },
+          }
+        : {}),
+    });
     // Record against the subject the server actually metered (a Pro request with
     // no token falls back to install metering).
     await useEntitlementStore
@@ -133,10 +154,10 @@ export async function generateRecommendation(
           context,
           advancedOptions,
         ),
-      () => runProxy(checkId, keyword, context, true),
+      () => runProxy(checkId, keyword, context, true, advancedOptions),
     );
   }
-  return runProxy(checkId, keyword, context, status.mode === "pro");
+  return runProxy(checkId, keyword, context, status.mode === "pro", advancedOptions);
 }
 
 export async function generateH2Suggestion(
@@ -149,10 +170,10 @@ export async function generateH2Suggestion(
   if (status.mode === "byok") {
     return runDirectWithFallback(
       () => generateH2SuggestionDirect(useStore.getState().apiKey, h2Text, keyword, advancedOptions),
-      () => runProxy("h2-keyword", keyword, h2Text, true),
+      () => runProxy("h2-keyword", keyword, h2Text, true, advancedOptions),
     );
   }
-  return runProxy("h2-keyword", keyword, h2Text, status.mode === "pro");
+  return runProxy("h2-keyword", keyword, h2Text, status.mode === "pro", advancedOptions);
 }
 
 export async function generateAllH2Suggestions(
@@ -173,8 +194,8 @@ export async function generateAltText(
   if (status.mode === "byok") {
     return runDirectWithFallback(
       () => generateAltTextDirect(useStore.getState().apiKey, imageSrc, keyword, advancedOptions),
-      () => runProxy("images-alt", keyword, imageSrc, true),
+      () => runProxy("images-alt", keyword, imageSrc, true, advancedOptions),
     );
   }
-  return runProxy("images-alt", keyword, imageSrc, status.mode === "pro");
+  return runProxy("images-alt", keyword, imageSrc, status.mode === "pro", advancedOptions);
 }
