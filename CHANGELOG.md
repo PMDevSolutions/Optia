@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1](https://github.com/PMDevSolutions/Optia/compare/v1.0.0...v1.0.1) (2026-08-21)
+
+
+### Fixed
+
+* **ai:** refresh the entitlement and retry once on a 401 from the proxy ([6324a21](https://github.com/PMDevSolutions/Optia/commit/6324a2113c075b4bd0c219d56dc21ded586bd620))
+* **ai:** refresh the entitlement and retry once on a 401 from the proxy ([9602003](https://github.com/PMDevSolutions/Optia/commit/9602003bf1786d7bd632e8bdb169814eaf82a711))
+
 ## [1.0.0](https://github.com/PMDevSolutions/Optia/compare/v0.7.4...v1.0.0) (2026-08-21)
 
 
