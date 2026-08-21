@@ -25,6 +25,17 @@
     <h1>You're Pro! Payment complete.</h1>
     <p>Head back to the <strong>Optia side panel</strong> — your Pro license activates there automatically within a few seconds. Your receipt is on its way from Stripe.</p>
     <p class="hint">Panel didn't update? Open the extension's options page and check the License card, or <a href="https://github.com/PMDevSolutions/Optia/issues">contact support</a>. You can close this tab.</p>
+    <p class="hint" id="ref" hidden></p>
   </div>
+  <script>
+    // Stripe appends ?session_id={CHECKOUT_SESSION_ID}; surface a truncated
+    // reference so support tickets can be matched to the Checkout session.
+    var sid = new URLSearchParams(location.search).get("session_id");
+    if (sid && /^cs_[A-Za-z0-9_]+$/.test(sid)) {
+      var el = document.getElementById("ref");
+      el.textContent = "Payment reference: …" + sid.slice(-10);
+      el.hidden = false;
+    }
+  </script>
 </body>
 </html>
