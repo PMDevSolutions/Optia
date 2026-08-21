@@ -19,6 +19,24 @@ A Chrome extension that analyzes web pages for SEO optimization and provides AI-
 - **One-Click Copy** — copy suggestions directly to your clipboard.
 - **Side panel UI** — recommendations alongside the page you're optimizing; light and dark themes.
 
+## How the freemium model works (open-core)
+
+Optia is **open-core**: this public repo ships the extension and everything
+free — local SEO analysis, the UI, and the *client* side of licensing (paywall,
+checkout initiation, entitlement verification). A separate **private** repo
+(`optia-backend`, a Cloudflare Worker) holds everything that must be trusted:
+Stripe billing, license minting and Ed25519 **signing**, and the metered AI
+proxy that fronts Anthropic with a server-funded key.
+
+Pro is a signed claim, not client state. After Stripe confirms payment, the
+backend signs a short-lived entitlement; the extension only bundles the
+*public* verification key, so a modified client can flip its own UI gates but
+can never mint Pro, exceed server-metered quotas, or steer checkout. The full
+security model — diagram, trust boundary, key rotation, and contributor rules
+(in short: **never add paid/secret server logic to this repo**) — is in
+[`docs/architecture.md`](./docs/architecture.md); the feature-by-feature gating
+matrix is in [`docs/free-vs-pro-gating.md`](./docs/free-vs-pro-gating.md).
+
 ## Privacy & Data Handling
 
 The user-facing policy lives at [pmdevsolutions.github.io/Optia/privacy.html](https://pmdevsolutions.github.io/Optia/privacy.html) (source: [`site/privacy.html`](./site/privacy.html), mirrored in [`docs/privacy-policy.md`](./docs/privacy-policy.md) — keep them in sync). The short version:
