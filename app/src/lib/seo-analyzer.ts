@@ -455,7 +455,7 @@ export function runSEOChecks(
 
   return checks.map((check) => ({
     ...check,
-    learnMoreUrl: getLearnMoreUrl(check.title),
+    learnMoreUrl: getLearnMoreUrl(check.id),
   }));
 }
 

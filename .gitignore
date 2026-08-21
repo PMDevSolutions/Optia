@@ -29,6 +29,7 @@ out/
 .vercel/
 storybook-static/
 app/dist/
+app/dist-staging/
 
 # Playwright MCP (auto-generated browser data)
 .playwright-mcp/
