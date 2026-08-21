@@ -15,7 +15,7 @@ The end-to-end path from this repo to a live, working, paid product. Backend ste
 
 - [x] Merge PR #28 (BYOK toggle + invalid-key fallback — closed #12, merged 2026-08-20).
 - [x] CI fully green on `main`, including the **Extension E2E (MV3)** job (`app/e2e/` — MV3 compliance + loaded-extension smoke tests).
-- [ ] **Substitute production Stripe price IDs** in `app/src/lib/plans.ts` — the literals `__OPTIA_LIVE_PRICE_PRO_MONTHLY__` / `__OPTIA_LIVE_PRICE_PRO_ANNUAL__` must be replaced before the release build. ⚠️ **Dashboard-verified 2026-08-20: the "live" IDs in `optia-backend/wrangler.toml` (`price_1TucPn…` / `price_1TucPp…`) do not exist in the Optia Stripe account and appear stale/foreign — do not trust them.** Real live prices can only be created after account activation (see Phase 2), then propagated to BOTH `wrangler.toml` and `plans.ts`.
+- [x] **Production Stripe price IDs substituted** in `app/src/lib/plans.ts` (2026-08-20): monthly `price_1U6faNRDHttKIwLT8gOTOVIe` ($5), annual `price_1U6flvRDHttKIwLTjOIPGpVG` ($50), created live on `acct_1U6Z2iRDHttKIwLT` (product `prod_V6tNs5AY55KP6R`). The old `price_1Tuc…` IDs were stale/foreign and are replaced in `optia-backend/wrangler.toml` too.
 - [ ] **Bundle the production entitlement public key**: the extension verifies entitlements against the environment's signing key — confirm `ENTITLEMENT_JWKS` in `app/src/lib/entitlement-keys.ts` contains the **production** key (`GET https://api.optia-api.com/license/public-key`) for production builds, not staging's.
 - [ ] Confirm `BACKEND_BASE_URL` resolves to `https://api.optia-api.com` in the production build (Vite mode), never staging/localhost.
 - [ ] Manual QA sweep of the built extension (load `app/dist` unpacked): free analysis, free AI (quota ticks down), paywall → Stripe test checkout, license activation, Pro features, BYOK path, options page.
@@ -24,10 +24,11 @@ The end-to-end path from this repo to a live, working, paid product. Backend ste
 
 **Stripe state as verified in the dashboard on 2026-08-20:** the live account (`acct_1U6Z2iRDHttKIwLT`) is still **in onboarding — "Verify your business" is incomplete, so it cannot take live payments**; the "Optia sandbox" has **no webhook endpoints** and no billing-portal configuration. Order of operations for Stripe (owner-only where noted):
 
-- [ ] Complete live account activation (business verification, bank account) — **owner-only, blocks everything below**
-- [ ] Create the Pro product + $5/month and $50/year prices in **live mode**; put the real IDs in `optia-backend/wrangler.toml` (production) and `app/src/lib/plans.ts`
-- [ ] Create the live webhook endpoint → `api.optia-api.com` (events per `optia-backend` Stripe design doc) and set its signing secret as a production secret
-- [ ] Configure the Billing Portal in live mode (the extension's "Manage billing" depends on it)
+- [x] Live account activation **submitted 2026-08-20** (entity: PMDS sole prop; public name Optia; statement descriptor `OPTIA`; category SaaS; PNC payouts). Stripe review in progress (2–3 days) — live charges enable when it clears.
+- [x] Pro product + prices created in live mode (2026-08-20): `prod_V6tNs5AY55KP6R`, monthly `price_1U6faNRDHttKIwLT8gOTOVIe`, annual `price_1U6flvRDHttKIwLTjOIPGpVG` (lookup keys `optia_pro_monthly`/`optia_pro_annual`); IDs propagated to `wrangler.toml` + `plans.ts`.
+- [x] Live webhook endpoint created: `we_1U6frWRDHttKIwLTMQgb9FU9` → `https://api.optia-api.com/billing/webhook` (checkout.session.completed, customer.subscription.updated/deleted). ⚠️ Destination API version is `2026-07-29.dahlia`; backend pins `2026-06-24.dahlia` — same family, verify event shapes in staging or align the pin.
+- [ ] **Reveal the webhook signing secret** (dashboard → Workbench → Webhooks → optia-production) and set it: `pnpm exec wrangler secret put STRIPE_WEBHOOK_SECRET --env production` — owner-only, do not paste the secret anywhere else
+- [x] Billing Portal configured in live mode (default configuration `bpc_1U6…` saved — what `/billing/portal` sessions use)
 - [ ] Also wire the missing **sandbox** webhook + portal for staging parity
 
 Follow `docs/PROVISIONING.md` §1–§8 for the production environment:

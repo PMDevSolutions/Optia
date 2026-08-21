@@ -13,13 +13,14 @@ export interface Plan {
   badge?: string;
 }
 
-// TODO(confirm): production price IDs are still placeholders in the backend's
-// wrangler.toml; substitute the live IDs before release.
+// LIVE price IDs created 2026-08-20 on acct_1U6Z2iRDHttKIwLT ("Optia Pro",
+// prod_V6tNs5AY55KP6R: $5/mo, $50/yr). Must match the backend wrangler.toml
+// production STRIPE_PRICE_* vars — the server rejects unknown priceIds.
 export const PLANS: Plan[] = [
   {
     id: "monthly",
     priceId: isProduction
-      ? "__OPTIA_LIVE_PRICE_PRO_MONTHLY__"
+      ? "price_1U6faNRDHttKIwLT8gOTOVIe"
       : "price_1U4l83CRgigSDnjuBaR9Fg00",
     amountLabel: "$5",
     intervalLabel: "/month",
@@ -27,7 +28,7 @@ export const PLANS: Plan[] = [
   {
     id: "annual",
     priceId: isProduction
-      ? "__OPTIA_LIVE_PRICE_PRO_ANNUAL__"
+      ? "price_1U6flvRDHttKIwLTjOIPGpVG"
       : "price_1U4l83CRgigSDnjusx4BHyWo",
     amountLabel: "$50",
     intervalLabel: "/year",
