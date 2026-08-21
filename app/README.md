@@ -99,7 +99,7 @@ This creates a `dist` folder with the built extension.
 
 4. Review the SEO score and recommendations
 
-5. For AI-powered suggestions, add your OpenAI API key in Settings
+5. AI-powered suggestions work out of the box — the free tier includes 25 AI recommendations per month through Optia's hosted service (Claude, by Anthropic), no account or API key required. Optia Pro raises the limit and can use your own Anthropic API key instead (Settings).
 
 ---
 
@@ -185,17 +185,16 @@ app/
 
 ---
 
-## Getting an OpenAI API Key
+## AI Recommendations: Hosted vs. Bring-Your-Own-Key
 
-For AI-powered suggestions, you need an OpenAI API key:
+AI suggestions are powered by Claude (Anthropic) and work with **no setup**: the free tier includes 25 recommendations a month through Optia's hosted service, and Optia Pro includes 1,000.
 
-1. Go to https://platform.openai.com/signup
-2. Create an account or sign in
-3. Navigate to API Keys in your account settings
-4. Create a new secret key
-5. Copy the key and paste it in the extension's Settings
+Pro users who prefer their own billing/limits can instead supply an **Anthropic API key** (Settings → Anthropic API key, with a "Use my Anthropic key" toggle):
 
-**Note:** OpenAI API usage has associated costs. The extension uses GPT-4o-mini which is inexpensive (typically fractions of a cent per request).
+1. Go to https://console.anthropic.com/ and create an API key
+2. Paste it in the extension's Settings (Pro required)
+
+Your key is stored only in your browser and used for direct calls to Anthropic — it is never sent to Optia's servers. See the [privacy policy](https://pmdevsolutions.github.io/Optia/privacy.html) for full data-handling details.
 
 ---
 
