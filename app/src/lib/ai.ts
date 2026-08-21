@@ -155,12 +155,24 @@ export async function generateH2Suggestion(
   return runProxy("h2-keyword", keyword, h2Text, status.mode === "pro");
 }
 
+/**
+ * Generates suggestions for every H2 independently. Quota is spent per request,
+ * so one upstream failure must not discard the suggestions that succeeded —
+ * failed slots come back as null for per-item retry. Throws only when every
+ * generation failed (preserving the locked/upsell error for the toast).
+ */
 export async function generateAllH2Suggestions(
   h2Texts: string[],
   keyword: string,
   advancedOptions?: AdvancedOptions,
-): Promise<string[]> {
-  return Promise.all(h2Texts.map((text) => generateH2Suggestion(text, keyword, advancedOptions)));
+): Promise<(string | null)[]> {
+  const settled = await Promise.allSettled(
+    h2Texts.map((text) => generateH2Suggestion(text, keyword, advancedOptions)),
+  );
+  if (settled.length > 0 && settled.every((r) => r.status === "rejected")) {
+    throw (settled[0] as PromiseRejectedResult).reason;
+  }
+  return settled.map((r) => (r.status === "fulfilled" ? r.value : null));
 }
 
 export async function generateAltText(

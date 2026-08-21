@@ -394,6 +394,25 @@ describe("generateAllH2Suggestions", () => {
     expect(generateViaProxyMock).not.toHaveBeenCalled();
     expect(generateH2SuggestionDirectMock).not.toHaveBeenCalled();
   });
+
+  it("keeps successful suggestions when one generation fails (quota already spent)", async () => {
+    setMode("free");
+    generateViaProxyMock
+      .mockResolvedValueOnce({ recommendation: "ok A", model: "m", quota: testQuota, authenticated: false })
+      .mockRejectedValueOnce(new Error("upstream 502"))
+      .mockResolvedValueOnce({ recommendation: "ok C", model: "m", quota: testQuota, authenticated: false });
+
+    const result = await generateAllH2Suggestions(["A", "B", "C"], "kw");
+
+    expect(result).toEqual(["ok A", null, "ok C"]);
+  });
+
+  it("throws the first error only when every generation fails", async () => {
+    setMode("free");
+    generateViaProxyMock.mockRejectedValue(new Error("backend down"));
+
+    await expect(generateAllH2Suggestions(["A", "B"], "kw")).rejects.toThrow("backend down");
+  });
 });
 
 describe("generateAltText", () => {

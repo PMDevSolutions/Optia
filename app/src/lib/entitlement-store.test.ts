@@ -311,6 +311,33 @@ describe("applyProxyQuota", () => {
     // The Pro remaining is untouched by a free-metered call.
     expect(state.aiQuotaRemaining).toBe(0);
   });
+
+  it("concurrent out-of-order snapshots keep the lowest remaining (generate-all)", async () => {
+    // Generate-all responses race: an early reservation (high remaining) can
+    // resolve after a later one (low remaining). The cache must converge to the
+    // most conservative value, not whichever response applied last.
+    const low: QuotaSnapshot = { period: "2026-07", remaining: 11, limit: 25 };
+    const high: QuotaSnapshot = { period: "2026-07", remaining: 24, limit: 25 };
+    const store = useEntitlementStore.getState();
+
+    await Promise.all([store.applyProxyQuota(low, "free"), store.applyProxyQuota(high, "free")]);
+
+    expect(useEntitlementStore.getState().freeAiRemaining).toBe(11);
+    expect(recordFreeAiQuotaMock).toHaveBeenLastCalledWith({ ...high, remaining: 11 });
+  });
+
+  it("a new period rollover replaces the cached remaining instead of min-ing it", async () => {
+    await useEntitlementStore
+      .getState()
+      .applyProxyQuota({ period: "2026-07", remaining: 3, limit: 25 }, "free");
+    await useEntitlementStore
+      .getState()
+      .applyProxyQuota({ period: "2026-08", remaining: 25, limit: 25 }, "free");
+
+    const state = useEntitlementStore.getState();
+    expect(state.freeAiRemaining).toBe(25);
+    expect(state.freeAiPeriod).toBe("2026-08");
+  });
 });
 
 describe("activateLicense", () => {

@@ -171,14 +171,17 @@ export const useEntitlementStore = create<EntitlementStore>((set) => ({
     // Concurrent generations (generate-all) resolve out of order; keep the most
     // conservative (lowest) remaining for the SAME period so the cache never
     // overstates the allowance. A different period is a rollover — take it as-is.
+    // The read→reconcile→set must be one synchronous slice: with an await in
+    // between, N concurrent calls all reconcile against the same stale state and
+    // the last (possibly highest) response wins (found in the #16 QA pass).
     const state = useEntitlementStore.getState();
     if (subject === "pro") {
       const known = state.quotaLimit > 0 ? state.aiQuotaRemaining : null;
       const sameMonth = quota.period === state.aiQuotaPeriod;
       const remaining = sameMonth && known !== null ? Math.min(known, quota.remaining) : quota.remaining;
       const reconciled = { ...quota, remaining };
-      await recordProAiQuota(reconciled);
       set({ aiQuotaRemaining: remaining, quotaLimit: reconciled.limit, aiQuotaPeriod: quota.period });
+      await recordProAiQuota(reconciled);
     } else {
       const sameMonth = quota.period === state.freeAiPeriod;
       const remaining =
@@ -186,8 +189,8 @@ export const useEntitlementStore = create<EntitlementStore>((set) => ({
           ? Math.min(state.freeAiRemaining, quota.remaining)
           : quota.remaining;
       const reconciled = { ...quota, remaining };
-      await recordFreeAiQuota(reconciled);
       set({ freeAiRemaining: remaining, freeAiLimit: reconciled.limit, freeAiPeriod: quota.period });
+      await recordFreeAiQuota(reconciled);
     }
   },
 }));

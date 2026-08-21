@@ -13,6 +13,7 @@ import {
   getRawEntitlementToken,
   getRefreshFailureCount,
   getValidEntitlement,
+  resetInstallIdCacheForTests,
   recordFreeAiQuota,
   recordProAiQuota,
   refreshNow,
@@ -67,6 +68,9 @@ beforeAll(async () => {
   keys = await createTestKeys();
   verifyOpts = { jwks: [keys.jwk] };
 });
+
+// The install-id memo caches across tests; storage does not.
+beforeEach(() => resetInstallIdCacheForTests());
 
 describe("verifyEntitlementToken", () => {
   it("returns the claims of a valid token", async () => {
@@ -166,6 +170,14 @@ describe("getInstallId", () => {
     expect(first).toMatch(/[0-9a-f-]{36}/);
     expect(await getInstallId()).toBe(first);
     expect(await getStorageItem(INSTALL_ID_KEY)).toBe(first);
+  });
+
+  it("concurrent first-use callers share a single id (generate-all metering)", async () => {
+    // Without the in-flight memo, N concurrent calls each mint their own id and
+    // the proxy meters N separate free-quota buckets.
+    const ids = await Promise.all(Array.from({ length: 14 }, () => getInstallId()));
+    expect(new Set(ids).size).toBe(1);
+    expect(await getStorageItem(INSTALL_ID_KEY)).toBe(ids[0]);
   });
 });
 

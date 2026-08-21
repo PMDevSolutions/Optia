@@ -54,6 +54,18 @@ describe("H2SelectionList", () => {
     expect(defaultProps.onRegenerateAll).toHaveBeenCalled();
   });
 
+  it("keeps the successful suggestions when some generations fail", async () => {
+    const user = userEvent.setup();
+    const onToast = vi.fn();
+    const onRegenerateAll = vi.fn().mockResolvedValue(["New Intro", null]);
+    render(<H2SelectionList {...defaultProps} onRegenerateAll={onRegenerateAll} onToast={onToast} />);
+
+    await user.click(screen.getByText("Generate All"));
+
+    expect(screen.getByDisplayValue("New Intro")).toBeInTheDocument();
+    expect(onToast).toHaveBeenCalledWith("Generated 1 of 2 — retry the rest individually");
+  });
+
   it("disables copy button when there is no suggestion", () => {
     render(<H2SelectionList {...defaultProps} />);
     const copyButtons = screen.getAllByTitle("Copy");

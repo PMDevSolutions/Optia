@@ -105,12 +105,30 @@ export async function verifyEntitlementToken(
 }
 
 /** Stable anonymous install id, generated once per profile (seat identity). */
-export async function getInstallId(): Promise<string> {
-  const existing = await getStorageItem<string>(INSTALL_ID_KEY);
-  if (existing) return existing;
-  const installId = crypto.randomUUID();
-  await setStorageItem(INSTALL_ID_KEY, installId);
-  return installId;
+// In-flight memo so concurrent callers share one read-or-create. Without it,
+// a first-ever generate-all fires N concurrent calls that all read "no id yet"
+// and mint N different ids — the proxy then meters N separate free-quota
+// buckets and the monthly cap is never reached (found in the #16 QA pass).
+let installIdPromise: Promise<string> | null = null;
+
+export function getInstallId(): Promise<string> {
+  installIdPromise ??= (async () => {
+    const existing = await getStorageItem<string>(INSTALL_ID_KEY);
+    if (existing) return existing;
+    const installId = crypto.randomUUID();
+    await setStorageItem(INSTALL_ID_KEY, installId);
+    return installId;
+  })().catch((err) => {
+    // Don't cache a failed read/write — let the next caller retry.
+    installIdPromise = null;
+    throw err;
+  });
+  return installIdPromise;
+}
+
+/** Test hook: clears the in-flight memo so each test sees fresh storage. */
+export function resetInstallIdCacheForTests(): void {
+  installIdPromise = null;
 }
 
 export async function hasStoredLicenseKey(): Promise<boolean> {
