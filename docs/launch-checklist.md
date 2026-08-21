@@ -16,8 +16,8 @@ The end-to-end path from this repo to a live, working, paid product. Backend ste
 - [x] Merge PR #28 (BYOK toggle + invalid-key fallback — closed #12, merged 2026-08-20).
 - [x] CI fully green on `main`, including the **Extension E2E (MV3)** job (`app/e2e/` — MV3 compliance + loaded-extension smoke tests).
 - [x] **Production Stripe price IDs substituted** in `app/src/lib/plans.ts` (2026-08-20): monthly `price_1U6faNRDHttKIwLT8gOTOVIe` ($5), annual `price_1U6flvRDHttKIwLTjOIPGpVG` ($50), created live on `acct_1U6Z2iRDHttKIwLT` (product `prod_V6tNs5AY55KP6R`). The old `price_1Tuc…` IDs were stale/foreign and are replaced in `optia-backend/wrangler.toml` too.
-- [ ] **Bundle the production entitlement public key**: the extension verifies entitlements against the environment's signing key — confirm `ENTITLEMENT_JWKS` in `app/src/lib/entitlement-keys.ts` contains the **production** key (`GET https://api.optia-api.com/license/public-key`) for production builds, not staging's.
-- [ ] Confirm `BACKEND_BASE_URL` resolves to `https://api.optia-api.com` in the production build (Vite mode), never staging/localhost.
+- [x] **Production entitlement public key bundled** — verified 2026-08-20: `entitlement-keys.ts` kid `7nwkI8jgmbJnMjWEZXnEIdd53-DlDXdARJxVhTOmDnQ` matches the live `GET https://api.optia-api.com/license/public-key` exactly.
+- [x] `BACKEND_BASE_URL` resolves to `https://api.optia-api.com` in production builds (verified in `entitlement-keys.ts` mode switch).
 - [ ] Manual QA sweep of the built extension (load `app/dist` unpacked): free analysis, free AI (quota ticks down), paywall → Stripe test checkout, license activation, Pro features, BYOK path, options page.
 
 ## Phase 2 — Backend go-live (`optia-backend`)
@@ -27,18 +27,18 @@ The end-to-end path from this repo to a live, working, paid product. Backend ste
 - [x] Live account activation **submitted 2026-08-20** (entity: PMDS sole prop; public name Optia; statement descriptor `OPTIA`; category SaaS; PNC payouts). Stripe review in progress (2–3 days) — live charges enable when it clears.
 - [x] Pro product + prices created in live mode (2026-08-20): `prod_V6tNs5AY55KP6R`, monthly `price_1U6faNRDHttKIwLT8gOTOVIe`, annual `price_1U6flvRDHttKIwLTjOIPGpVG` (lookup keys `optia_pro_monthly`/`optia_pro_annual`); IDs propagated to `wrangler.toml` + `plans.ts`.
 - [x] Live webhook endpoint created: `we_1U6frWRDHttKIwLTMQgb9FU9` → `https://api.optia-api.com/billing/webhook` (checkout.session.completed, customer.subscription.updated/deleted). ⚠️ Destination API version is `2026-07-29.dahlia`; backend pins `2026-06-24.dahlia` — same family, verify event shapes in staging or align the pin.
-- [ ] **Reveal the webhook signing secret** (dashboard → Workbench → Webhooks → optia-production) and set it: `pnpm exec wrangler secret put STRIPE_WEBHOOK_SECRET --env production` — owner-only, do not paste the secret anywhere else
+- [x] Webhook signing secret set as `STRIPE_WEBHOOK_SECRET` production secret (owner, 2026-08-20; verified present via `wrangler secret list`)
 - [x] Billing Portal configured in live mode (default configuration `bpc_1U6…` saved — what `/billing/portal` sessions use)
 - [ ] Also wire the missing **sandbox** webhook + portal for staging parity
 
 Follow `docs/PROVISIONING.md` §1–§8 for the production environment:
 
-- [ ] D1 `optia-db-production` created + migrations applied (`pnpm db:migrate:production`).
-- [ ] KV `RATE_LIMIT` bound; production secrets set (Anthropic key, Stripe live secret + webhook secret, signing private key).
-- [ ] **CORS**: replace `chrome-extension://__OPTIA_EXTENSION_ID__` with `chrome-extension://lgkgkmjldppeidgafolhfpepmabnnbhe` in `wrangler.toml` `ALLOWED_ORIGINS` (all three envs reference it; production matters for launch) — can be done now thanks to the pinned ID.
-- [ ] Stripe live-mode webhook endpoint pointed at `api.optia-api.com` and verified.
-- [ ] Deploy production with a real `COMMIT_SHA` (`pnpm deploy:production` per the runbook — the `"UNSET"` sentinel in `/health` means the override was forgotten).
-- [ ] Smoke: `/health`, `/license/public-key`, one metered `POST /ai/generate` from a production build, one full checkout → activation with a live card (then refund).
+- [x] D1 `optia-db-production` created + migrations applied (verified 2026-08-20: `wrangler d1 migrations list … --remote` → none pending).
+- [x] KV `RATE_LIMIT` bound; all five production secrets set (`ANTHROPIC_API_KEY`, `OPS_TOKEN`, `SIGNING_PRIVATE_JWK`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`).
+- [x] **CORS**: `ALLOWED_ORIGINS` carries `chrome-extension://lgkgkmjldppeidgafolhfpepmabnnbhe` in all three envs.
+- [x] Live webhook endpoint pointed at `api.optia-api.com/billing/webhook` (`we_1U6frWRDHttKIwLTMQgb9FU9`).
+- [x] **Production deployed 2026-08-20** (`pnpm exec wrangler deploy --env production --var COMMIT_SHA:…` — note: `pnpm deploy:production -- --var …` does NOT forward the var; call wrangler directly). `/health` reports the real commit.
+- [x] Smoke passed 2026-08-20: `/health` healthy + DB connected, `/license/public-key` serves the bundled key, one metered `POST /ai/generate` returned a real Claude recommendation. ⏳ Remaining: one full live-card checkout → activation → refund, **after Stripe's account review clears** (2–3 days).
 
 ## Phase 3 — Store package, listing, legal
 
