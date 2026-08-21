@@ -176,6 +176,7 @@ export default [
     ignores: [
       "node_modules/**",
       "dist/**",
+      "dist-staging/**",
       "coverage/**",
       "postcss.config.js",
     ],
