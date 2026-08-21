@@ -6,6 +6,8 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { Toggle } from "@/components/ui/Toggle";
 import { useAiStatus, useEntitlementStore } from "@/lib/entitlement-store";
 import { useStore } from "@/lib/store";
+import { listTopModels } from "@/lib/anthropic";
+import { fetchProxyModels } from "@/lib/ai-proxy";
 
 /** Opens an external URL in a new tab (extension page or dev preview). */
 function openExternalUrl(url: string) {
@@ -173,6 +175,34 @@ export function Options() {
   const [useOwnKey, setUseOwnKey] = useState(true);
   const [language, setLanguage] = useState("en");
   const [saved, setSaved] = useState(false);
+  const [modelOptions, setModelOptions] = useState<string[]>([]);
+  const [selectedModel, setSelectedModel] = useState("");
+
+  // Model choice (optia-backend#21). BYOK mode lists the newest models on the
+  // user's own key; hosted mode lists the server's allowlist. The selection is
+  // stored per mode (byok_model / hosted_model).
+  const byokActive = canBringOwnKey && useOwnKey && apiKey.startsWith("sk-ant-") && apiKey.length > 40;
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const models = byokActive ? await listTopModels(apiKey) : (await fetchProxyModels()).models;
+        const storageKey = byokActive ? "byok_model" : "hosted_model";
+        const stored = (await chrome.storage.local.get(storageKey))[storageKey] as
+          | string
+          | undefined;
+        if (cancelled) return;
+        setModelOptions(models);
+        setSelectedModel(stored && models.includes(stored) ? stored : (models[0] ?? ""));
+      } catch {
+        // Bad key or offline — hide the picker rather than show a broken one.
+        if (!cancelled) setModelOptions([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [byokActive, apiKey]);
 
   useEffect(() => {
     void hydrateEntitlement();
@@ -195,6 +225,7 @@ export function Options() {
     const toStore: Record<string, string> = { default_language: effectiveLanguage };
     // BYO key is Pro-only; never persist a key for a free user.
     if (canBringOwnKey) toStore.anthropic_api_key = apiKey;
+    if (selectedModel) toStore[byokActive ? "byok_model" : "hosted_model"] = selectedModel;
     await chrome.storage.local.set(toStore);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -298,6 +329,34 @@ export function Options() {
                 </p>
               )}
             </div>
+
+            {modelOptions.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <label htmlFor="ai-model" className="text-body-semibold text-ink">
+                  AI model
+                </label>
+                <div className="relative">
+                  <select
+                    id="ai-model"
+                    value={selectedModel}
+                    onChange={(e) => setSelectedModel(e.target.value)}
+                    className="w-full appearance-none rounded-input border border-border bg-surface px-3.5 py-3 pr-10 text-body text-ink shadow-card outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/30"
+                  >
+                    {modelOptions.map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted" />
+                </div>
+                <p className="text-body-12 text-muted">
+                  {byokActive
+                    ? "The newest models available on your Anthropic key."
+                    : "Models included with Optia's hosted AI at no extra charge."}
+                </p>
+              </div>
+            )}
 
             <button
               onClick={handleSave}

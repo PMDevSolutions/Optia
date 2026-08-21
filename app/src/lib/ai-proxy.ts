@@ -51,8 +51,26 @@ export interface ProxyRequest {
   context: string;
   /** When true, authenticate as Pro via the stored entitlement; else free-tier by install id. */
   authenticated: boolean;
+  /** Caller-selected Claude model; must be on the server's allowlist (GET /ai/models). */
+  model?: string;
   /** Sent only when the entitlement is actually presented (Pro-only features). */
   advanced?: ProxyAdvancedOptions;
+}
+
+export interface ProxyModels {
+  models: string[];
+  default: string;
+}
+
+/** The hosted-generation model menu (server allowlist). */
+export async function fetchProxyModels(): Promise<ProxyModels> {
+  const response = await fetch(`${BACKEND_BASE_URL}/ai/models`);
+  if (!response.ok) throw new AiProxyError("upstream", "Could not load the model list.");
+  const body = (await response.json().catch(() => null)) as Partial<ProxyModels> | null;
+  if (!body || !Array.isArray(body.models) || typeof body.default !== "string") {
+    throw new AiProxyError("upstream", "The AI service returned an unexpected model list.");
+  }
+  return { models: body.models, default: body.default };
 }
 
 interface ErrorBody {
@@ -91,7 +109,7 @@ function mapError(status: number, code: string, message: string): AiProxyError {
 
 /** POSTs one generation to the hosted proxy. Throws AiProxyError on failure. */
 export async function generateViaProxy(request: ProxyRequest): Promise<ProxyResult> {
-  const { checkId, keyword, context, authenticated, advanced } = request;
+  const { checkId, keyword, context, authenticated, model, advanced } = request;
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   // Pro metering requires the token to actually be present; if it isn't, the
   // request is install-metered (free) and the caller records it as such.
@@ -117,6 +135,7 @@ export async function generateViaProxy(request: ProxyRequest): Promise<ProxyResu
         keyword,
         context,
         installId,
+        ...(model ? { model } : {}),
         ...(didAuthenticate && advanced?.languageCode
           ? { languageCode: advanced.languageCode }
           : {}),

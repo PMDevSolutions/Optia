@@ -90,6 +90,17 @@ describe("useStore", () => {
     expect(useStore.getState().apiKey).toBe("sk-loaded");
   });
 
+  it("persists and hydrates the per-mode model selections", async () => {
+    await useStore.getState().setHostedModel("claude-sonnet-5");
+    await useStore.getState().setByokModel("claude-opus-5");
+    useStore.setState({ hostedModel: null, byokModel: null });
+
+    await useStore.getState().loadApiKey();
+
+    expect(useStore.getState().hostedModel).toBe("claude-sonnet-5");
+    expect(useStore.getState().byokModel).toBe("claude-opus-5");
+  });
+
   it("setApiKey clears a prior key rejection", async () => {
     useStore.setState({ apiKeyInvalid: true });
 
