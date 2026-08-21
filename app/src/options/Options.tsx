@@ -311,6 +311,26 @@ export function Options() {
         </div>
 
         <LicenseCard />
+
+        <p className="mt-5 text-center text-body-12 text-faint">
+          <a
+            href="https://pmdevsolutions.github.io/Optia/privacy.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="transition-colors hover:text-brand"
+          >
+            Privacy Policy
+          </a>
+          {" · "}
+          <a
+            href="https://github.com/PMDevSolutions/Optia/issues"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="transition-colors hover:text-brand"
+          >
+            Support
+          </a>
+        </p>
       </div>
     </div>
   );

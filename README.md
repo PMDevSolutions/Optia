@@ -1,29 +1,35 @@
 # Optia - Chrome Extension
 
-A Chrome extension that analyzes web pages for SEO optimization and provides AI-powered recommendations to improve search rankings.
+A Chrome extension that analyzes web pages for SEO optimization and provides AI-powered recommendations (Claude, by Anthropic) to improve search rankings. Free tier included; Optia Pro adds more AI, advanced analysis, and bring-your-own-key.
 
-**Website:** https://ai-seo-copilot.webflow.io/
+**Website:** https://pmdevsolutions.github.io/Optia/
+**Privacy Policy:** https://pmdevsolutions.github.io/Optia/privacy.html
+**Support:** https://github.com/PMDevSolutions/Optia/issues
 
-> ⚠️ **Rebrand in progress (AI SEO Copilot → Optia).** The codebase, UI, docs, and package names have been renamed to **Optia**. The items below live on **external systems** and must be renamed/migrated **manually by the project owner** — they were intentionally left unchanged so links don't break before migration:
+> ℹ️ **Remaining external-property migrations (AI SEO Copilot → Optia).** The repo, UI, docs, site, and store assets are fully renamed to **Optia**. Two predecessor properties are still referenced for their content and must be migrated manually by the project owner:
 >
-> - **GitHub repository & remote URL** — currently `die-Manufaktur/AISEOC-Chrome-Extension`. Rename the repo, update the git remote, then update the links in `docs/` and `app/src/components/Footer.tsx`.
-> - **Marketing website** — `https://ai-seo-copilot.webflow.io/` (Webflow project).
-> - **Chrome Web Store listing** — extension name, description, screenshots, and the public store URL.
-> - **Documentation site** — `ai-seo-copilot.gitbook.io` (referenced in `app/src/lib/docs-links.ts` and `app/src/components/Footer.tsx`).
-> - **Feature-request portal** — `aiseocopilot.featurebase.app` (referenced in `app/src/components/Footer.tsx`).
-> - **Bug-report repo link** — `github.com/PMDevSolutions/seo-copilot` (referenced in `app/src/components/Footer.tsx`).
+> - **Documentation site** — the per-check "Learn more" links in `app/src/lib/docs-links.ts` still point at `ai-seo-copilot.gitbook.io` (the content is accurate; the branding is not). Replace once Optia docs exist.
 > - **Figma design file** — `…/AI-SEO-Copilot-design` (referenced in `app/QA-PROMPT.md`).
-> - **Donation / sponsor links** — none found in the repo; update if any exist outside it.
->
-> After migrating each external property, update the corresponding URL in `Footer.tsx`, `docs-links.ts`, and the docs to the new Optia domain.
 
 ## Features
 
-- **Real-time SEO Analysis** - Instant scoring for titles, meta descriptions, headings, images, and more
-- **AI-Powered Recommendations** - OpenAI integration generates optimized content suggestions
-- **Keyword Optimization** - Track keyword usage across all page elements
-- **One-Click Copy** - Copy suggestions directly to your clipboard
-- **Visual Score Breakdown** - See exactly where your page needs improvement
+- **Real-time SEO Analysis** — instant 0–100 scoring for titles, meta descriptions, headings, images, links, structured data, and more. Unlimited and free; analysis runs locally in your browser.
+- **AI-Powered Recommendations** — one-click optimized titles, meta descriptions, H2s, and alt text, powered by Claude (Anthropic). 25/month free with no account; Optia Pro raises that to 1,000/month.
+- **Optia Pro** ($5/month or $50/year, billed via Stripe) — more AI, page-type-aware Advanced Analysis, multi-language output, schema recommendations, and bring-your-own Anthropic key for unlimited AI.
+- **Keyword Optimization** — track keyword usage across all page elements.
+- **One-Click Copy** — copy suggestions directly to your clipboard.
+- **Side panel UI** — recommendations alongside the page you're optimizing; light and dark themes.
+
+## Privacy & Data Handling
+
+The user-facing policy lives at [pmdevsolutions.github.io/Optia/privacy.html](https://pmdevsolutions.github.io/Optia/privacy.html) (source: [`site/privacy.html`](./site/privacy.html), mirrored in [`docs/privacy-policy.md`](./docs/privacy-policy.md) — keep them in sync). The short version:
+
+- SEO analysis runs **locally**; page content is not transmitted by browsing or analyzing.
+- AI requests send only the keyword + relevant page snippets — to the Optia backend (Cloudflare Workers → Anthropic) in hosted mode, or **directly to Anthropic** in Pro bring-your-own-key mode (the key never touches the backend; enforced server-side).
+- The backend stores licenses and coarse usage counters, never page content or profiles. Billing is handled entirely by **Stripe** — no card data ever touches Optia.
+- No analytics, no tracking, no ads, no data sales. Data requests: [open an issue](https://github.com/PMDevSolutions/Optia/issues).
+
+Chrome Web Store data-safety answers are maintained in [`docs/chrome-web-store-data-disclosure.md`](./docs/chrome-web-store-data-disclosure.md); the full listing source is [`docs/chrome-web-store-listing.md`](./docs/chrome-web-store-listing.md).
 
 ## Quick Start
 
@@ -31,13 +37,12 @@ See the detailed setup instructions in [`app/README.md`](./app/README.md).
 
 **TL;DR:**
 ```bash
-# Install Node.js from https://nodejs.org/ first, then:
 npm install -g pnpm
 cd app
 pnpm install
 pnpm build
-# Load app/dist folder in Chrome as unpacked extension
 ```
+Then load the `app/dist` folder in Chrome as an unpacked extension.
 
 ## Project Structure
 
@@ -45,12 +50,13 @@ pnpm build
 optia-extension/
 ├── app/                    # Chrome extension source code
 │   ├── src/                # React + TypeScript source
+│   ├── e2e/                # Playwright extension E2E + MV3 compliance tests
 │   ├── dist/               # Built extension (load this in Chrome)
-│   ├── icons/              # Extension icons
-│   ├── manifest.json       # Chrome extension manifest
-│   └── README.md           # Detailed setup instructions
+│   └── manifest.json       # Chrome extension manifest (MV3)
+├── site/                   # GitHub Pages site (landing, privacy, billing pages)
+├── marketing/              # Store assets pipeline (screenshots, promo tile)
+├── docs/                   # Listing, privacy, release & launch documentation
 ├── .claude/                # Claude Code AI agent configuration
-├── docs/                   # Additional documentation
 └── README.md               # This file
 ```
 
@@ -58,21 +64,23 @@ optia-extension/
 
 ```bash
 cd app
-pnpm install       # Install dependencies
-pnpm dev           # Start development server
-pnpm build         # Build for production
-pnpm test          # Run test suite (283 tests)
+pnpm install            # Install dependencies
+pnpm dev                # Browser dev preview (no extension loading needed)
+pnpm dev:ext            # Extension build in watch mode
+pnpm build              # Build for production
+pnpm test               # Unit tests (Vitest)
+pnpm test:e2e           # Extension E2E + MV3 compliance (build first)
 ```
+
+Releases are automated with release-please — see [`docs/RELEASING.md`](./docs/RELEASING.md). The Chrome Web Store upload zip is attached to every GitHub Release. The launch runbook is [`docs/launch-checklist.md`](./docs/launch-checklist.md).
 
 ## Tech Stack
 
-- **React 19** - UI framework
-- **TypeScript** - Type-safe JavaScript
-- **Tailwind CSS** - Utility-first styling
-- **Vite** - Build tool and dev server
-- **Zustand** - State management
-- **OpenAI API** - AI-powered recommendations
-- **Vitest** - Testing framework
+- **React 19** + **TypeScript** + **Tailwind CSS** + **Vite** (crxjs)
+- **Zustand** — state management
+- **Claude (Anthropic)** — AI recommendations, via the Optia backend proxy or the user's own key
+- **Cloudflare Workers backend** ([optia-backend](https://github.com/PMDevSolutions/optia-backend)) — licensing, Stripe billing, metered AI proxy
+- **Vitest** + **Playwright** — unit and extension E2E testing
 
 ## License
 

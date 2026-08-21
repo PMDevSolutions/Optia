@@ -1,10 +1,13 @@
-import { BookOpen, Lightbulb, Bug, Mail } from "lucide-react";
+import { Globe, Bug, Shield } from "lucide-react";
 
+// All links point at Optia properties: the GitHub Pages site (also the Chrome
+// Web Store listing's website/privacy URLs) and the repo's issue tracker,
+// which is the published support/data-request contact path (see
+// docs/privacy-policy.md). Keep these in sync with docs/chrome-web-store-listing.md.
 const links = [
-  { label: "Documentation", icon: BookOpen, href: "https://ai-seo-copilot.gitbook.io/ai-seo-copilot/" },
-  { label: "Feature requests", icon: Lightbulb, href: "https://aiseocopilot.featurebase.app/" },
-  { label: "Report a bug", icon: Bug, href: "https://github.com/PMDevSolutions/seo-copilot/issues" },
-  { label: "Contact us", icon: Mail, href: "mailto:sofianbettayeb@gmail.com" },
+  { label: "Website", icon: Globe, href: "https://pmdevsolutions.github.io/Optia/" },
+  { label: "Privacy", icon: Shield, href: "https://pmdevsolutions.github.io/Optia/privacy.html" },
+  { label: "Support", icon: Bug, href: "https://github.com/PMDevSolutions/Optia/issues" },
 ];
 
 export function Footer() {
