@@ -18,7 +18,7 @@ The end-to-end path from this repo to a live, working, paid product. Backend ste
 - [x] **Production Stripe price IDs substituted** in `app/src/lib/plans.ts` (2026-08-20): monthly `price_1U6faNRDHttKIwLT8gOTOVIe` ($5), annual `price_1U6flvRDHttKIwLTjOIPGpVG` ($50), created live on `acct_1U6Z2iRDHttKIwLT` (product `prod_V6tNs5AY55KP6R`). The old `price_1Tuc…` IDs were stale/foreign and are replaced in `optia-backend/wrangler.toml` too.
 - [x] **Production entitlement public key bundled** — verified 2026-08-20: `entitlement-keys.ts` kid `7nwkI8jgmbJnMjWEZXnEIdd53-DlDXdARJxVhTOmDnQ` matches the live `GET https://api.optia-api.com/license/public-key` exactly.
 - [x] `BACKEND_BASE_URL` resolves to `https://api.optia-api.com` in production builds (verified in `entitlement-keys.ts` mode switch).
-- [ ] Manual QA sweep of the built extension (load `app/dist` unpacked): free analysis, free AI (quota ticks down), paywall → Stripe test checkout, license activation, Pro features, BYOK path, options page.
+- [ ] Manual QA sweep per **`docs/qa-checklist-v1.md`** (fresh profile, light + dark, consoles clean) — the human half of issue #16; the automated half is the 500+ unit tests plus `app/e2e/` (26 tests incl. freemium/error-path E2E with a mocked backend). When green, cut v1.0.0 via a `Release-As: 1.0.0` commit footer; release notes draft: `docs/release-notes-v1.0.0.md`.
 
 ## Phase 2 — Backend go-live (`optia-backend`)
 
