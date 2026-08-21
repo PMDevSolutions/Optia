@@ -3,7 +3,7 @@
   "name": "Optia",
   "short_name": "Optia",
   "description": "Analyze page SEO and get AI-powered recommendations",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "minimum_chrome_version": "137",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzn2sp589pFrejUuT1NioUdhZ5BQHL2C17yNHFYkuJOnJ7z8Po2/rd1sKQp2AFfGqz8bjv/d5gz0iylvBcleEHT/0qNeNgN23NC9DiNFbXV54tRHKHvf0sLy1dLg7h57J5vQaZ5qZir/TIZbMkYo/lStODSEEzSzE5DbeB9YWdJ3xOrw6A9y0YCw5JJ1PXAuwT9I4fBy3JdwYG2vWBNyU2bzpUtjPU3NZY6iFJA2zjqrXbGvGQBZsVhNvDhx5H2R4wuxqZx29T8sRB7RxugrOt0WrN+RMdIe4bBxl/wJPxQwHLFjfuiw7rq4y+Wf7vS84Gtny+veuF5n4DjgtNea8LQIDAQAB",
   "icons": {

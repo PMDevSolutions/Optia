@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/PMDevSolutions/Optia/compare/v1.0.1...v1.1.0) (2026-08-21)
+
+
+### Added
+
+* **options:** AI model picker for hosted and BYO-key generation ([a23f4ea](https://github.com/PMDevSolutions/Optia/commit/a23f4ea601087f7fc0105bebb31d8e4e47b9dc0b))
+
 ## [1.0.1](https://github.com/PMDevSolutions/Optia/compare/v1.0.0...v1.0.1) (2026-08-21)
 
 
