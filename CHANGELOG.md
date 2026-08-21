@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.3](https://github.com/PMDevSolutions/Optia/compare/v0.7.2...v0.7.3) (2026-08-21)
+
+
+### Fixed
+
+* **billing:** staging Stripe price ids for the current Optia Sandbox ([f6abd60](https://github.com/PMDevSolutions/Optia/commit/f6abd60246687da44d086e23deaca4be0595fa9e))
+* **billing:** staging Stripe price ids for the current Optia Sandbox ([1cb1110](https://github.com/PMDevSolutions/Optia/commit/1cb1110a303a8c221d574298ee42ec42f473955c))
+
 ## [0.7.2](https://github.com/PMDevSolutions/Optia/compare/v0.7.1...v0.7.2) (2026-08-21)
 
 
