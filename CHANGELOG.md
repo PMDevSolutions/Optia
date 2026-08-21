@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.0](https://github.com/PMDevSolutions/Optia/compare/v0.6.0...v0.7.0) (2026-08-21)
+
+
+### Added
+
+* **site:** payment reference on the checkout success page (closes [#21](https://github.com/PMDevSolutions/Optia/issues/21)) ([04b3a03](https://github.com/PMDevSolutions/Optia/commit/04b3a03f75ca2dec2c9a292ab8c22c536ac8f7fc))
+* **site:** show a payment reference on the checkout success page ([e96980c](https://github.com/PMDevSolutions/Optia/commit/e96980c0bc0569e6d3fa55dd46919a8c24078848)), closes [#21](https://github.com/PMDevSolutions/Optia/issues/21)
+
 ## [0.6.0](https://github.com/PMDevSolutions/Optia/compare/v0.5.0...v0.6.0) (2026-08-21)
 
 
