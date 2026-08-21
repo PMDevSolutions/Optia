@@ -205,6 +205,18 @@ describe("generateRecommendation", () => {
     expect(generateRecommendationDirectMock).not.toHaveBeenCalled();
   });
 
+  it("attaches the selected hosted model to the proxy request", async () => {
+    setMode("free");
+    useStore.setState({ hostedModel: "claude-sonnet-5" });
+
+    await generateRecommendation("title-keyword", "kw", "ctx");
+
+    expect(generateViaProxyMock).toHaveBeenCalledWith(
+      expect.objectContaining({ model: "claude-sonnet-5" }),
+    );
+    useStore.setState({ hostedModel: null });
+  });
+
   it("free → advanced options never reach the proxy even if passed", async () => {
     setMode("free");
 

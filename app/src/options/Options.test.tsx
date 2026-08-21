@@ -32,6 +32,21 @@ vi.mock("@/lib/entitlement", async (importOriginal) => {
   };
 });
 
+// The model pickers hit the network (Anthropic / the proxy); mock both lists.
+vi.mock("@/lib/anthropic", () => ({
+  listTopModels: vi.fn().mockResolvedValue(["claude-opus-5", "claude-sonnet-5", "claude-haiku-4-5"]),
+}));
+vi.mock("@/lib/ai-proxy", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/lib/ai-proxy")>();
+  return {
+    ...original,
+    fetchProxyModels: vi.fn().mockResolvedValue({
+      models: ["claude-haiku-4-5", "claude-sonnet-5", "claude-opus-5"],
+      default: "claude-haiku-4-5",
+    }),
+  };
+});
+
 const activateMock = vi.mocked(activate);
 const deactivateMock = vi.mocked(deactivate);
 const getBillingPortalUrlMock = vi.mocked(getBillingPortalUrl);
@@ -106,6 +121,25 @@ describe("Options page", () => {
     expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
   });
 
+  // --- Model choice (optia-backend#21) ---
+
+  it("lists the hosted model menu from the proxy and saves the selection", async () => {
+    const user = userEvent.setup();
+    render(<Options />);
+    const select = await screen.findByLabelText(/ai model/i);
+    expect(select).toBeInTheDocument();
+    expect(screen.getByText(/no extra charge/i)).toBeInTheDocument();
+
+    await user.selectOptions(select, "claude-sonnet-5");
+    await user.click(screen.getByRole("button", { name: /save/i }));
+
+    await waitFor(() => {
+      expect(chrome.storage.local.set).toHaveBeenCalledWith(
+        expect.objectContaining({ hosted_model: "claude-sonnet-5" }),
+      );
+    });
+  });
+
   // --- Free tier gating ---
 
   it("hides the Anthropic API key input for free users (Pro upsell instead)", async () => {
@@ -137,7 +171,9 @@ describe("Options page", () => {
 
     await user.click(screen.getByRole("button", { name: /save/i }));
 
-    expect(chrome.storage.local.set).toHaveBeenCalledWith({ default_language: "en" });
+    expect(chrome.storage.local.set).toHaveBeenCalledWith(
+      expect.objectContaining({ default_language: "en" }),
+    );
     const call = (chrome.storage.local.set as ReturnType<typeof vi.fn>).mock.calls[0][0];
     expect(call).not.toHaveProperty("anthropic_api_key");
   });

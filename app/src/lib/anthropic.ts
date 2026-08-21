@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getLanguageByCode } from "./languages";
+import { useStore } from "@/lib/store";
 
 // Direct browser→Anthropic path for Pro users who bring their own key. The key
 // never transits Optia's backend (that path is the hosted proxy in ai-proxy.ts).
@@ -28,6 +29,17 @@ function extractText(message: Anthropic.Message): string {
   return text.replace(/^["']|["']$/g, "");
 }
 
+/**
+ * The newest N models available on the user's own key (optia-backend#21).
+ * The Anthropic list endpoint returns newest-first; throws on a bad key or
+ * network failure so the caller can fall back to the built-in default.
+ */
+export async function listTopModels(apiKey: string, limit = 3): Promise<string[]> {
+  const client = createClient(apiKey);
+  const page = await client.models.list({ limit });
+  return page.data.map((m) => m.id);
+}
+
 async function completeWithRetry(
   apiKey: string,
   systemPrompt: string,
@@ -36,11 +48,14 @@ async function completeWithRetry(
 ): Promise<string> {
   const client = createClient(apiKey);
   let retries = 0;
+  // Model choice (optia-backend#21): the user's selected BYOK model, read at
+  // call time; null falls back to the built-in default.
+  const model = useStore.getState().byokModel ?? AI_MODEL;
 
   while (retries <= maxRetries) {
     try {
       const message = await client.messages.create({
-        model: AI_MODEL,
+        model,
         max_tokens: MAX_TOKENS,
         system: systemPrompt,
         messages: [{ role: "user", content: userPrompt }],

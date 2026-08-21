@@ -98,11 +98,13 @@ async function runProxy(
   isRetry = false,
 ): Promise<string> {
   try {
+    const hostedModel = useStore.getState().hostedModel;
     const result = await generateViaProxy({
       checkId,
       keyword,
       context,
       authenticated,
+      ...(hostedModel ? { model: hostedModel } : {}),
       ...(authenticated && advancedOptions
         ? {
             advanced: {

@@ -18,12 +18,18 @@ interface Store extends AppState {
   useOwnKey: boolean;
   /** Session-scoped: the stored key was rejected by Anthropic (401/403). Never persisted. */
   apiKeyInvalid: boolean;
+  /** Selected Claude model for hosted (proxy) generation; null = server default. */
+  hostedModel: string | null;
+  /** Selected Claude model for BYO-key direct generation; null = built-in default. */
+  byokModel: string | null;
   setView: (view: AppState["view"]) => void;
   setAnalysis: (analysis: SEOAnalysis) => void;
   setSettings: (settings: Partial<AnalysisSettings>) => void;
   setActiveCategory: (category: CheckCategory | null) => void;
   setApiKey: (key: string) => void;
   setUseOwnKey: (value: boolean) => Promise<void>;
+  setHostedModel: (model: string | null) => Promise<void>;
+  setByokModel: (model: string | null) => Promise<void>;
   setApiKeyInvalid: (value: boolean) => void;
   setError: (error: string | null) => void;
   showToast: (message: string) => void;
@@ -49,6 +55,8 @@ export const useStore = create<Store>((set) => ({
   apiKey: "",
   useOwnKey: true,
   apiKeyInvalid: false,
+  hostedModel: null,
+  byokModel: null,
   error: null,
   toast: { visible: false, message: "" },
 
@@ -68,6 +76,14 @@ export const useStore = create<Store>((set) => ({
     // Turning the toggle is a deliberate retry — clear any prior rejection.
     set({ useOwnKey: value, apiKeyInvalid: false });
   },
+  setHostedModel: async (model) => {
+    await setStorageItem("hosted_model", model);
+    set({ hostedModel: model });
+  },
+  setByokModel: async (model) => {
+    await setStorageItem("byok_model", model);
+    set({ byokModel: model });
+  },
   setApiKeyInvalid: (value) => set({ apiKeyInvalid: value }),
   setError: (error) => set({ error }),
   showToast: (message) => set({ toast: { visible: true, message } }),
@@ -80,6 +96,9 @@ export const useStore = create<Store>((set) => ({
     set({ useOwnKey: useOwn !== false });
     const lang = await getStorageItem<string>("default_language");
     if (lang) set((state) => ({ settings: { ...state.settings, language: lang } }));
+    const hostedModel = await getStorageItem<string>("hosted_model");
+    const byokModel = await getStorageItem<string>("byok_model");
+    set({ hostedModel: hostedModel ?? null, byokModel: byokModel ?? null });
   },
   reset: () =>
     set((state) => ({
