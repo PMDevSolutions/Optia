@@ -298,6 +298,43 @@ describe("SetupPage", () => {
     expect(screen.getByText(/optional/i)).toBeInTheDocument();
   });
 
+  it("does not pin language to English before entitlement hydration resolves", async () => {
+    // Startup race (#16 QA): the hydrated Pro default language must survive the
+    // moment before entitlementLoaded flips true, when all flags read false.
+    useEntitlementStore.setState({ entitlementLoaded: false, canUseMultiLanguage: false });
+    useStore.setState({
+      settings: {
+        keyword: "",
+        secondaryKeywords: "",
+        pageType: "homepage",
+        language: "fr",
+        advancedMode: false,
+        targetUrl: "",
+      },
+    });
+    render(<SetupPage onAnalyze={onAnalyze} />);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(useStore.getState().settings.language).toBe("fr");
+  });
+
+  it("pins language to English for free users once entitlement has loaded", async () => {
+    useEntitlementStore.setState({ entitlementLoaded: true, canUseMultiLanguage: false });
+    useStore.setState({
+      settings: {
+        keyword: "",
+        secondaryKeywords: "",
+        pageType: "homepage",
+        language: "fr",
+        advancedMode: false,
+        targetUrl: "",
+      },
+    });
+    render(<SetupPage onAnalyze={onAnalyze} />);
+    await waitFor(() => {
+      expect(useStore.getState().settings.language).toBe("en");
+    });
+  });
+
   it("forces advancedMode off when there is no Pro entitlement", async () => {
     useStore.setState({
       settings: {

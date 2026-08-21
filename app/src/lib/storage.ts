@@ -47,7 +47,9 @@ export async function getKeywordForUrl(url: string): Promise<string | null> {
 interface SavedAdvancedOptions {
   pageType: string;
   secondaryKeywords: string;
-  language: string;
+  /** Legacy field: language is a global setting (default_language) now, not
+   * per-host. Still present in older stored records; never restored. */
+  language?: string;
 }
 
 export async function saveAdvancedOptions(

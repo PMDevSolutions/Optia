@@ -38,12 +38,21 @@ export interface ProxyResult {
   authenticated: boolean;
 }
 
+/** Pro prompt refinements the proxy honors on entitlement-authenticated requests. */
+export interface ProxyAdvancedOptions {
+  languageCode?: string;
+  pageType?: string;
+  secondaryKeywords?: string;
+}
+
 export interface ProxyRequest {
   checkId: string;
   keyword: string;
   context: string;
   /** When true, authenticate as Pro via the stored entitlement; else free-tier by install id. */
   authenticated: boolean;
+  /** Sent only when the entitlement is actually presented (Pro-only features). */
+  advanced?: ProxyAdvancedOptions;
 }
 
 interface ErrorBody {
@@ -82,7 +91,7 @@ function mapError(status: number, code: string, message: string): AiProxyError {
 
 /** POSTs one generation to the hosted proxy. Throws AiProxyError on failure. */
 export async function generateViaProxy(request: ProxyRequest): Promise<ProxyResult> {
-  const { checkId, keyword, context, authenticated } = request;
+  const { checkId, keyword, context, authenticated, advanced } = request;
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   // Pro metering requires the token to actually be present; if it isn't, the
   // request is install-metered (free) and the caller records it as such.
@@ -101,7 +110,21 @@ export async function generateViaProxy(request: ProxyRequest): Promise<ProxyResu
     response = await fetch(`${BACKEND_BASE_URL}/ai/generate`, {
       method: "POST",
       headers,
-      body: JSON.stringify({ checkId, keyword, context, installId }),
+      // Advanced options are Pro features; the server honors them only on
+      // authenticated requests, so send them only when the token went along.
+      body: JSON.stringify({
+        checkId,
+        keyword,
+        context,
+        installId,
+        ...(didAuthenticate && advanced?.languageCode
+          ? { languageCode: advanced.languageCode }
+          : {}),
+        ...(didAuthenticate && advanced?.pageType ? { pageType: advanced.pageType } : {}),
+        ...(didAuthenticate && advanced?.secondaryKeywords
+          ? { secondaryKeywords: advanced.secondaryKeywords }
+          : {}),
+      }),
     });
   } catch {
     throw new AiProxyError("network", "Could not reach the AI service.");
