@@ -1,6 +1,8 @@
-# Optia v1.0.0 — Release Notes (draft)
+# Optia v1.0.0 — Release Notes
 
-> Draft for the GitHub Release body and the Chrome Web Store "What's new" field when 1.0.0 ships (cut it by landing a `Release-As: 1.0.0` commit footer and merging the Release PR — see `docs/RELEASING.md`).
+> Body for the GitHub Release and the Chrome Web Store "What's new" field. QA
+> hardening pass (#16) completed 2026-08-21; the merge of the Release PR this
+> commit triggers stamps `manifest.json` to 1.0.0 and attaches the store zip.
 
 ## Optia 1.0.0 — the freemium launch
 
