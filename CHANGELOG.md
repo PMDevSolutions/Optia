@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.1](https://github.com/PMDevSolutions/Optia/compare/v0.7.0...v0.7.1) (2026-08-21)
+
+
+### Fixed
+
+* **docs:** replace AI SEO Copilot Learn More links with Optia's own docs site ([9b53103](https://github.com/PMDevSolutions/Optia/commit/9b53103f23404ca5f86ebb8ea1ecd076c6e1d68c))
+* **docs:** replace AI SEO Copilot Learn More links with Optia's own docs site ([a543eb2](https://github.com/PMDevSolutions/Optia/commit/a543eb2b0329065e00833a9a1c41049b7a1c2a1d))
+
 ## [0.7.0](https://github.com/PMDevSolutions/Optia/compare/v0.6.0...v0.7.0) (2026-08-21)
 
 
