@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.0](https://github.com/PMDevSolutions/Optia/compare/v0.7.4...v1.0.0) (2026-08-21)
+
+
+### Miscellaneous
+
+* **release:** finalize v1.0.0 release notes and cut the freemium launch ([d6adb3a](https://github.com/PMDevSolutions/Optia/commit/d6adb3a2c3864f8fa8b0841f5e3338dc846c826b))
+
 ## [0.7.4](https://github.com/PMDevSolutions/Optia/compare/v0.7.3...v0.7.4) (2026-08-21)
 
 
