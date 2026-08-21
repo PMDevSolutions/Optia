@@ -21,7 +21,7 @@ export const PLANS: Plan[] = [
     id: "monthly",
     priceId: isProduction
       ? "price_1U6faNRDHttKIwLT8gOTOVIe"
-      : "price_1U4l83CRgigSDnjuBaR9Fg00",
+      : "price_1U4neeDQEfCKbFEuayNpkn1V",
     amountLabel: "$5",
     intervalLabel: "/month",
   },
@@ -29,7 +29,7 @@ export const PLANS: Plan[] = [
     id: "annual",
     priceId: isProduction
       ? "price_1U6flvRDHttKIwLTjOIPGpVG"
-      : "price_1U4l83CRgigSDnjusx4BHyWo",
+      : "price_1U4neeDQEfCKbFEuBbuVsrax",
     amountLabel: "$50",
     intervalLabel: "/year",
     badge: "2 months free",
