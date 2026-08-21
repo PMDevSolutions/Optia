@@ -14,6 +14,7 @@ import {
 } from "@/lib/anthropic";
 import { generateViaProxy, AiProxyError } from "@/lib/ai-proxy";
 import { aiStatusNow, useEntitlementStore, type AiStatus } from "@/lib/entitlement-store";
+import { refreshNow } from "@/lib/entitlement";
 import { useStore } from "@/lib/store";
 
 // The AI facade only routes; the three access paths (direct SDK, hosted proxy)
@@ -39,11 +40,18 @@ vi.mock("@/lib/entitlement-store", async (importOriginal) => {
   return { ...original, aiStatusNow: vi.fn() };
 });
 
+// refreshNow drives the 401 refresh-and-retry path; everything else stays real.
+vi.mock("@/lib/entitlement", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/lib/entitlement")>();
+  return { ...original, refreshNow: vi.fn() };
+});
+
 const generateRecommendationDirectMock = vi.mocked(generateRecommendationDirect);
 const generateH2SuggestionDirectMock = vi.mocked(generateH2SuggestionDirect);
 const generateAltTextDirectMock = vi.mocked(generateAltTextDirect);
 const generateViaProxyMock = vi.mocked(generateViaProxy);
 const aiStatusNowMock = vi.mocked(aiStatusNow);
+const refreshNowMock = vi.mocked(refreshNow);
 
 const TEST_KEY = "sk-ant-test-key";
 const testQuota = { period: "2026-07", remaining: 42, limit: 100 };
@@ -56,6 +64,7 @@ const advancedOptions: AdvancedOptions = {
 // applyProxyQuota is a store action; we swap it for a spy each test so we can
 // assert the recorded (quota, subject) without touching real storage.
 let applyProxyQuotaMock: ReturnType<typeof vi.fn>;
+let hydrateEntitlementMock: ReturnType<typeof vi.fn>;
 let showToastMock: ReturnType<typeof vi.fn>;
 
 function setMode(mode: AiStatus["mode"]): void {
@@ -69,8 +78,14 @@ function anthropicError(status: number): Error {
 
 beforeEach(() => {
   applyProxyQuotaMock = vi.fn().mockResolvedValue(undefined);
+  hydrateEntitlementMock = vi.fn().mockResolvedValue(undefined);
   showToastMock = vi.fn();
-  useEntitlementStore.setState({ applyProxyQuota: applyProxyQuotaMock });
+  refreshNowMock.mockReset();
+  refreshNowMock.mockResolvedValue(null);
+  useEntitlementStore.setState({
+    applyProxyQuota: applyProxyQuotaMock,
+    hydrateEntitlement: hydrateEntitlementMock,
+  });
   useStore.setState({ apiKey: "", useOwnKey: true, apiKeyInvalid: false, showToast: showToastMock });
 
   generateRecommendationDirectMock.mockResolvedValue("direct recommendation");
@@ -84,6 +99,66 @@ beforeEach(() => {
     quota: testQuota,
     authenticated: req.authenticated,
   }));
+});
+
+describe("401 → entitlement refresh, one retry", () => {
+  const proClaims = {
+    sub: "lic_1",
+    subjectType: "license",
+    tier: "pro",
+    quotaLimit: 1000,
+    period: "2026-08",
+    exp: Math.floor(Date.now() / 1000) + 3600,
+  };
+  const unauthorized = () => new AiProxyError("unauthorized", "Invalid or expired entitlement.");
+
+  it("pro 401 → refreshes the entitlement and retries the request once", async () => {
+    setMode("pro");
+    generateViaProxyMock.mockRejectedValueOnce(unauthorized());
+    refreshNowMock.mockResolvedValue(proClaims);
+
+    const result = await generateRecommendation("title-keyword", "kw", "ctx");
+
+    expect(result).toBe("proxy recommendation");
+    expect(refreshNowMock).toHaveBeenCalledTimes(1);
+    expect(generateViaProxyMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("pro 401 with a failed refresh → rehydrates (degrade to Free) and rethrows", async () => {
+    setMode("pro");
+    generateViaProxyMock.mockRejectedValue(unauthorized());
+    refreshNowMock.mockResolvedValue(null);
+
+    await expect(generateRecommendation("title-keyword", "kw", "ctx")).rejects.toMatchObject({
+      code: "unauthorized",
+    });
+    expect(refreshNowMock).toHaveBeenCalledTimes(1);
+    expect(generateViaProxyMock).toHaveBeenCalledTimes(1);
+    expect(hydrateEntitlementMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("a 401 on the retry is not retried again", async () => {
+    setMode("pro");
+    generateViaProxyMock.mockRejectedValue(unauthorized());
+    refreshNowMock.mockResolvedValue(proClaims);
+
+    await expect(generateRecommendation("title-keyword", "kw", "ctx")).rejects.toMatchObject({
+      code: "unauthorized",
+    });
+    expect(refreshNowMock).toHaveBeenCalledTimes(1);
+    expect(generateViaProxyMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("free-tier 401 never triggers a refresh", async () => {
+    setMode("free");
+    generateViaProxyMock.mockRejectedValue(unauthorized());
+
+    await expect(generateRecommendation("title-keyword", "kw", "ctx")).rejects.toMatchObject({
+      code: "unauthorized",
+    });
+    expect(refreshNowMock).not.toHaveBeenCalled();
+    expect(generateViaProxyMock).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("generateRecommendation", () => {

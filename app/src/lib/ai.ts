@@ -1,6 +1,6 @@
 import { useStore } from "@/lib/store";
 import { aiStatusNow, useEntitlementStore } from "@/lib/entitlement-store";
-import { currentAiPeriod } from "@/lib/entitlement";
+import { currentAiPeriod, refreshNow } from "@/lib/entitlement";
 import {
   generateRecommendationDirect,
   generateH2SuggestionDirect,
@@ -95,6 +95,7 @@ async function runProxy(
   context: string,
   authenticated: boolean,
   advancedOptions?: AdvancedOptions,
+  isRetry = false,
 ): Promise<string> {
   try {
     const result = await generateViaProxy({
@@ -131,6 +132,17 @@ async function runProxy(
       const subject = authenticated ? "pro" : "free";
       const limit = subject === "pro" ? state.quotaLimit : (state.freeAiLimit ?? 0);
       await state.applyProxyQuota({ period: currentAiPeriod(), remaining: 0, limit }, subject);
+    }
+    // 401 on a Pro call usually means the cached entitlement just expired:
+    // refresh it and retry once. A refresh that comes back empty (revoked
+    // license — local state already cleared) rehydrates the store so the UI
+    // degrades to Free instead of retrying into the same 401.
+    if (err instanceof AiProxyError && err.code === "unauthorized" && authenticated && !isRetry) {
+      const claims = await refreshNow().catch(() => null);
+      if (claims) {
+        return runProxy(checkId, keyword, context, authenticated, advancedOptions, true);
+      }
+      await useEntitlementStore.getState().hydrateEntitlement();
     }
     throw err;
   }
