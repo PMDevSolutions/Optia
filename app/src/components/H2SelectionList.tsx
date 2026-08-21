@@ -13,7 +13,7 @@ interface H2Item {
 interface H2SelectionListProps {
   items: H2Item[];
   onRegenerateOne: (index: number, h2Text: string) => Promise<string>;
-  onRegenerateAll: () => Promise<string[]>;
+  onRegenerateAll: () => Promise<(string | null)[]>;
   onToast: (message: string) => void;
   aiDisabled?: boolean;
   className?: string;
@@ -94,12 +94,22 @@ export function H2SelectionList({
     setLoadingAll(true);
     try {
       const results = await onRegenerateAll();
-      const newSuggestions: Record<number, string> = {};
-      items.forEach((item, i) => {
-        newSuggestions[item.index] = results[i] ?? "";
+      // Keep every suggestion that succeeded; failed slots stay empty for
+      // per-item retry (their quota was refunded server-side).
+      setSuggestions((prev) => {
+        const next = { ...prev };
+        items.forEach((item, i) => {
+          const result = results[i];
+          if (result != null) next[item.index] = result;
+        });
+        return next;
       });
-      setSuggestions(newSuggestions);
-      onToast("All H2 suggestions generated");
+      const failed = items.filter((_, i) => results[i] == null).length;
+      onToast(
+        failed === 0
+          ? "All H2 suggestions generated"
+          : `Generated ${items.length - failed} of ${items.length} — retry the rest individually`,
+      );
     } catch (err) {
       onToast(aiErrorMessage(err, "Failed to generate suggestions"));
     } finally {
