@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.4](https://github.com/PMDevSolutions/Optia/compare/v0.7.3...v0.7.4) (2026-08-21)
+
+
+### Fixed
+
+* **ai:** deliver multi-language and advanced analysis to hosted-Pro users ([b8e9401](https://github.com/PMDevSolutions/Optia/commit/b8e9401ae10526c1f10ea569b2df25a23b88bcee))
+* **ai:** deliver multi-language and advanced analysis to hosted-Pro users ([b4dd02c](https://github.com/PMDevSolutions/Optia/commit/b4dd02cda74cc4c44bc77bfcf76017eb8a87aab9))
+
 ## [0.7.3](https://github.com/PMDevSolutions/Optia/compare/v0.7.2...v0.7.3) (2026-08-21)
 
 

@@ -1,6 +1,6 @@
 {
   "name": "optia-extension",
-  "version": "0.7.3",
+  "version": "0.7.4",
   "description": "Chrome extension for SEO analysis with AI-powered recommendations",
   "private": true,
   "type": "module",
