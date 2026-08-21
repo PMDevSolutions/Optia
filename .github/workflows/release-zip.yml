@@ -43,6 +43,10 @@ jobs:
         run: |
           VERSION=$(node -p "require('./manifest.json').version")
           cd dist
+          # The Chrome Web Store rejects manifests containing "key" ("key field
+          # is not allowed in manifest") — it is a local-dev ID pin only. Strip
+          # it from the store artifact; the repo manifest keeps it for dev.
+          node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('manifest.json'));delete m.key;fs.writeFileSync('manifest.json',JSON.stringify(m,null,2))"
           zip -r "../optia-${VERSION}.zip" .
           cd ..
           unzip -l "optia-${VERSION}.zip" | head -10
