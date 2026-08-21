@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.2](https://github.com/PMDevSolutions/Optia/compare/v0.7.1...v0.7.2) (2026-08-21)
+
+
+### Fixed
+
+* **quota:** install-id, quota-cache, and generate-all races from live QA ([a01d17f](https://github.com/PMDevSolutions/Optia/commit/a01d17f1ea9a5fb92b3f4f3338531b7ddd6ab592))
+* **quota:** three races found live-testing generate-all in the [#16](https://github.com/PMDevSolutions/Optia/issues/16) QA pass ([bb45eab](https://github.com/PMDevSolutions/Optia/commit/bb45eaba6bda837b2eade0bdea382613f399d955))
+
 ## [0.7.1](https://github.com/PMDevSolutions/Optia/compare/v0.7.0...v0.7.1) (2026-08-21)
 
 
