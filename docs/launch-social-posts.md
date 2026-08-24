@@ -16,7 +16,7 @@ Built this because I got tired of switching between SEO tools that either cost t
 
 The analysis itself is free, unlimited, and runs locally in your browser.
 
-[Chrome Web Store link]
+https://chromewebstore.google.com/detail/gnlidlpidaoalbbmekofjednjkhhmehn
 
 ---
 
@@ -38,7 +38,7 @@ What made this project different:
 
 If you work with SEO or just want to improve your site's search visibility, give it a try and let me know what you think.
 
-[Chrome Web Store link]
+https://chromewebstore.google.com/detail/gnlidlpidaoalbbmekofjednjkhhmehn
 
 ---
 
@@ -71,7 +71,7 @@ Meta Tags, Headings, Images, Links, Content Quality, Structured Data (JSON-LD), 
 **Privacy:**
 The analysis itself runs locally in your browser. AI requests send only the relevant page snippets (your keyword + the element being improved). No tracking, no analytics, and a Pro user's own API key never touches our servers.
 
-[Chrome Web Store link]
+https://chromewebstore.google.com/detail/gnlidlpidaoalbbmekofjednjkhhmehn
 
 Would love feedback from this community — what checks would you want to see added?
 
@@ -102,21 +102,9 @@ Just launched Optia on the Chrome Web Store.
 - A freemium quota is a distributed-systems problem: the server must be the quota authority, the client just caches
 - Shipping is the hardest part
 
-[Chrome Web Store link]
+https://chromewebstore.google.com/detail/gnlidlpidaoalbbmekofjednjkhhmehn
 
 Would love feedback — what features would make this more useful for you?
-
----
-
-## Twitter/X
-
-🚀 Just shipped Optia — a Chrome extension for on-page SEO analysis.
-
-Enter your keyword, get a 0–100 score, and see exactly what to fix across titles, meta, headings, images, and structured data.
-
-25 free AI suggestions/month powered by Claude — no account needed. Pro for more, or bring your own key.
-
-[Chrome Web Store link]
 
 ---
 
@@ -153,6 +141,6 @@ One-click suggestions for titles, meta descriptions, and image alt text, powered
 **Privacy:**
 The analysis runs locally in your browser — AI requests send only the snippet being improved. No accounts for the free tier, no tracking.
 
-[Chrome Web Store link]
+https://chromewebstore.google.com/detail/gnlidlpidaoalbbmekofjednjkhhmehn
 
 I'd love to hear what SEO checks would be most useful for Webflow users specifically. Happy to add features based on feedback!
