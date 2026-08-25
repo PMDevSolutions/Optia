@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.1](https://github.com/PMDevSolutions/Optia/compare/v1.1.0...v1.1.1) (2026-08-25)
+
+
+### Fixed
+
+* **ui:** stop tailwind-merge from dropping text colors on custom font-size tokens ([015500c](https://github.com/PMDevSolutions/Optia/commit/015500c771b7a47d02d52742b90745c167cf4dff))
+* **ui:** stop tailwind-merge from dropping text colors on custom font-size tokens ([970ea21](https://github.com/PMDevSolutions/Optia/commit/970ea21f35549c509c63ea8ef45512ec5d0f7aab)), closes [#62](https://github.com/PMDevSolutions/Optia/issues/62)
+
 ## [1.1.0](https://github.com/PMDevSolutions/Optia/compare/v1.0.1...v1.1.0) (2026-08-21)
 
 
