@@ -120,9 +120,9 @@ pnpm tsc --noEmit         # Type check without emitting
 
 ---
 
-### Custom Agents (44 Total)
+### Custom Agents (71 Total)
 
-44 specialized agents covering the full product lifecycle:
+71 specialized agents covering the full product lifecycle:
 
 | Category | Count | Key Agents |
 |----------|-------|------------|
@@ -131,7 +131,7 @@ pnpm tsc --noEmit         # Type check without emitting
 | Design-to-Code | 2 | figma-react-converter, asset-cataloger |
 | Testing & QA | 7 | visual-qa-agent, accessibility-auditor, api-tester, performance-benchmarker |
 | Product | 3 | sprint-prioritizer, feedback-synthesizer, trend-researcher |
-| Marketing | 7 | content-creator, growth-hacker, app-store-optimizer |
+| Marketing | 33 | content-creator, growth-hacker, app-store-optimizer, copywriter, email-marketer, seo-specialist, social-media-manager, pr-outreach, paid-ads-specialist, brand-strategist (full roster imported from Maecenas) |
 | Project Management | 3 | studio-producer, project-shipper, experiment-tracker |
 | Operations | 5 | analytics-reporter, infrastructure-maintainer, legal-compliance-checker |
 | Documentation | 1 | docusaurus-expert |
@@ -143,6 +143,22 @@ Agents are invoked automatically based on task context.
 **Full catalog:** `.claude/CUSTOM-AGENTS-GUIDE.md`
 
 ---
+
+### Marketing Pipeline (imported from Maecenas, 2026-08-23)
+
+Optia is live on the Chrome Web Store; this repo now also carries marketing duties.
+
+**Skills (13):** campaign-brief-intake, brand-voice-lock, content-calendar, editorial-qa, email-sequence, landing-page-copy, ad-copy-variants, social-content-batching, seo-keyword-research, persona-research, competitor-teardown, analytics-report, parallel-orchestration
+
+**Commands:** `/build-campaign` (brief → publish-ready pipeline), `/write-content`, `/setup-brand` (creates brand-guidelines.json lockfile — run this first), `/plan-content-calendar`, `/build-email-sequence`, `/seo-audit`, `/competitor-teardown`, `/analyze-performance`
+
+**QA scripts:** `scripts/brand-voice-lint.js`, `scripts/readability-score.js`, `scripts/seo-check.js`, `scripts/validate-content-calendar.js`
+
+**Hooks (informational, in settings.json):** brand guard on commits, editorial QA reminder, approval-gate warning on external publish/send/spend commands. Human approval is required before anything publishes externally.
+
+**Channel access:**
+- **Google Calendar / Gmail:** Google MCP (account paul@pmds.info) — full event CRUD via `manage_event`.
+- **LinkedIn + Chrome Web Store dev console:** headed Playwright MCP with persistent Chrome profile (log in once, session persists). No official write API is wired up yet.
 
 ### React Skills (9 Total)
 
@@ -328,5 +344,5 @@ gh issue create               # Create issue
 
 ---
 
-**Last Updated:** 2026-03-16
-**Architecture:** 44 agents, 9 skills, 4 plugins + gh CLI, Figma + Playwright MCP
+**Last Updated:** 2026-08-23
+**Architecture:** 71 agents, 22 skills, 12 commands, 4 plugins + gh CLI, Figma + Playwright + Google MCP

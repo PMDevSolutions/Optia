@@ -7,7 +7,7 @@ The end-to-end path from this repo to a live, working, paid product. Backend ste
 ## Phase 0 — Decisions (block everything else)
 
 - [ ] **Host permissions**: keep `<all_urls>` (any-site analysis, in-depth CWS review accepted) or narrow to `activeTab` + `scripting` (faster review, but changes UX — content script must be injected on demand). Current decision: **keep `<all_urls>`**; record any change here and in the listing's permission justifications.
-- [x] **Privacy hosting + website**: **decided 2026-08-20 — GitHub Pages.** Landing page + privacy policy live in `site/`, deployed by the Deploy Site workflow to https://pmdevsolutions.github.io/Optia/ (privacy: `/privacy.html`); support = repo issues. Context: the only Optia domain owned is `optia-api.com` (Cloudflare, 2026-07-18, API only); `optia.com` is not ours; `pmds.info` is the business site but doesn't mention Optia yet — either can take over the website slot later (update the CWS listing and Stripe business profile if so).
+- [x] **Privacy hosting + website**: **decided 2026-08-20 — GitHub Pages.** Landing page + privacy policy live in `site/`, deployed by the Deploy Site workflow to https://pmdevsolutions.github.io/Optia/ (privacy: `/privacy.html`); support = repo issues. Context: the only Optia domain owned is `optia-api.com` (Cloudflare, 2026-07-18, API only); `optia.com` is not ours; `pmds.info` now has a product page at https://pmds.info/products/optia (live 2026-09-02, with homepage card, nav link, sitemap entry, SoftwareApplication JSON-LD) — switch the CWS listing Website field and the Stripe business profile to it (tracked in the PMDS Marketing task list).
 - [ ] **Privacy contact email** (optional refinement): the published policy currently points to GitHub issues for contact; add a dedicated email (e.g. on `pmds.info` or `optia-api.com`) if preferred.
 - [ ] **Legal review** of `docs/privacy-policy.md` (drafted with the `legal-advisor` agent; flagged TODOs inside).
 
@@ -39,6 +39,8 @@ Follow `docs/PROVISIONING.md` §1–§8 for the production environment:
 - [x] Live webhook endpoint pointed at `api.optia-api.com/billing/webhook` (`we_1U6frWRDHttKIwLTMQgb9FU9`).
 - [x] **Production deployed 2026-08-20** (`pnpm exec wrangler deploy --env production --var COMMIT_SHA:…` — note: `pnpm deploy:production -- --var …` does NOT forward the var; call wrangler directly). `/health` reports the real commit.
 - [x] Smoke passed 2026-08-20: `/health` healthy + DB connected, `/license/public-key` serves the bundled key, one metered `POST /ai/generate` returned a real Claude recommendation. ⏳ Remaining: one full live-card checkout → activation → refund, **after Stripe's account review clears** (2–3 days).
+- [x] ~~🚨 BLOCKER found 2026-08-23~~ **found and FIXED 2026-08-23:** production `POST /billing/checkout` returned 500 — Worker logs showed Stripe rejecting with `No such price: 'price_1U6fa…'`. Root cause: the production **`STRIPE_SECRET_KEY` secret belonged to the wrong Stripe account** (stale Optia Sandbox key; confirmed because the live account's secret key had never been revealed). Fixed by revealing the live key (acct_1U6Z2iRDHttKIwLT) and re-running `wrangler secret put STRIPE_SECRET_KEY --env production`. The 8/20 smoke test missed it because it never exercised billing — future deploy checklists should include one `POST /billing/checkout` smoke call.
+- [x] **Live checkout → activation → refund test PASSED 2026-08-23:** real $5 card payment on a live Checkout Session (`payment_status=paid`) → webhook minted the license → one-time claim returned the key → `/license/activate` minted a Pro entitlement with the correct production kid (`7nwkI8…`), tier pro, quota 1000 → subscription canceled immediately → **$5.00 refund succeeded** → test seat deactivated. Stripe account activation confirmed complete (products activated). Live billing is fully operational.
 
 ## Phase 3 — Store package, listing, legal
 
@@ -54,6 +56,8 @@ Follow `docs/PROVISIONING.md` §1–§8 for the production environment:
 - [ ] Upload the release zip; fill listing, privacy, and distribution tabs from the docs above.
 - [ ] Verify the dashboard shows item ID `lgkgkmjldppeidgafolhfpepmabnnbhe` (it honors the manifest `key`). If it ever differs, update the backend `ALLOWED_ORIGINS` and redeploy before publishing.
 - [ ] Submit for review. Expect the **in-depth queue** because of `<all_urls>` — reviews commonly take days, occasionally longer. Respond to reviewer emails promptly; rejections cite the exact policy.
+
+> ⚠️ **Published ID differs from the pinned ID (2026-08-23).** The store published Optia v1.1.0 under **`gnlidlpidaoalbbmekofjednjkhhmehn`**, not the manifest-key-pinned `lgkgkmjldppeidgafolhfpepmabnnbhe` (which still applies to local unpacked loads). Exactly the contingency Phase 4 warned about. Backend `ALLOWED_ORIGINS` now carries **both** IDs (hotfixed + deployed to production 2026-08-23, CORS verified for both). All public listing links must use the new ID: https://chromewebstore.google.com/detail/gnlidlpidaoalbbmekofjednjkhhmehn — links using the old ID 404. Worth investigating later why the store did not honor the manifest `key` (was the `key` field present in the uploaded zip?).
 
 ## Phase 5 — Post-publish
 
