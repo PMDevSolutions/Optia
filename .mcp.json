@@ -11,9 +11,9 @@
       "description": "Figma remote MCP server (fallback)"
     },
     "playwright": {
-      "command": "cmd",
-      "args": ["/c", "npx", "@playwright/mcp@latest", "--headless"],
-      "description": "Playwright browser automation - defaults to Chromium. Change browser via PLAYWRIGHT_MCP_BROWSER env var or restart with --browser firefox|webkit"
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest", "--browser", "chrome"],
+      "description": "Playwright browser automation - HEADED real Chrome with a persistent profile (~/Library/Caches/ms-playwright/mcp-chrome-profile). Runs visibly so you can log in manually (e.g. LinkedIn, Chrome Web Store dev console); the session persists across restarts. Re-add --headless for silent/automated runs."
     }
   }
 }

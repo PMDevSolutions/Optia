@@ -1,0 +1,160 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2026-08-23T14:00:00Z",
+  "sources": [
+    "docs/chrome-web-store-listing.md (live listing copy)",
+    "docs/launch-social-posts.md (approved launch corpus, 2026-08)",
+    "README.md + site/index.html (product copy + visual identity)",
+    "app/src/styles/globals.css (extension theme tokens)",
+    "user interview 2026-08-23 (personality, POV, claims, lexicon confirmed by Paul)"
+  ],
+
+  "brand": {
+    "name": "Optia",
+    "tagline": "Instant SEO score and AI recommendations for any page",
+    "boilerplate": "Optia is a Chrome extension that analyzes any web page for SEO issues and gives you a 0–100 score with actionable, priority-labeled recommendations. One-click AI suggestions — titles, meta descriptions, headings, alt text — are powered by Claude (Anthropic). Analysis runs locally in your browser; the free tier needs no account. Built by PMDS."
+  },
+
+  "voice": {
+    "personality": ["plainspoken", "honest", "practical"],
+    "neverBe": ["hypey", "corporate", "smug"],
+    "attributes": [
+      {
+        "trait": "plainspoken",
+        "do": "Enter your keyword, get a 0–100 score, and see exactly what to fix.",
+        "dont": "Leverage Optia's cutting-edge analysis engine to unlock actionable SEO insights."
+      },
+      {
+        "trait": "honest",
+        "do": "Freemium done honestly: the analyzer is fully free; you pay only for more AI.",
+        "dont": "Start your journey free! (while hiding what actually costs money)"
+      },
+      {
+        "trait": "practical",
+        "do": "Every issue is labeled High or Medium priority so you fix the right things first.",
+        "dont": "Optia empowers you to transform your entire SEO strategy."
+      }
+    ],
+    "pointOfView": "Dual POV: personal channels (Paul's LinkedIn, Reddit, X) speak as the builder — first-person singular 'I'. Product surfaces (store listing, site, docs, email, ads) use product voice addressing 'you'. Never fake-corporate 'we' for a solo builder; 'we/our' is acceptable only in product-voice privacy/billing statements where it means PMDS.",
+    "examplePhrases": [
+      "The analysis itself is free, unlimited, and runs locally in your browser.",
+      "No tracking, no ads, no analytics, and your data is never sold.",
+      "25 AI recommendations a month free — no account, no API key.",
+      "Built this because I got tired of switching between SEO tools that either cost too much or required accounts just to see basic recommendations."
+    ]
+  },
+
+  "tone": {
+    "contexts": {
+      "launch": "Energetic but concrete — lead with what it does and real numbers (0–100 score, 25/month free, $5/month), never adjectives doing the work of facts",
+      "support": "Calm, accountable, solution-first; own bugs plainly and say what happens next",
+      "crisis": "Honest, human, no defensiveness, no humor",
+      "legal": "Precise and unembellished",
+      "community": "Peer-to-peer builder voice ('I built', 'what I learned'); always end asking for feedback, never pitching"
+    }
+  },
+
+  "lexicon": {
+    "preferred": [
+      { "use": "powered by Claude (Anthropic)", "insteadOf": ["our AI", "our proprietary AI", "advanced AI technology"] },
+      { "use": "AI recommendations", "insteadOf": ["AI magic", "AI-powered insights engine"] },
+      { "use": "open-core", "insteadOf": ["open source (as a product descriptor — the backend is private)"] },
+      { "use": "bring your own Anthropic API key", "insteadOf": ["BYOK (in customer-facing copy)"] },
+      { "use": "free tier", "insteadOf": ["freemium (in customer-facing copy; 'freemium' is fine internally and in builder posts)"] }
+    ],
+    "banned": [
+      "synergy",
+      "world-class",
+      "revolutionary",
+      "game-changing",
+      "game changer",
+      "best-in-class",
+      "cutting-edge",
+      "magic",
+      "magical",
+      "superpowers",
+      "supercharge",
+      "10x your",
+      "skyrocket",
+      "unlock the power",
+      "AI SEO Copilot"
+    ],
+    "productNames": [
+      { "correct": "Optia", "incorrect": ["OPTIA", "optia", "Optia AI", "the Optia extension (redundant after first mention)"] },
+      { "correct": "Optia Pro", "incorrect": ["Optia PRO", "Pro version", "premium plan", "Optia Premium"] },
+      { "correct": "Claude (Anthropic)", "incorrect": ["Claude AI", "Anthropic's ChatGPT", "the AI model"] }
+    ],
+    "capitalization": [
+      "Sentence case for headlines and buttons",
+      "No ALL CAPS except section labels in the store listing (FEATURES, PRIVACY FIRST) and legal text",
+      "'Chrome Web Store' capitalized exactly; 'side panel' lowercase"
+    ]
+  },
+
+  "claims": {
+    "requireSourceForStatistics": true,
+    "superlativesRequireSubstantiation": true,
+    "testimonialPolicy": "real, permissioned, unedited in substance; permission documented",
+    "prohibited": [
+      "guarantee",
+      "guaranteed",
+      "will boost your rankings",
+      "will improve your rankings",
+      "get to #1",
+      "#1 on Google",
+      "guaranteed traffic",
+      "risk-free",
+      "the only tool"
+    ],
+    "outcomeClaims": "Never promise ranking or traffic outcomes. Optia 'helps you improve', 'shows you what to fix', 'scores your page' — it does not 'boost', 'raise', or 'guarantee' rankings. Rankings depend on factors outside any tool's control.",
+    "comparativeClaims": "must be current, accurate, and substantiated; legal review for named competitors",
+    "aiClaims": "AI features are attributed concretely — 'powered by Claude (Anthropic)', with the free quota (25/month) stated when relevant. Never generic 'our AI' or capability inflation."
+  },
+
+  "visual": {
+    "colors": {
+      "primary": { "hex": "#4F46E5", "name": "Optia Indigo", "note": "indigo-600; brand token in light mode" },
+      "primaryHover": { "hex": "#4338CA", "name": "Indigo 700" },
+      "primaryDark": { "hex": "#6366F1", "name": "Indigo 500", "note": "brand token in dark mode" },
+      "accent": { "hex": "#0EA5E9", "name": "Sky 500" },
+      "success": { "hex": "#10B981", "name": "Emerald 500", "note": "score/success states" },
+      "ink": { "hex": "#111827", "name": "Gray 900" },
+      "inkDeep": { "hex": "#1E1B4B", "name": "Indigo 950", "note": "site hero backgrounds" },
+      "surface": { "hex": "#F6F7FB", "name": "Site surface" }
+    },
+    "typography": {
+      "heading": { "family": "system-ui stack (-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial)", "weights": [600, 700] },
+      "body": { "family": "system-ui stack (same)", "weights": [400, 500] },
+      "note": "No webfonts — the system stack is a deliberate lightweight/privacy-consistent choice; keep it in marketing surfaces unless a rebrand says otherwise"
+    },
+    "logo": {
+      "source": "app/public/icons/icon-128.svg (store icon generated via pnpm icons)",
+      "clearSpace": "0.5x icon width on all sides",
+      "minSizePx": 16,
+      "donts": ["stretch", "recolor", "place on low-contrast busy imagery"]
+    },
+    "imagery": {
+      "style": "Real UI captures framed cleanly (marketing/store-assets pipeline) — the product is the visual",
+      "avoid": ["fake browser mockups with invented scores", "stock photos of people pointing at analytics", "misleading before/after ranking charts"]
+    }
+  },
+
+  "compliance": {
+    "disclaimers": [
+      { "assetType": "email", "text": "Unsubscribe link + physical address (CAN-SPAM)", "required": true },
+      { "assetType": "email-sequence", "text": "Unsubscribe link + physical address (CAN-SPAM)", "required": true },
+      { "assetType": "store-listing", "text": "Optia Pro is purchased from us and billed securely through Stripe — not through the Chrome Web Store. Google is not the merchant of record.", "required": true },
+      { "assetType": "landing-page", "text": "Stripe external-billing note required if Pro pricing is shown", "required": false },
+      { "assetType": "ad-campaign", "text": "none required", "required": false },
+      { "assetType": "blog-post", "text": "none required", "required": false },
+      { "assetType": "social-post", "text": "none required", "required": false },
+      { "assetType": "press-release", "text": "PMDS boilerplate paragraph", "required": true }
+    ],
+    "regulatedTopics": [],
+    "disclosureRules": [
+      "Any copy that mentions Optia Pro pricing or billing must state that billing is via Stripe, not the Chrome Web Store (CWS policy; see issue #14 — omission risks takedown)",
+      "Sponsored/affiliate content labeled per FTC guidance",
+      "Privacy claims must match docs/privacy-policy.md exactly — never improvise privacy language"
+    ]
+  }
+}

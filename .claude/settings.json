@@ -8,6 +8,21 @@
             "type": "command",
             "command": "bash -c 'if echo \"$TOOL_INPUT\" | grep -q \"pnpm build\" && echo \"$TOOL_OUTPUT\" | grep -q \"built in\"; then echo \"[post-build-qa] Build succeeded. Run quality gate: pnpm vitest run && pnpm tsc --noEmit && ./scripts/verify-tokens.sh\"; fi'",
             "description": "Remind to run quality gate after successful builds during the pipeline"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/pre-commit-brand-guard.sh \"$TOOL_INPUT\" \"$TOOL_OUTPUT\"",
+            "description": "Lint staged content against brand-guidelines.json before git commits"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/editorial-qa-reminder.sh \"$TOOL_INPUT\" \"$TOOL_OUTPUT\"",
+            "description": "After a clean brand-voice lint, remind about the remaining editorial QA gates"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/approval-gate-guard.sh \"$TOOL_INPUT\" \"$TOOL_OUTPUT\"",
+            "description": "Warn when a command looks like an external publish/send/spend without a recorded approval"
           }
         ]
       }
