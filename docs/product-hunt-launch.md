@@ -69,13 +69,13 @@ I'm a one-person shop, so I read every comment. The most useful thing you can te
 Most of them dump every check on you with equal weight. Optia labels each one High or Medium so you fix the things that move rankings first, and it writes the replacement title or meta description for you instead of telling you to go write one.
 
 **"Why Claude and not OpenAI?"**
-I tested both on real page snippets. Claude's titles and meta descriptions needed less editing to sound like a person wrote them. Pro users who prefer another setup can bring their own Anthropic key.
+The first version was bring-your-own OpenAI key. When I built the hosted free tier I standardized on Claude for the suggestions and kept bring-your-own-key as a Pro option, now for Anthropic keys. (Paul: add your own reason if you have one; do not claim a head-to-head test unless you ran one.)
 
 **"Is my page content sent anywhere?"**
 Only when you ask for an AI suggestion, and only the snippet being improved plus your keyword. The scoring never leaves the browser. Full policy: https://pmdevsolutions.github.io/Optia/privacy.html
 
 **"Firefox or Edge?"**
-Edge can install it from the Chrome Web Store today. Firefox needs a separate build and is not scheduled yet. If enough people ask here, that changes the order.
+Chrome only today. Edge can usually load Chrome Web Store extensions, but I have not tested Optia there, so I will not promise it. There is no Firefox build yet. If enough people ask here, that changes the order.
 
 **"Does it work on Webflow / WordPress / Shopify?"**
 Yes. It analyzes the rendered page, so any published site works. It does not edit the site for you; you copy the suggestion into your CMS.
