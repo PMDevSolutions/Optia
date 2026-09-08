@@ -1,6 +1,6 @@
 # Product Hunt launch kit
 
-Prepared 2026-09-08 for the launch scheduled Wednesday 2026-09-09 at 12:01 AM PT. Everything below is ready to paste into the Product Hunt launch form. Copy follows brand-guidelines.json (product voice on the listing, Paul's first-person voice in the maker comment).
+Prepared 2026-09-08. **Status: entered in Product Hunt and scheduled for Wednesday 2026-09-09 at 12:01 AM PDT** (confirmed on the My products page). Launch page https://www.producthunt.com/products/optia, edit at https://www.producthunt.com/posts/optia/edit, launch-day dashboard at https://www.producthunt.com/products/optia/optia/prelaunch. Product Hunt account: GitHub sign-in (PAMulligan), username pamulligan, email paul@pmds.info. Product Hunt rejected the Chrome Web Store URL as the primary link, so pmds.info/products/optia is primary and the store link is the additional link. Everything below is what was entered. Copy follows brand-guidelines.json (product voice on the listing, Paul's first-person voice in the maker comment).
 
 ## Go / no-go check (done 2026-09-08)
 
