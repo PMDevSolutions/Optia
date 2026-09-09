@@ -83,6 +83,5 @@ Yes. It analyzes the rendered page, so any published site works. It does not edi
 ## Launch-day amplification (separate task, due 2026-09-09)
 
 - LinkedIn: short post linking the PH page, drafted in the LinkedIn composer.
-- X: one post linking the PH page.
 - Reply to every PH comment through the day.
 - Do not ask for upvotes anywhere. Ask for feedback and link the page.
