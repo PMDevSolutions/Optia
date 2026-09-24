@@ -19,6 +19,13 @@ interface H2SelectionListProps {
   className?: string;
 }
 
+function omitIndex(errors: Record<number, string>, index: number): Record<number, string> {
+  if (!(index in errors)) return errors;
+  const next = { ...errors };
+  delete next[index];
+  return next;
+}
+
 export function H2SelectionList({
   items,
   onRegenerateOne,
@@ -69,16 +76,22 @@ export function H2SelectionList({
   const [loadingItems, setLoadingItems] = useState<Set<number>>(new Set());
   const [copiedItems, setCopiedItems] = useState<Set<number>>(new Set());
   const [loadingAll, setLoadingAll] = useState(false);
+  // Per-item generation failures, shown inside each item's card until that
+  // item is retried or a later Generate All fills it (#67).
+  const [errors, setErrors] = useState<Record<number, string>>({});
 
   const handleRegenerateOne = useCallback(
     async (index: number, h2Text: string) => {
       setLoadingItems((prev) => new Set(prev).add(index));
+      setErrors((prev) => omitIndex(prev, index));
       try {
         const result = await onRegenerateOne(index, h2Text);
         setSuggestions((prev) => ({ ...prev, [index]: result }));
         onToast("H2 suggestion regenerated");
       } catch (err) {
-        onToast(aiErrorMessage(err, "Failed to regenerate"));
+        const message = aiErrorMessage(err, "Failed to regenerate");
+        onToast(message);
+        setErrors((prev) => ({ ...prev, [index]: message }));
       } finally {
         setLoadingItems((prev) => {
           const next = new Set(prev);
@@ -92,15 +105,23 @@ export function H2SelectionList({
 
   const handleRegenerateAll = useCallback(async () => {
     setLoadingAll(true);
+    setErrors({});
     try {
       const results = await onRegenerateAll();
       // Keep every suggestion that succeeded; failed slots stay empty for
-      // per-item retry (their quota was refunded server-side).
+      // per-item retry (their quota was refunded server-side) and say so.
       setSuggestions((prev) => {
         const next = { ...prev };
         items.forEach((item, i) => {
           const result = results[i];
           if (result != null) next[item.index] = result;
+        });
+        return next;
+      });
+      setErrors(() => {
+        const next: Record<number, string> = {};
+        items.forEach((item, i) => {
+          if (results[i] == null) next[item.index] = "Failed to generate";
         });
         return next;
       });
@@ -111,7 +132,10 @@ export function H2SelectionList({
           : `Generated ${items.length - failed} of ${items.length} — retry the rest individually`,
       );
     } catch (err) {
-      onToast(aiErrorMessage(err, "Failed to generate suggestions"));
+      // onRegenerateAll rejects only when every generation failed.
+      const message = aiErrorMessage(err, "Failed to generate suggestions");
+      onToast(message);
+      setErrors(Object.fromEntries(items.map((item) => [item.index, message])));
     } finally {
       setLoadingAll(false);
     }
@@ -215,6 +239,11 @@ export function H2SelectionList({
                 </button>
               </div>
             </div>
+            {errors[item.index] && (
+              <p role="alert" className="mt-1.5 text-body-12 text-poor">
+                {errors[item.index]}
+              </p>
+            )}
           </div>
         );
       })}
