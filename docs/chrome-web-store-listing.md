@@ -113,3 +113,50 @@ Answers for the Dashboard's Privacy practices tab live in `docs/chrome-web-store
 | Marquee promo tile | 1400×560 (optional, featured placements) | ⬜ optional |
 
 Assets are generated from real UI captures: `node marketing/store-assets/capture.mjs` (needs `pnpm dev` running and a built `app/dist`) then `render-asset.mjs` frames them — see `marketing/store-assets/README.md`. Screenshot 4 shows the Pro paywall, satisfying the "upgrade surface" requirement of issue #14; its caption repeats the Stripe external-billing disclosure.
+
+---
+
+## Tuning pass, 2026-09-24 (proposed, not yet applied in the dashboard)
+
+Google Task "OPTIA: CWS listing optimization pass + review asks" (due 2026-09-23). The dashboard
+could not be edited on 2026-09-24: the developer console asks paul@pmds.info to sign in again
+in the automation Chrome. The text above stays the source of truth until the change below is
+applied there; then move it up and delete this section.
+
+**Data available.** Last dashboard read 2026-09-21 (Maecenas
+`.claude/research/optia/2026-09-21-one-month-numbers.md`): 30 days, 47 installs from 28 listing
+page views and 26 store impressions, 1 uninstall, average 3 weekly users, 55% of installs on
+ChromeOS while no weekly user runs ChromeOS. Public listing 2026-09-24: 7 users, 5.0 from one
+rating, no written reviews. Installs exceed page views, so the install count is mostly automated
+and there is no usable impression-to-install signal yet. This pass is keyword-driven, not
+performance-driven.
+
+**Short description.** Current (121 characters): `Analyze any page's SEO and get an instant
+score with AI-powered title, meta description, and alt text recommendations.`
+
+Proposed (120 characters, limit 132):
+
+`Free on-page SEO checker. Score any page for your keyword, then get AI title, meta description and alt text suggestions.`
+
+Why, from the 2026-09-22 Keyword Planner pull (US, 12-month averages, Maecenas
+`.claude/research/optia/2026-09-22-keyword-planner-optia.md`): "check my website seo" 1,000/mo,
+"seo score checker" 720, "on page seo tool" 720, "free seo audit tool" 720, "website seo
+checker free" 590, "on page seo checker" 480, "meta description checker" 480, "alt text
+generator" 2,900. The words "checker", "on-page", "free", "score" and "keyword" are what people
+type; "analyze" and "instant" are not. "Free" is accurate (25 AI recommendations a month, scoring
+unlimited). Pro and Stripe wording are untouched; the external-payments disclosure in the
+detailed description stays as is.
+
+**Screenshot order.** Current: 1 score, 2 checks, 3 setup, 4 Pro paywall, 5 options and BYO key.
+Proposed: 1 score, 2 checks, 3 options and BYO key (the privacy and own-key angle is the one
+differentiator outside commenters have named), 4 setup, 5 Pro paywall last. A judgment call with
+no data behind it; revisit when the dashboard shows real page views.
+
+**Review asks.** Pinned issue #68 asks satisfied users for an honest Chrome Web Store review, with
+no incentive, and points bug reports to issues instead. The Monday LinkedIn Optia post can carry
+one plain sentence ("if you use it, an honest review helps") once a week at most. Nothing traded,
+nothing scripted, no review requests to people who have not said they use it.
+
+**To apply (dashboard, after re-verification):** Store listing > Description > Short description;
+Store listing > Graphic assets > reorder screenshots; save and submit. No new version is needed
+for either change.
