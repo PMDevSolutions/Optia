@@ -169,9 +169,90 @@ function anthropicProxy(): Plugin {
   };
 }
 
+/** The backend the dev preview harness reaches through /api/backend. */
+export const DEV_BACKEND_TARGET = "https://optia-backend-staging.paul-130.workers.dev";
+
+/**
+ * Vite plugin that proxies /api/backend/* to the staging Optia backend.
+ *
+ * The harness page is served from http://localhost, which staging's CORS
+ * allowlist rejects (it admits only the extension origin and the staging
+ * site), so hosted-AI, license and billing calls made straight from the page
+ * never get past the browser (#67). Routing them through the dev server
+ * sidesteps CORS the same way /api/anthropic does for BYOK calls. The app opts
+ * in via BACKEND_BASE_URL (src/lib/entitlement-keys.ts), which resolves to
+ * this path only in the harness — the extension itself never uses it.
+ */
+export function backendProxy(): Plugin {
+  // Only the request headers the backend's CORS policy accepts. Browser-added
+  // headers (Origin, Host, cookies, Sec-Fetch-*) stay on this side.
+  const forwarded = [
+    "content-type",
+    "authorization",
+    "x-optia-entitlement",
+    "x-optia-install-id",
+  ];
+  return {
+    name: "backend-proxy",
+    configureServer(server) {
+      server.middlewares.use("/api/backend", async (req, res) => {
+        // Handle CORS preflight (same-origin callers never send one; kept for parity)
+        if (req.method === "OPTIONS") {
+          res.writeHead(204, {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "Access-Control-Allow-Headers": forwarded.join(", "),
+          });
+          res.end();
+          return;
+        }
+
+        // connect strips the mount path, so req.url is the backend route with
+        // its query string intact (e.g. /ai/generate, /billing/session/cs_1?installId=...).
+        const method = req.method ?? "GET";
+        const targetUrl = `${DEV_BACKEND_TARGET}${req.url ?? ""}`;
+
+        try {
+          const headers: Record<string, string> = {};
+          for (const name of forwarded) {
+            const value = req.headers[name];
+            if (typeof value === "string") headers[name] = value;
+          }
+
+          let body: string | undefined;
+          if (method !== "GET" && method !== "HEAD") {
+            const chunks: Buffer[] = [];
+            for await (const chunk of req) {
+              chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+            }
+            body = Buffer.concat(chunks).toString();
+          }
+
+          const response = await fetch(targetUrl, { method, headers, body });
+          const responseBody = await response.text();
+          console.log(`[Backend Proxy] ${method} ${req.url} -> ${response.status}`);
+          if (!response.ok) {
+            console.log("[Backend Proxy] Error response:", responseBody.slice(0, 500));
+          }
+          // Status and body pass through untouched so ai-proxy.ts / backend.ts
+          // map errors exactly as they would against staging directly.
+          res.writeHead(response.status, {
+            "Content-Type": response.headers.get("content-type") ?? "application/json",
+            "Access-Control-Allow-Origin": "*",
+          });
+          res.end(responseBody);
+        } catch (err) {
+          res.writeHead(502, { "Content-Type": "text/plain" });
+          res.end(`Backend proxy error: ${err}`);
+        }
+      });
+    },
+  };
+}
+
 // Dev preview config — no CRXJS, just serves the side panel UI in a browser tab
 export default defineConfig({
-  plugins: [react(), fetchPageProxy(), anthropicProxy()],
+  plugins: [react(), fetchPageProxy(), anthropicProxy(), backendProxy()],
   resolve: {
     alias: {
       "@": resolve(__dirname, "src"),
