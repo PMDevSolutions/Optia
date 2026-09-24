@@ -145,3 +145,100 @@ describe("H2SelectionList", () => {
     });
   });
 });
+
+describe("H2SelectionList inline failure messages", () => {
+  const items = [
+    { index: 0, text: "Introduction", suggestion: "" },
+    { index: 1, text: "Features", suggestion: "Top Features" },
+  ];
+
+  const defaultProps = {
+    items,
+    onRegenerateOne: vi.fn().mockResolvedValue("Better heading"),
+    onRegenerateAll: vi.fn().mockResolvedValue(["New Intro", "New Features"]),
+    onToast: vi.fn(),
+  };
+
+  it("shows no failure messages initially", () => {
+    render(<H2SelectionList {...defaultProps} />);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("marks only the failed item after a per-item regenerate fails", async () => {
+    const user = userEvent.setup();
+    const onRegenerateOne = vi.fn().mockRejectedValue(new Error("fail"));
+    render(<H2SelectionList {...defaultProps} onRegenerateOne={onRegenerateOne} />);
+
+    await user.click(screen.getAllByTitle("Regenerate")[0]);
+
+    const alerts = screen.getAllByRole("alert");
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]).toHaveTextContent("Failed to regenerate");
+  });
+
+  it("surfaces the AI service's own message on a per-item failure", async () => {
+    const user = userEvent.setup();
+    const quota = Object.assign(new Error("AI quota reached."), { name: "AiProxyError" });
+    const onRegenerateOne = vi.fn().mockRejectedValue(quota);
+    render(<H2SelectionList {...defaultProps} onRegenerateOne={onRegenerateOne} />);
+
+    await user.click(screen.getAllByTitle("Regenerate")[1]);
+
+    expect(screen.getByRole("alert")).toHaveTextContent("AI quota reached.");
+  });
+
+  it("clears an item's failure once it regenerates successfully", async () => {
+    const user = userEvent.setup();
+    const onRegenerateOne = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("fail"))
+      .mockResolvedValueOnce("Better heading");
+    render(<H2SelectionList {...defaultProps} onRegenerateOne={onRegenerateOne} />);
+
+    await user.click(screen.getAllByTitle("Regenerate")[0]);
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+
+    await user.click(screen.getAllByTitle("Regenerate")[0]);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("textbox")[0]).toHaveValue("Better heading");
+  });
+
+  it("marks the slots that Generate All could not fill", async () => {
+    const user = userEvent.setup();
+    const onRegenerateAll = vi.fn().mockResolvedValue([null, "New Features"]);
+    render(<H2SelectionList {...defaultProps} onRegenerateAll={onRegenerateAll} />);
+
+    await user.click(screen.getByText("Generate All"));
+
+    const alerts = screen.getAllByRole("alert");
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]).toHaveTextContent("Failed to generate");
+    expect(screen.getByDisplayValue("New Features")).toBeInTheDocument();
+  });
+
+  it("marks every item when Generate All fails outright", async () => {
+    const user = userEvent.setup();
+    const quota = Object.assign(new Error("AI quota reached."), { name: "AiProxyError" });
+    const onRegenerateAll = vi.fn().mockRejectedValue(quota);
+    render(<H2SelectionList {...defaultProps} onRegenerateAll={onRegenerateAll} />);
+
+    await user.click(screen.getByText("Generate All"));
+
+    const alerts = screen.getAllByRole("alert");
+    expect(alerts).toHaveLength(2);
+    for (const alert of alerts) expect(alert).toHaveTextContent("AI quota reached.");
+  });
+
+  it("clears earlier failures when Generate All later fills every slot", async () => {
+    const user = userEvent.setup();
+    const onRegenerateOne = vi.fn().mockRejectedValue(new Error("fail"));
+    render(<H2SelectionList {...defaultProps} onRegenerateOne={onRegenerateOne} />);
+
+    await user.click(screen.getAllByTitle("Regenerate")[0]);
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+
+    await user.click(screen.getByText("Generate All"));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByDisplayValue("New Intro")).toBeInTheDocument();
+  });
+});

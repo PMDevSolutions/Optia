@@ -102,3 +102,77 @@ describe("EditableRecommendation", () => {
     });
   });
 });
+
+describe("EditableRecommendation inline failure message", () => {
+  const defaultProps = {
+    label: "Meta Title",
+    initialValue: "My SEO Title",
+    onRegenerate: vi.fn().mockResolvedValue("Regenerated title"),
+    onToast: vi.fn(),
+  };
+
+  it("shows no failure message initially", () => {
+    render(<EditableRecommendation {...defaultProps} />);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("keeps the failure visible in the box after a failed regenerate", async () => {
+    const user = userEvent.setup();
+    const onRegenerate = vi.fn().mockRejectedValue(new Error("API error"));
+    render(<EditableRecommendation {...defaultProps} onRegenerate={onRegenerate} />);
+
+    await user.click(screen.getByTitle("Regenerate"));
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Failed to regenerate");
+    // The box keeps whatever text it had; the message is what signals the failure.
+    expect(screen.getByRole("textbox")).toHaveValue("My SEO Title");
+  });
+
+  it("surfaces the AI service's own message when it explains the failure", async () => {
+    const user = userEvent.setup();
+    const quota = Object.assign(new Error("AI quota reached."), { name: "AiProxyError" });
+    const onRegenerate = vi.fn().mockRejectedValue(quota);
+    render(<EditableRecommendation {...defaultProps} onRegenerate={onRegenerate} />);
+
+    await user.click(screen.getByTitle("Regenerate"));
+
+    expect(screen.getByRole("alert")).toHaveTextContent("AI quota reached.");
+  });
+
+  it("clears the failure once a later regenerate succeeds", async () => {
+    const user = userEvent.setup();
+    const onRegenerate = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("API error"))
+      .mockResolvedValueOnce("Regenerated title");
+    render(<EditableRecommendation {...defaultProps} onRegenerate={onRegenerate} />);
+
+    await user.click(screen.getByTitle("Regenerate"));
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+
+    await user.click(screen.getByTitle("Regenerate"));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox")).toHaveValue("Regenerated title");
+  });
+
+  it("clears the failure when a new suggestion arrives from the parent", async () => {
+    const user = userEvent.setup();
+    const onRegenerate = vi.fn().mockRejectedValue(new Error("API error"));
+    const { rerender } = render(
+      <EditableRecommendation {...defaultProps} onRegenerate={onRegenerate} />,
+    );
+
+    await user.click(screen.getByTitle("Regenerate"));
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+
+    rerender(
+      <EditableRecommendation
+        {...defaultProps}
+        onRegenerate={onRegenerate}
+        initialValue="Fresh suggestion"
+      />,
+    );
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox")).toHaveValue("Fresh suggestion");
+  });
+});

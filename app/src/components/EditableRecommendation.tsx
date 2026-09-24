@@ -21,11 +21,16 @@ export function EditableRecommendation({
   className,
 }: EditableRecommendationProps) {
   const [text, setText] = useState(initialValue);
+  // Last generation failure, shown inside the box until the next attempt or a
+  // new suggestion. The toast alone disappears within seconds and leaves an
+  // empty box that looks like nothing happened (#67).
+  const [error, setError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Sync state when initialValue changes (e.g., when AI suggestions complete)
   useEffect(() => {
     setText(initialValue);
+    setError(null);
   }, [initialValue]);
 
   // Auto-resize textarea to fit content
@@ -52,12 +57,15 @@ export function EditableRecommendation({
 
   const handleRegenerate = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const newText = await onRegenerate();
       setText(newText);
       onToast("Recommendation regenerated");
     } catch (err) {
-      onToast(aiErrorMessage(err, "Failed to regenerate"));
+      const message = aiErrorMessage(err, "Failed to regenerate");
+      onToast(message);
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -108,6 +116,11 @@ export function EditableRecommendation({
         rows={1}
         className="w-full rounded-input bg-surface px-3 py-2 text-body-16 text-ink placeholder:text-faint outline-none focus:ring-1 focus:ring-brand transition-shadow resize-none overflow-hidden"
       />
+      {error && (
+        <p role="alert" className="mt-2 text-body-12 text-poor">
+          {error}
+        </p>
+      )}
       {aiDisabled && (
         <p className="mt-2 text-body-12 text-muted opacity-70">
           Activate Optia Pro or add your own Anthropic key in options to use AI suggestions.
