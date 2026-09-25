@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.2](https://github.com/PMDevSolutions/Optia/compare/v1.1.1...v1.1.2) (2026-09-24)
+
+
+### Fixed
+
+* dev harness hosted AI via a vite backend proxy, inline AI failure message ([7dff9c8](https://github.com/PMDevSolutions/Optia/commit/7dff9c8e134ffb173f2089a121b90647c92c37f9))
+* **dev:** route the dev harness's backend calls through a vite proxy ([6475a6a](https://github.com/PMDevSolutions/Optia/commit/6475a6a94b2a29a7f25d482f69a8064980f69768)), closes [#67](https://github.com/PMDevSolutions/Optia/issues/67)
+* **ui:** keep AI generation failures visible inside the suggestion box ([4b7b2c2](https://github.com/PMDevSolutions/Optia/commit/4b7b2c2072212575fc85c0f028169e247bed5c13)), closes [#67](https://github.com/PMDevSolutions/Optia/issues/67)
+
 ## [1.1.1](https://github.com/PMDevSolutions/Optia/compare/v1.1.0...v1.1.1) (2026-08-25)
 
 
