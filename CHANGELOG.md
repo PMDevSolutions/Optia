@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.3](https://github.com/PMDevSolutions/Optia/compare/v1.1.2...v1.1.3) (2026-09-29)
+
+
+### Fixed
+
+* **store:** keyword-led store summary in the manifest ([2f2bbbc](https://github.com/PMDevSolutions/Optia/commit/2f2bbbca52c058e24104f538d4faa764a8eae17f))
+* **store:** keyword-led store summary in the manifest ([3faa3c7](https://github.com/PMDevSolutions/Optia/commit/3faa3c7335a55d804080841a277c68d1fb401657))
+
 ## [1.1.2](https://github.com/PMDevSolutions/Optia/compare/v1.1.1...v1.1.2) (2026-09-24)
 
 
