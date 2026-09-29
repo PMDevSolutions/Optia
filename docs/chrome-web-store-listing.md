@@ -6,9 +6,13 @@ Source of truth for everything entered in the CWS Developer Dashboard. Keep this
 
 Optia
 
-## Short Description (132 chars max)
+## Summary (132 chars max, set in `app/manifest.json`)
 
-Analyze any page's SEO and get an instant score with AI-powered title, meta description, and alt text recommendations.
+The store summary is not a dashboard field. The dashboard shows it read-only as "Summary from
+package", taken from the `description` in `app/manifest.json`, so changing it takes a release and
+a package upload.
+
+Free on-page SEO checker. Score any page for your keyword, then get AI title, meta description and alt text suggestions.
 
 ## Category
 
@@ -116,12 +120,15 @@ Assets are generated from real UI captures: `node marketing/store-assets/capture
 
 ---
 
-## Tuning pass, 2026-09-24 (proposed, not yet applied in the dashboard)
+## Tuning pass, 2026-09-24 (summary moved to the manifest 2026-09-29; screenshot order still to apply)
 
 Google Task "OPTIA: CWS listing optimization pass + review asks" (due 2026-09-23). The dashboard
 could not be edited on 2026-09-24: the developer console asks paul@pmds.info to sign in again
-in the automation Chrome. The text above stays the source of truth until the change below is
-applied there; then move it up and delete this section.
+in the automation Chrome. Checked in the dashboard on 2026-09-29: the summary is "Summary from
+package" (read-only, from `app/manifest.json`), so the proposed text now lives in the manifest and
+the Summary section above, and ships with the next release. The live summary until then is
+`Analyze page SEO and get AI-powered recommendations`; the 121-character text quoted below was
+this doc's old entry and was never what the store showed.
 
 **Data available.** Last dashboard read 2026-09-21 (Maecenas
 `.claude/research/optia/2026-09-21-one-month-numbers.md`): 30 days, 47 installs from 28 listing
@@ -157,6 +164,6 @@ no incentive, and points bug reports to issues instead. The Monday LinkedIn Opti
 one plain sentence ("if you use it, an honest review helps") once a week at most. Nothing traded,
 nothing scripted, no review requests to people who have not said they use it.
 
-**To apply (dashboard, after re-verification):** Store listing > Description > Short description;
-Store listing > Graphic assets > reorder screenshots; save and submit. No new version is needed
-for either change.
+**To apply.** Summary: merge this change, merge the release PR it produces, then upload the
+release zip under Package in the dashboard. Screenshots: Store listing > Graphic assets >
+reorder. Submit both for review together. The screenshot order alone needs no new version.
