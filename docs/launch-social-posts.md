@@ -1,5 +1,7 @@
 # Launch Day Social Media Posts
 
+> **Store links (2026-10-02):** every link to the Chrome Web Store listing now carries UTM parameters so the dashboard can attribute page views by channel. Do not paste the bare listing URLs below; take the tagged link for the channel from Maecenas `.claude/research/optia/2026-10-02-utm-link-set.md` (utm_campaign=optia, utm_source per channel, utm_medium referral/social/video/email, utm_content = placement).
+
 > Rewritten 2026-08 for the freemium launch: AI is served by Claude (Anthropic) through Optia's hosted service — free users get 25 AI recommendations/month with no account or API key; Pro ($5/mo or $50/yr) raises that to 1,000/month and adds bring-your-own-Anthropic-key (unlimited), Advanced Analysis, multi-language output, and schema recommendations. Do not reuse the pre-freemium copy (OpenAI/BYO-only, "open source", old GitHub links).
 
 ## LinkedIn
