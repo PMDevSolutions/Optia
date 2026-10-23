@@ -34,7 +34,7 @@ The root `package.json` exists for release-please's version stamp and has no scr
 ## Deploys and releases
 
 - A push to `main` that touches `site/**` deploys the site to GitHub Pages (`pages.yml`). Every push to `main` runs release-please, which maintains one Release PR. **Merging the Release PR is the human release gate**: it stamps the version into `package.json`, `app/package.json` and `app/manifest.json`, updates `CHANGELOG.md`, tags `vX.Y.Z`, publishes a GitHub Release and attaches `optia-X.Y.Z.zip` with the manifest `key` stripped. Paul uploads that zip in the Chrome Web Store Developer Dashboard under paul@pmds.info; the store needs a version greater than the published one. `docs/RELEASING.md` has the detail. Never hand-edit a version.
-- CI (`ci.yml`) on every PR and push to `main`: lint, typecheck, test, build, the MV3 e2e under xvfb, and Claude Code conformance with the hook tests. Branch protection on `main` requires those checks.
+- CI (`ci.yml`) on every PR and push to `main`: lint, typecheck, test, build, the MV3 e2e under xvfb, and Claude Code conformance with the hook tests. Branch protection on `main` requires those checks (`docs/RELEASING.md`, Branch protection).
 - The `release-guard` hook asks before `git push`, `gh pr merge`, `gh release create|edit|upload|delete`, `gh workflow run` and `gh run rerun`, and denies them inside subagents. Do not look for a way around it; hand Paul the command.
 
 ## Working conventions

@@ -26,3 +26,32 @@ To force a specific version, add a `Release-As: 1.0.0` footer to any commit on `
 - **Squash-merge PRs with a Conventional Commit title** — release-please reads the commits that land on `main`, and a squash commit's message is the PR title.
 - The manifest `key` field pins the extension ID (`lgkgkmjldppeidgafolhfpepmabnnbhe`); it ships in the zip so the store keeps the same ID across uploads. Do not remove or regenerate it.
 - The Chrome Web Store requires each upload's `manifest.json` version to be **greater** than the currently published one — another reason versions only move through the Release PR.
+
+## Branch protection
+
+`main` is protected so that every pull request, the Release PR included, must be up to date and pass the six CI jobs before it merges; administrators keep bypass for emergencies. Apply or re-apply it with:
+
+```bash
+gh api -X PUT repos/PMDevSolutions/Optia/branches/main/protection --input - <<'JSON'
+{
+  "required_status_checks": {
+    "strict": true,
+    "checks": [
+      { "context": "Lint & Format" },
+      { "context": "Type Check" },
+      { "context": "Test" },
+      { "context": "Build" },
+      { "context": "Extension E2E (MV3)" },
+      { "context": "Claude Code conformance & hook tests" }
+    ]
+  },
+  "enforce_admins": false,
+  "required_pull_request_reviews": null,
+  "restrictions": null,
+  "allow_force_pushes": false,
+  "allow_deletions": false
+}
+JSON
+```
+
+Check it with `gh api repos/PMDevSolutions/Optia/branches/main/protection --jq '[.required_status_checks.checks[].context]'`. When a CI job is renamed, update the list here and in the protection rule in the same PR.
