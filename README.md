@@ -1,5 +1,7 @@
 # Optia - Chrome Extension
 
+[![Patreon](https://img.shields.io/badge/Patreon-Support-orange?logo=patreon)](https://www.patreon.com/PaulMakesThings?utm_source=github)
+
 A Chrome extension that analyzes web pages for SEO optimization and provides AI-powered recommendations (Claude, by Anthropic) to improve search rankings. Free tier included; Optia Pro adds more AI, advanced analysis, and bring-your-own-key.
 
 **[Install Optia from the Chrome Web Store](https://chromewebstore.google.com/detail/optia/gnlidlpidaoalbbmekofjednjkhhmehn?utm_source=github&utm_medium=referral&utm_campaign=optia&utm_content=readme)**
