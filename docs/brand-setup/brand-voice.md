@@ -45,6 +45,6 @@ Typography: system-ui stack, no webfonts — deliberate.
 
 ## Enforcement
 
-- `node scripts/brand-voice-lint.js <files>` — mechanical checks (lexicon, names, disclaimers)
+- `node scripts/brand-voice-lint.js <files>` in the Maecenas repo (the lint moved there with the marketing pipeline on 2026-10-23) — mechanical checks (lexicon, names, disclaimers)
 - Editorial QA (`editorial-qa` skill / brand-compliance-checker agent) — tone, claims, POV
 - Pre-commit hook lints staged `content/**` automatically
