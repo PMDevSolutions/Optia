@@ -13,11 +13,13 @@ const createMock = vi.hoisted(() => vi.fn());
 // Replace the SDK's default export with a constructor that hands back a client
 // whose messages.create is our controllable mock. The constructor args
 // (apiKey/dangerouslyAllowBrowser/baseURL) are irrelevant here since the network
-// is never touched.
+// is never touched. The implementation is a `function`, not an arrow: since
+// Vitest 4, `new Anthropic()` really constructs through the mock, and an arrow
+// function is not a constructor.
 vi.mock("@anthropic-ai/sdk", () => ({
-  default: vi.fn().mockImplementation(() => ({
-    messages: { create: createMock },
-  })),
+  default: vi.fn(function MockAnthropic() {
+    return { messages: { create: createMock } };
+  }),
 }));
 
 /** Build a mock Anthropic Message whose text block carries `text`. */

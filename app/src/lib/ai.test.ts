@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import {
   generateRecommendation,
   generateH2Suggestion,
@@ -62,10 +62,14 @@ const advancedOptions: AdvancedOptions = {
 };
 
 // applyProxyQuota is a store action; we swap it for a spy each test so we can
-// assert the recorded (quota, subject) without touching real storage.
-let applyProxyQuotaMock: ReturnType<typeof vi.fn>;
-let hydrateEntitlementMock: ReturnType<typeof vi.fn>;
-let showToastMock: ReturnType<typeof vi.fn>;
+// assert the recorded (quota, subject) without touching real storage. The mocks
+// carry the store's own function types: since Vitest 4 a bare vi.fn() is typed
+// as a generic procedure and no longer assigns to a typed store field.
+type EntitlementActions = ReturnType<typeof useEntitlementStore.getState>;
+type StoreActions = ReturnType<typeof useStore.getState>;
+let applyProxyQuotaMock: Mock<EntitlementActions["applyProxyQuota"]>;
+let hydrateEntitlementMock: Mock<EntitlementActions["hydrateEntitlement"]>;
+let showToastMock: Mock<StoreActions["showToast"]>;
 
 function setMode(mode: AiStatus["mode"]): void {
   aiStatusNowMock.mockReturnValue({ mode, remaining: null, limit: null });
@@ -77,9 +81,9 @@ function anthropicError(status: number): Error {
 }
 
 beforeEach(() => {
-  applyProxyQuotaMock = vi.fn().mockResolvedValue(undefined);
-  hydrateEntitlementMock = vi.fn().mockResolvedValue(undefined);
-  showToastMock = vi.fn();
+  applyProxyQuotaMock = vi.fn<EntitlementActions["applyProxyQuota"]>().mockResolvedValue(undefined);
+  hydrateEntitlementMock = vi.fn<EntitlementActions["hydrateEntitlement"]>().mockResolvedValue(undefined);
+  showToastMock = vi.fn<StoreActions["showToast"]>();
   refreshNowMock.mockReset();
   refreshNowMock.mockResolvedValue(null);
   useEntitlementStore.setState({
