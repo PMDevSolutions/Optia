@@ -10,8 +10,5 @@
     "ai"
   ],
   "author": "PAMulligan",
-  "license": "MIT",
-  "devDependencies": {
-    "vitest": "^4.1.10"
-  }
+  "license": "MIT"
 }
