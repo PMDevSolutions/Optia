@@ -1,28 +1,66 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(pnpm -C app lint)",
+      "Bash(pnpm -C app lint:fix)",
+      "Bash(pnpm -C app test)",
+      "Bash(pnpm -C app test:e2e)",
+      "Bash(pnpm -C app build)",
+      "Bash(pnpm -C app tsc --noEmit)",
+      "Bash(pnpm -C app install --frozen-lockfile)",
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(jq:*)",
+      "Bash(node scripts/*)",
+      "Bash(node --test:*)",
+      "Bash(bash -n:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh release view:*)",
+      "Bash(gh release list:*)",
+      "Bash(gh issue view:*)",
+      "Bash(gh issue list:*)",
+      "mcp__playwright__browser_*"
+    ],
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(gh release create:*)",
+      "Bash(gh release edit:*)",
+      "Bash(gh release upload:*)",
+      "Bash(gh release delete:*)",
+      "Bash(gh workflow run:*)",
+      "Bash(gh run rerun:*)"
+    ]
+  },
   "hooks": {
-    "PostToolUse": [
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-context.sh",
+            "timeout": 15,
+            "statusMessage": "Loading Optia status"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
       {
         "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'if echo \"$TOOL_INPUT\" | grep -q \"pnpm build\" && echo \"$TOOL_OUTPUT\" | grep -q \"built in\"; then echo \"[post-build-qa] Build succeeded. Run quality gate: pnpm vitest run && pnpm tsc --noEmit && ./scripts/verify-tokens.sh\"; fi'",
-            "description": "Remind to run quality gate after successful builds during the pipeline"
-          },
-          {
-            "type": "command",
-            "command": "bash .claude/hooks/pre-commit-brand-guard.sh \"$TOOL_INPUT\" \"$TOOL_OUTPUT\"",
-            "description": "Lint staged content against brand-guidelines.json before git commits"
-          },
-          {
-            "type": "command",
-            "command": "bash .claude/hooks/editorial-qa-reminder.sh \"$TOOL_INPUT\" \"$TOOL_OUTPUT\"",
-            "description": "After a clean brand-voice lint, remind about the remaining editorial QA gates"
-          },
-          {
-            "type": "command",
-            "command": "bash .claude/hooks/approval-gate-guard.sh \"$TOOL_INPUT\" \"$TOOL_OUTPUT\"",
-            "description": "Warn when a command looks like an external publish/send/spend without a recorded approval"
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/release-guard.sh",
+            "timeout": 10,
+            "statusMessage": "Checking the release guard"
           }
         ]
       }
