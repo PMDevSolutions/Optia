@@ -1,0 +1,10 @@
+# Keeps the pinned GitHub Actions in .github/workflows/ current. Extension
+# dependencies in app/ are updated by hand (see issue #79), not here.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci

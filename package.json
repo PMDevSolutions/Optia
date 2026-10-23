@@ -4,24 +4,14 @@
   "description": "Chrome extension for SEO analysis with AI-powered recommendations",
   "private": true,
   "type": "module",
-  "scripts": {
-    "release": "standard-version",
-    "release:minor": "standard-version --release-as minor",
-    "release:major": "standard-version --release-as major",
-    "release:patch": "standard-version --release-as patch",
-    "release:dry": "standard-version --dry-run",
-    "new-app": "node scripts/create-app.js"
-  },
   "keywords": [
     "seo",
     "chrome-extension",
-    "ai",
-    "react"
+    "ai"
   ],
   "author": "PAMulligan",
   "license": "MIT",
   "devDependencies": {
-    "standard-version": "^9.5.0",
     "vitest": "^4.1.10"
   }
 }

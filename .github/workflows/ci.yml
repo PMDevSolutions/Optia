@@ -115,3 +115,21 @@ jobs:
           name: playwright-report
           path: app/playwright-report/
           retention-days: 7
+
+  conformance:
+    name: Claude Code conformance & hook tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Shell syntax of the hooks
+        run: for f in .claude/hooks/*.sh .claude/hooks/lib/*.sh; do bash -n "$f"; done
+      - name: Claude Code conformance (strict)
+        run: node scripts/claude-code-conformance.js --root . --strict
+      - name: Hook tests
+        run: node --test scripts/__tests__/*.test.js
