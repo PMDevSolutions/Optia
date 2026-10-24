@@ -19,7 +19,7 @@ Releases are automated with [release-please](https://github.com/googleapis/relea
 | `feat!:` / `BREAKING CHANGE:` footer | major |
 | `docs:`, `chore:`, `test:`, `ci:`, `refactor:` | none (hidden from changelog) |
 
-To force a specific version, add a `Release-As: 1.0.0` footer to any commit on `main`.
+To force a specific version, add a `Release-As: 1.0.0` footer to any commit on `main`. Footers on branch commits do not survive a squash merge (the squash body is blank), so type the footer into the squash commit when merging: `gh pr merge <n> --squash --body 'Release-As: 1.0.0'`, or edit the message in the merge dialog. The same goes for a `BREAKING CHANGE:` footer; `feat!:` in the PR title needs nothing extra.
 
 ## Cautions
 
