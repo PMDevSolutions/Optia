@@ -11,6 +11,7 @@ from that store — never an ad-hoc `apiKey` check or raw license data.
 | On-page SEO scoring | ✅ Full | ✅ Full | *ungated — never gate* |
 | Score breakdown (per-check detail) | ✅ Full | ✅ Full | *ungated — never gate* |
 | AI recommendations (title, meta, H1, URL, intro, H2, alt text) | ✅ Capped monthly, via hosted proxy | ✅ Higher cap via proxy, or unlimited with own key | `useCanUseAI()` / `useAiStatus()` |
+| First-run AI try (one title suggestion offered after a fresh install's first analysis, #80) | ✅ Once per install; counts against the monthly allowance | ❌ Never shown | `aiStatusNow().mode === "free"` at the first analysis; hidden whenever `isPro` |
 | Advanced analysis (page type, secondary keywords) | ❌ | ✅ | `canUseAdvancedOptions` |
 | Multi-language AI output | ❌ English only | ✅ Any supported language | `canUseMultiLanguage` |
 | Schema markup generation | ❌ | ✅ | `canUseSchema` |

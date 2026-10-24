@@ -3,6 +3,7 @@ import { ArrowLeft, AlertTriangle, Sparkles } from "lucide-react";
 import confetti from "canvas-confetti";
 import { ScoreGauge } from "@/components/ui/ScoreGauge";
 import { SummaryCard } from "@/components/SummaryCard";
+import { FirstRunAiTry } from "@/components/FirstRunAiTry";
 import { Footer } from "@/components/Footer";
 import { PanelHeader } from "@/components/PanelHeader";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
@@ -105,6 +106,9 @@ export function ScorePage() {
           </span>
         </div>
       </div>
+
+      {/* One-time AI try after a fresh install's first analysis */}
+      <FirstRunAiTry analysis={analysis} />
 
       {/* Category breakdown */}
       <div className="flex flex-col gap-3">
