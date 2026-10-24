@@ -23,6 +23,6 @@ To force a specific version, add a `Release-As: 1.0.0` footer to any commit on `
 
 ## Cautions
 
-- **Squash-merge PRs with a Conventional Commit title** — release-please reads the commits that land on `main`, and a squash commit's message is the PR title.
+- **Squash-merge PRs with a Conventional Commit title** — release-please reads the commits that land on `main`, and a squash commit's message is the PR title. Since 2026-10-24 the repository allows only squash merges, with the PR title as the commit title and a blank body: release-please splits any body paragraph that starts with a type such as `feat(` into a second changelog entry, which is how 1.1.3 and 1.2.0 listed each change twice from their merge commits.
 - The manifest `key` field pins the extension ID (`lgkgkmjldppeidgafolhfpepmabnnbhe`); it ships in the zip so the store keeps the same ID across uploads. Do not remove or regenerate it.
 - The Chrome Web Store requires each upload's `manifest.json` version to be **greater** than the currently published one — another reason versions only move through the Release PR.
