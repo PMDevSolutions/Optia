@@ -48,7 +48,8 @@ The user-facing policy lives at [pmdevsolutions.github.io/Optia/privacy.html](ht
 - SEO analysis runs **locally**; page content is not transmitted by browsing or analyzing.
 - AI requests send only the keyword + relevant page snippets — to the Optia backend (Cloudflare Workers → Anthropic) in hosted mode, or **directly to Anthropic** in Pro bring-your-own-key mode (the key never touches the backend; enforced server-side).
 - The backend stores licenses and coarse usage counters, never page content or profiles. Billing is handled entirely by **Stripe** — no card data ever touches Optia.
-- No analytics, no tracking, no ads, no data sales. Data requests: [open an issue](https://github.com/PMDevSolutions/Optia/issues).
+- One anonymous usage count, at most once a day: install ID, month and the number of pages analyzed that month, nothing else. On by default; "Share anonymous usage counts" in Options turns it off.
+- No analytics services, no tracking, no ads, no data sales. Data requests: [open an issue](https://github.com/PMDevSolutions/Optia/issues).
 
 Chrome Web Store data-safety answers are maintained in [`docs/chrome-web-store-data-disclosure.md`](./docs/chrome-web-store-data-disclosure.md); the full listing source is [`docs/chrome-web-store-listing.md`](./docs/chrome-web-store-listing.md).
 

@@ -19,6 +19,7 @@ Optia is **open-core**. The split is by trust, not by convenience:
 | Licensing | The **client** half: entitlement verification, caching, refresh, the paywall/account UI, checkout *initiation* | The **authority** half: license minting, Ed25519 **signing** (private key), seat activation, revocation |
 | Billing | Opens Checkout/portal URLs the backend returns | Stripe integration: Checkout session creation (price allowlist), Billing Portal, webhook ingestion — webhooks are the source of truth for license state |
 | AI | The routing facade (`app/src/lib/ai.ts`) and the BYO-key direct path | The hosted AI proxy `/ai/generate`: server-funded Anthropic key, per-subject metering (D1), rate limiting (KV), per-check prompts |
+| Usage counts | Counts page analyses per month locally and reports the running total at most once a day (`app/src/lib/usage.ts`) | `POST /usage/analysis`: keeps the highest count per install and month (D1) |
 | Secrets | **None.** Public verification keys only | Anthropic API key, Stripe secret + webhook secret, the entitlement signing JWK |
 
 The extension's full gating logic is public on purpose. Hiding it would add
@@ -38,6 +39,7 @@ flowchart LR
     LIC["/license<br/>activate · refresh · deactivate<br/>Ed25519 entitlement signing"]
     BILL["/billing<br/>checkout · portal · webhook"]
     AIP["/ai/generate<br/>metered proxy"]
+    USG["/usage/analysis<br/>monthly analysis counts"]
     D1[("D1<br/>licenses · usage")]
     KV[("KV<br/>rate limits")]
   end
@@ -52,10 +54,12 @@ flowchart LR
   EXT -- "BYO key (Pro): direct,<br/>never transits the backend" --> ANTH
   EXT --> LIC
   EXT -- "start checkout / portal" --> BILL
+  EXT -- "at most daily: install id,<br/>month, count" --> USG
   BILL <--> STRIPE
   STRIPE -- "webhooks (license truth)" --> BILL
   LIC --- D1
   AIP --- D1
+  USG --- D1
   AIP --- KV
   STRIPE -- "redirects after pay/cancel" --> PAGES
 ```
@@ -63,6 +67,12 @@ flowchart LR
 Notes the diagram can't carry:
 
 - **SEO analysis is fully local.** Scoring never sends the page anywhere.
+- **The only usage signal is a count.** At most once a day, right after an
+  analysis, the side panel sends `{ installId, period, count }` (the month's
+  running total of pages analyzed) to `POST /usage/analysis`. The backend keeps
+  the highest count per install and month, so a re-sent total changes nothing.
+  "Share anonymous usage counts" in Options stops the reports; the local count
+  continues. Nothing enforces a limit on analyses (#80, optia-backend#30).
 - **BYO-key requests never touch the backend** — the proxy deliberately ignores
   any `Authorization` header, so user keys cannot transit our infrastructure
   even by accident.
