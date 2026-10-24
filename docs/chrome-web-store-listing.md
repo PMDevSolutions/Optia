@@ -62,7 +62,7 @@ Note: Optia Pro is purchased from us and billed securely through Stripe — not 
 
 **PRIVACY FIRST**
 
-All SEO analysis happens locally in your browser. When you request an AI recommendation, only the relevant page snippets (like the current title and your keyword) are sent to our AI service to generate the suggestion — nothing else, and never in the background. No accounts required for the free tier. No tracking, no ads, no analytics, and your data is never sold. Pro users who bring their own Anthropic key talk to Anthropic directly; the key never leaves the browser.
+All SEO analysis happens locally in your browser. When you request an AI recommendation, only the relevant page snippets (like the current title and your keyword) are sent to our AI service to generate the suggestion — nothing else, and never in the background. At most once a day, Optia also sends one anonymous number: how many pages you analyzed this month, with a random install ID. No URLs, page content or scores, and you can turn it off in Options. No accounts required for the free tier. No tracking, no ads, no analytics services, and your data is never sold. Pro users who bring their own Anthropic key talk to Anthropic directly; the key never leaves the browser.
 
 Full privacy policy: https://pmdevsolutions.github.io/Optia/privacy.html
 

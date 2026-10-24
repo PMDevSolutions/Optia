@@ -7,6 +7,7 @@ import { fetchAndAnalyzePage } from "@/lib/fetch-page";
 import { detectLanguage } from "@/lib/languages";
 import { generateRecommendation, generateAllH2Suggestions } from "@/lib/ai";
 import { aiStatusNow } from "@/lib/entitlement-store";
+import { recordAnalysis, reportUsageIfDue } from "@/lib/usage";
 import {
   saveKeywordForUrl,
   getKeywordForUrl,
@@ -380,6 +381,14 @@ export default function App() {
       const analysis = calculateAnalysis(checks, pageData, settings.keyword);
 
       setAnalysis(analysis);
+
+      // Count the completed analysis, then send the once-a-day anonymous usage
+      // report if one is due (#80). Fire-and-forget: it never delays results.
+      void recordAnalysis()
+        .then(() => reportUsageIfDue())
+        .catch(() => {
+          // Usage counting is non-critical
+        });
 
       // Auto-generate AI recommendations in the background (non-blocking) only
       // for unmetered/high-cap paths. Free users generate on demand per
