@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { X, Search, Sparkles, BarChart3 } from "lucide-react";
 import { getStorageItem, setStorageItem } from "@/lib/storage";
+import { markFirstRunAiTryPending } from "@/lib/first-run-ai-try";
 import { Button } from "./ui/Button";
 import { OptiaMark } from "./ui/Logo";
 
@@ -16,6 +17,9 @@ export function Onboarding() {
   const handleDismiss = async () => {
     setVisible(false);
     await setStorageItem("onboarding_dismissed", true);
+    // Getting past onboarding is what makes this a fresh install: queue the
+    // one-time AI try for after its first analysis (#80).
+    await markFirstRunAiTryPending();
   };
 
   if (!visible) return null;

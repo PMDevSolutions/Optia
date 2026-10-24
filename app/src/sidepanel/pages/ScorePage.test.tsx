@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { useStore } from "@/lib/store";
 import { useEntitlementStore } from "@/lib/entitlement-store";
+import { useFirstRunAiTry } from "@/lib/first-run-ai-try";
 import { ScorePage } from "./ScorePage";
 import type { SEOAnalysis, PageSEOData } from "@/types/seo";
 
@@ -58,6 +59,7 @@ const mockAnalysis: SEOAnalysis = {
 
 beforeEach(() => {
   useEntitlementStore.setState({ entitlementLoaded: false, isPro: false, tier: "free" });
+  useFirstRunAiTry.setState({ offeredFor: null, suggestion: null });
   useStore.setState({
     view: "score",
     analysis: null,
@@ -136,6 +138,24 @@ describe("ScorePage", () => {
     useStore.setState({ analysis: mockAnalysis });
     render(<ScorePage />);
     expect(screen.queryByRole("button", { name: /upgrade/i })).not.toBeInTheDocument();
+  });
+
+  it("shows the first-run AI try above the breakdown when it was offered for this analysis", () => {
+    useFirstRunAiTry.setState({ offeredFor: mockAnalysis.timestamp, suggestion: null });
+    useStore.setState({ analysis: mockAnalysis });
+    render(<ScorePage />);
+
+    const tryHeading = screen.getByRole("heading", { name: /try one ai suggestion/i });
+    expect(
+      tryHeading.compareDocumentPosition(screen.getByText("Meta Tags")) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("shows no AI try for an analysis it was not offered for", () => {
+    useStore.setState({ analysis: mockAnalysis });
+    render(<ScorePage />);
+    expect(screen.queryByRole("heading", { name: /try one ai suggestion/i })).not.toBeInTheDocument();
   });
 
   it("shows warning banner when fetchWarnings present", () => {

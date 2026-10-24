@@ -64,6 +64,7 @@ test.describe("Free tier", () => {
   test("fresh install shows onboarding once, then hydrates as Free — no console errors", async ({
     extensionContext,
     extensionId,
+    extensionServiceWorker,
   }) => {
     const unexpected: string[] = [];
     await extensionContext.route(BACKEND_GLOB, (route) => {
@@ -78,6 +79,10 @@ test.describe("Free tier", () => {
     await expect(getStarted).toBeVisible();
     await getStarted.click();
     await expect(getStarted).toBeHidden();
+    // Getting past onboarding queues the one-time AI try for the first analysis (#80).
+    await expect
+      .poll(async () => readStorage(extensionServiceWorker, "first_run_ai_try"))
+      .toBe("pending");
 
     await expect(page.getByRole("button", { name: /upgrade/i })).toBeVisible();
     await expect(page.getByRole("heading", { name: /set up your seo analysis/i })).toBeVisible();
