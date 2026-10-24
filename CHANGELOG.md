@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.2.0](https://github.com/PMDevSolutions/Optia/compare/v1.1.3...v1.2.0) (2026-10-24)
+
+
+### Added
+
+* **ai:** offer new installs one AI title suggestion after their first analysis ([251f33d](https://github.com/PMDevSolutions/Optia/commit/251f33dd998abb9f2c93196618b82aae8cc737ad))
+* **ai:** offer new installs one AI title suggestion after their first analysis ([703861f](https://github.com/PMDevSolutions/Optia/commit/703861f5981781dd93b544a987ab01221aaccd9b))
+* **usage:** anonymous daily count of pages analyzed, with an opt-out toggle in Options ([25d55cf](https://github.com/PMDevSolutions/Optia/commit/25d55cfaf8a02ee0833ff38d8aee4b86082b0a8a))
+* **usage:** anonymous daily count of pages analyzed, with an opt-out toggle in Options ([29dcc28](https://github.com/PMDevSolutions/Optia/commit/29dcc28fc9621bb0f6396682f00548592433351f))
+
 ## [1.1.3](https://github.com/PMDevSolutions/Optia/compare/v1.1.2...v1.1.3) (2026-09-29)
 
 
