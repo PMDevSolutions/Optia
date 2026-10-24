@@ -422,4 +422,86 @@ describe("Options page", () => {
     await waitFor(() => expect(screen.getByText("Free")).toBeInTheDocument());
     expect(screen.getByLabelText(/license key/i)).toBeInTheDocument();
   });
+
+  // --- Usage counts (#80) ---
+
+  const thisMonth = () => new Date().toISOString().slice(0, 7);
+
+  function storedItems(items: Record<string, unknown>) {
+    (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockImplementation(() =>
+      Promise.resolve(items),
+    );
+  }
+
+  it("shows this month's analysis count next to the free AI quota line", async () => {
+    getFreeAiQuotaMock.mockResolvedValue({ period: thisMonth(), remaining: 3, limit: 25 });
+    storedItems({ usage_analyses: { [thisMonth()]: 7 } });
+    render(<Options />);
+
+    expect(await screen.findByText("7 pages analyzed this month.")).toBeInTheDocument();
+    expect(screen.getByText(/free ai quota this month: 3 of 25 remaining/i)).toBeInTheDocument();
+  });
+
+  it("shows the count on its own before any AI use, in the singular for one page", async () => {
+    storedItems({ usage_analyses: { [thisMonth()]: 1 } });
+    render(<Options />);
+
+    expect(await screen.findByText("1 page analyzed this month.")).toBeInTheDocument();
+    expect(screen.queryByText(/free ai quota this month/i)).not.toBeInTheDocument();
+  });
+
+  it("counts only the current month", async () => {
+    storedItems({ usage_analyses: { "2000-01": 40 } });
+    render(<Options />);
+
+    expect(await screen.findByText("0 pages analyzed this month.")).toBeInTheDocument();
+  });
+
+  it("shows the count next to the Pro quota meter", async () => {
+    mockPro(100);
+    storedItems({ usage_analyses: { [thisMonth()]: 12 } });
+    render(<Options />);
+
+    expect(await screen.findByText("12 pages analyzed this month.")).toBeInTheDocument();
+    expect(screen.getByText(/ai quota this month: 100 of 100 remaining/i)).toBeInTheDocument();
+  });
+
+  it("updates the count when the side panel records an analysis", async () => {
+    storedItems({ usage_analyses: { [thisMonth()]: 2 } });
+    render(<Options />);
+    await screen.findByText("2 pages analyzed this month.");
+
+    storedItems({ usage_analyses: { [thisMonth()]: 3 } });
+    const onChanged = vi.mocked(chrome.storage.onChanged.addListener).mock.calls.at(-1)![0];
+    onChanged({ usage_analyses: { newValue: { [thisMonth()]: 3 } } }, "local");
+
+    expect(await screen.findByText("3 pages analyzed this month.")).toBeInTheDocument();
+  });
+
+  it("shares anonymous usage counts by default and turns sharing off immediately", async () => {
+    const user = userEvent.setup();
+    render(<Options />);
+
+    const toggle = await screen.findByLabelText(/share anonymous usage counts/i);
+    expect(toggle).toBeChecked();
+    expect(screen.getByText(/at most once a day/i)).toHaveTextContent(
+      /never urls, page content, keywords or scores/i,
+    );
+
+    await user.click(toggle);
+
+    expect(chrome.storage.local.set).toHaveBeenCalledWith({ share_usage_counts: false });
+    expect(toggle).not.toBeChecked();
+    expect(screen.getByText(/nothing is sent/i)).toBeInTheDocument();
+  });
+
+  it("renders the usage toggle off when sharing was turned off", async () => {
+    storedItems({ share_usage_counts: false });
+    render(<Options />);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/share anonymous usage counts/i)).not.toBeChecked();
+    });
+    expect(screen.getByText(/nothing is sent/i)).toBeInTheDocument();
+  });
 });

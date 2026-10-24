@@ -8,6 +8,12 @@ import { useAiStatus, useEntitlementStore } from "@/lib/entitlement-store";
 import { useStore } from "@/lib/store";
 import { listTopModels } from "@/lib/anthropic";
 import { fetchProxyModels } from "@/lib/ai-proxy";
+import {
+  ANALYSIS_COUNTS_KEY,
+  getMonthlyAnalysisCount,
+  isUsageSharingEnabled,
+  setUsageSharingEnabled,
+} from "@/lib/usage";
 
 /** Opens an external URL in a new tab (extension page or dev preview). */
 function openExternalUrl(url: string) {
@@ -16,6 +22,44 @@ function openExternalUrl(url: string) {
   } else {
     window.open(url, "_blank", "noopener");
   }
+}
+
+/** This month's local analysis count, kept current while the side panel runs analyses. */
+function useMonthlyAnalysisCount(): number | null {
+  const [count, setCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = () => {
+      void getMonthlyAnalysisCount().then((value) => {
+        if (!cancelled) setCount(value);
+      });
+    };
+    const onChanged: Parameters<typeof chrome.storage.onChanged.addListener>[0] = (
+      changes,
+      area,
+    ) => {
+      if (area === "local" && changes[ANALYSIS_COUNTS_KEY]) load();
+    };
+    load();
+    chrome.storage.onChanged.addListener(onChanged);
+    return () => {
+      cancelled = true;
+      chrome.storage.onChanged.removeListener(onChanged);
+    };
+  }, []);
+
+  return count;
+}
+
+function AnalysisCountLine() {
+  const count = useMonthlyAnalysisCount();
+  if (count === null) return null;
+  return (
+    <p className="text-body-12 text-muted">
+      {count.toLocaleString()} {count === 1 ? "page" : "pages"} analyzed this month.
+    </p>
+  );
 }
 
 function LicenseCard() {
@@ -84,17 +128,20 @@ function LicenseCard() {
               <> Your entitlement auto-renews by {new Date(expiresAt).toLocaleDateString()}.</>
             )}
           </p>
-          {aiStatus.mode === "byok" ? (
-            <p className="text-body-12 text-muted">
-              AI: using your Anthropic key — not metered.
-            </p>
-          ) : (
-            quotaLimit > 0 && (
+          <div className="flex flex-col gap-1">
+            {aiStatus.mode === "byok" ? (
               <p className="text-body-12 text-muted">
-                AI quota this month: {aiQuotaRemaining} of {quotaLimit} remaining.
+                AI: using your Anthropic key — not metered.
               </p>
-            )
-          )}
+            ) : (
+              quotaLimit > 0 && (
+                <p className="text-body-12 text-muted">
+                  AI quota this month: {aiQuotaRemaining} of {quotaLimit} remaining.
+                </p>
+              )
+            )}
+            <AnalysisCountLine />
+          </div>
           {billingPortalError && (
             <p role="alert" className="text-body text-poor">
               {billingPortalError}
@@ -126,11 +173,14 @@ function LicenseCard() {
             Enter your Optia Pro license key to unlock AI without an Anthropic key and advanced
             analysis.
           </p>
-          {freeAiRemaining !== null && freeAiLimit !== null && (
-            <p className="text-body-12 text-muted">
-              Free AI quota this month: {freeAiRemaining} of {freeAiLimit} remaining.
-            </p>
-          )}
+          <div className="flex flex-col gap-1">
+            {freeAiRemaining !== null && freeAiLimit !== null && (
+              <p className="text-body-12 text-muted">
+                Free AI quota this month: {freeAiRemaining} of {freeAiLimit} remaining.
+              </p>
+            )}
+            <AnalysisCountLine />
+          </div>
           <div className="flex flex-col gap-2">
             <label htmlFor="license-key" className="text-body-semibold text-ink">
               License key
@@ -177,6 +227,11 @@ export function Options() {
   const [saved, setSaved] = useState(false);
   const [modelOptions, setModelOptions] = useState<string[]>([]);
   const [selectedModel, setSelectedModel] = useState("");
+  const [shareUsage, setShareUsage] = useState(true);
+
+  useEffect(() => {
+    void isUsageSharingEnabled().then(setShareUsage);
+  }, []);
 
   // Model choice (optia-backend#21). BYOK mode lists the newest models on the
   // user's own key; hosted mode lists the server's allowlist. The selection is
@@ -366,6 +421,24 @@ export function Options() {
             </button>
 
             {saved && <p className="text-body-semibold text-good">Settings saved.</p>}
+
+            <div className="flex flex-col gap-1.5 border-t border-border pt-5">
+              <Toggle
+                id="share-usage-counts"
+                label="Share anonymous usage counts"
+                checked={shareUsage}
+                onChange={(checked) => {
+                  // Acts immediately, like the key toggle above; no Save needed.
+                  setShareUsage(checked);
+                  void setUsageSharingEnabled(checked);
+                }}
+              />
+              <p className="text-body-12 text-muted">
+                {shareUsage
+                  ? "At most once a day, Optia sends how many pages you've analyzed this month, with a random install ID. Never URLs, page content, keywords or scores."
+                  : "Nothing is sent. Optia still counts pages on this device so it can show you the number."}
+              </p>
+            </div>
           </div>
         </div>
 
