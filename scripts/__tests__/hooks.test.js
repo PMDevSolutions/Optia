@@ -53,13 +53,20 @@ describe("release-guard (PreToolUse, Bash)", () => {
     "git push origin main": /git push/,
     "gh pr merge 123": /merging a pull request/,
     "gh release create v1.2.0": /gh release writes/,
-    "git push": /git push/,
-    "git push -u origin chore/claude-code-conformance": /git push/,
-    "git push origin HEAD:main": /git push/,
-    "git push --force-with-lease origin fix/x": /git push/,
-    "git -C /tmp/x push": /git push/,
-    "git --no-pager push origin main": /git push/,
-    "cd app && git push": /git push/,
+    "git push": /no branch is named/,
+    "git push origin HEAD:main": /targets main/,
+    "git push origin HEAD": /targets HEAD/,
+    "git -C /tmp/x push": /no branch is named/,
+    "git --no-pager push origin main": /targets main/,
+    "cd app && git push": /no branch is named/,
+    "git push --force origin fix/x": /--force forces/,
+    "git push origin --delete feat/old": /--delete forces/,
+    "git push origin :feat/old": /empty source deletes/,
+    "git push --tags": /--tags forces/,
+    "git push origin v1.2.0": /targets v1\.2\.0/,
+    "git push origin +fix/x": /force-updates/,
+    "git push origin refs/heads/main": /targets refs\/heads\/main/,
+    "git push -u origin chore/x && git push origin main": /targets main/,
     "gh pr merge 82 --squash --subject 'chore(main): release 1.2.0'": /merging a pull request/,
     "gh api -X PUT repos/PMDevSolutions/Optia/pulls/82/merge": /merging a pull request/,
     "gh release edit v1.1.3 --notes 'x'": /gh release writes/,
@@ -88,7 +95,7 @@ describe("release-guard (PreToolUse, Bash)", () => {
     for (const cmd of ["git push origin main", "gh pr merge 123", "gh release create v1.2.0"]) {
       const res = guard(cmd, { agent_id: "a1b2", agent_type: "release-manager" });
       assert.equal(res.permissionDecision, "deny", cmd);
-      assert.match(res.permissionDecisionReason, /Subagents never push, merge, release/);
+      assert.match(res.permissionDecisionReason, /Subagents never push to main, merge, release/);
     }
   });
 
@@ -102,11 +109,10 @@ describe("release-guard (PreToolUse, Bash)", () => {
     assert.equal(res.permissionDecision, "deny");
   });
 
-  test("downgrades ask to deny where a hook cannot prompt", () => {
+  test("asks in bypassPermissions and dontAsk too (Claude Code decides what ask means there)", () => {
     for (const permission_mode of ["bypassPermissions", "dontAsk"]) {
       const res = guard("git push origin main", { permission_mode });
-      assert.equal(res.permissionDecision, "deny", permission_mode);
-      assert.match(res.permissionDecisionReason, new RegExp(permission_mode));
+      assert.equal(res.permissionDecision, "ask", permission_mode);
     }
   });
 
@@ -121,6 +127,11 @@ describe("release-guard (PreToolUse, Bash)", () => {
     "git diff main",
     'git commit -m "fix: push fix for the badge"',
     "git -c core.pager=cat log --grep push",
+    "git push -u origin chore/claude-code-conformance",
+    "git push --force-with-lease origin fix/x",
+    "git push -u origin chore/x && gh pr create --fill",
+    "git push origin feature/one feature/two",
+    "git push --dry-run -u origin chore/x",
     "git fetch origin && git pull --rebase",
     "git checkout -b chore/x origin/main",
     "gh pr view 12",
@@ -164,7 +175,7 @@ describe("session-context (SessionStart)", () => {
     assert.match(out, /- Latest GitHub Release: unavailable/);
     assert.match(out, /- Open Release PR: unavailable/);
     assert.match(out, /- Open issues: unavailable/);
-    assert.match(out, /release guard asks before git push/);
+    assert.match(out, /release guard asks before a push to main/);
   });
 
   test("reads the Release PR, latest release, CI, Pages and issues from gh", () => {
