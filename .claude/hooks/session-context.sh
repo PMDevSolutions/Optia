@@ -102,5 +102,5 @@ echo "- Latest GitHub Release: $LATEST_REL$REL_NOTE"
 echo "- Open Release PR: $RELEASE_PR"
 echo "- Last CI on main: $CI_RUN. Last Deploy Site run: $PAGES_RUN"
 echo "- Open issues: $ISSUES"
-echo "- Merging the Release PR is the release gate (tags, GitHub Release, store zip); the Chrome Web Store upload is manual under paul@pmds.info. The release guard asks before git push, gh pr merge, gh release writes, gh workflow run and gh run rerun, and denies them in subagents."
+echo "- Merging the Release PR is the release gate (tags, GitHub Release, store zip); the Chrome Web Store upload is manual under paul@pmds.info. The release guard asks before a push to main (a plain branch push passes), gh pr merge, gh release writes, gh workflow run and gh run rerun, and denies them in subagents."
 exit 0

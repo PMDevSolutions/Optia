@@ -33,4 +33,4 @@ Report the version, the changelog text, the CI state, and the exact command for 
 
 ## Rules
 
-No `git push`, `gh pr merge`, `gh release` writes, `gh workflow run`, no tags, no version edits, no changelog edits. The release guard denies them here anyway. Report only what you verified; a check you could not run is reported as not run, never assumed.
+No push to `main`, no `gh pr merge`, `gh release` writes or `gh workflow run`, no tags, no version edits, no changelog edits. The release guard denies those here anyway. Report only what you verified; a check you could not run is reported as not run, never assumed.
